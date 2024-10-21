@@ -11,7 +11,7 @@ the schedulers depending on the result of the ownership
 check.
 
 diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
-index 419c056faf0d49d9b0435feb01252e87e227b9a9..63eb35aebc4551355ea1ea5cd1305d93502f0dbc 100644
+index e20e4239a5a1f952e1c70e899549989d5e42f73c..60ac226b58981155649b7d67c11385a0c105eca0 100644
 --- a/src/main/java/org/bukkit/Bukkit.java
 +++ b/src/main/java/org/bukkit/Bukkit.java
 @@ -2916,6 +2916,14 @@ public final class Bukkit {
@@ -30,7 +30,7 @@ index 419c056faf0d49d9b0435feb01252e87e227b9a9..63eb35aebc4551355ea1ea5cd1305d93
      @NotNull
      public static Server.Spigot spigot() {
 diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
-index 5aa64ea39ebd92e5067c53cea49a8685c0b9eee4..8a7ba7d14f20b8169854daaf26e8f4da4563f166 100644
+index 6246251caf2c6f025c824b8e7a944b8d48751fa1..10f6eb1756de71960f1c0565366d5f262c7641f1 100644
 --- a/src/main/java/org/bukkit/Server.java
 +++ b/src/main/java/org/bukkit/Server.java
 @@ -2554,4 +2554,10 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi

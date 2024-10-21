@@ -9,10 +9,10 @@ add explicit block update suppression techniques, it's better
 than the server crashing.
 
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index b0ad25daf2d3c1727c61686e35eb4c03e1c60122..d963e8a6a498232a9ae760b2befaa17578a192f8 100644
+index d518487433088f090edb0d12e222b85f0c93b792..db232ac0cc27ddff4bc25ba9b9a5f3a1996fc4e8 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
-@@ -1919,7 +1919,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -1936,7 +1936,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
              Direction enumdirection = (Direction) iterator.next();
              BlockPos blockposition1 = pos.relative(enumdirection);
  

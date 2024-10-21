@@ -6,10 +6,10 @@ Subject: [PATCH] Fix tests by removing them
 We don't care about this one, some commands just need to be removed.
 
 diff --git a/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java b/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java
-index ca71c688b37ce2c8b712a4f9216cf872c8edf78e..d2298f423a289b8a4df815d04bd8218faafb5e30 100644
+index 75ed5050f72c001d6eab117a2c0b352a413548bd..2b036e80fbc1c873b47fe947dee7175a93586a90 100644
 --- a/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java
 +++ b/src/test/java/io/papermc/paper/permissions/MinecraftCommandPermissionsTest.java
-@@ -36,6 +36,7 @@ public class MinecraftCommandPermissionsTest extends AbstractTestingBase {
+@@ -37,6 +37,7 @@ public class MinecraftCommandPermissionsTest {
  
      @Test
      public void test() {

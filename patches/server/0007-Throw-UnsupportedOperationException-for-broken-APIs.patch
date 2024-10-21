@@ -5,10 +5,10 @@ Subject: [PATCH] Throw UnsupportedOperationException() for broken APIs
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 454cac11619fc1e8317db0b95a174f6747af6e60..39e4493ef5c7d4bfd903da18b76e14235a535ab5 100644
+index f9b399214848098149eb1f3a4043028d242dd454..dee23b4b96b7f2c6af54a6affe385b183479f8cc 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -1310,6 +1310,7 @@ public final class CraftServer implements Server {
+@@ -1312,6 +1312,7 @@ public final class CraftServer implements Server {
  
      @Override
      public World createWorld(WorldCreator creator) {
@@ -16,7 +16,7 @@ index 454cac11619fc1e8317db0b95a174f6747af6e60..39e4493ef5c7d4bfd903da18b76e1423
          Preconditions.checkState(this.console.getAllLevels().iterator().hasNext(), "Cannot create additional worlds on STARTUP");
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot create a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          Preconditions.checkArgument(creator != null, "WorldCreator cannot be null");
-@@ -1488,6 +1489,7 @@ public final class CraftServer implements Server {
+@@ -1490,6 +1491,7 @@ public final class CraftServer implements Server {
  
      @Override
      public boolean unloadWorld(World world, boolean save) {

@@ -14,12 +14,12 @@ more helpful than some random error log caused by
 a breakage.
 
 diff --git a/src/main/java/io/papermc/paper/plugin/configuration/PluginMeta.java b/src/main/java/io/papermc/paper/plugin/configuration/PluginMeta.java
-index bcf91d048d84144f6acf9bfd2095df9ada2e585f..3072f95dc1cafb47c1820dc67c8d24991540fc4a 100644
+index 3c768d5ccf490e962d9638e92d4ea7c85670bad8..2dbc9fc268850c85e4e8d38da05586a004862c76 100644
 --- a/src/main/java/io/papermc/paper/plugin/configuration/PluginMeta.java
 +++ b/src/main/java/io/papermc/paper/plugin/configuration/PluginMeta.java
-@@ -200,4 +200,12 @@ public interface PluginMeta {
-     @Nullable
-     String getAPIVersion();
+@@ -183,4 +183,12 @@ public interface PluginMeta {
+      */
+     @Nullable String getAPIVersion();
  
 +    // Folia start - block plugins not marked as supported
 +    /**
