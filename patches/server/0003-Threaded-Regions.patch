@@ -11893,7 +11893,7 @@ index f9abf63e12ea930275121b470e4e4906cff0fc12..f03f968d1526fbcff1ae87376370ba59
                  for (ServerPlayer player : ServerLevel.this.players) {
                      player.getBukkitEntity().onEntityRemove(entity);
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index c396580a9cfd86ff261bed439bb4662ae88010b5..2f55541136976a8a04a657d87a658b11a1e1db2f 100644
+index c396580a9cfd86ff261bed439bb4662ae88010b5..00b3c3c60f67d129058a888b7bd5e7fb031063da 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
 @@ -15,6 +15,7 @@ import java.util.Objects;
@@ -12067,7 +12067,7 @@ index c396580a9cfd86ff261bed439bb4662ae88010b5..2f55541136976a8a04a657d87a658b11
          AABB axisalignedbb = this.getDimensions(Pose.STANDING).makeBoundingBox(Vec3.ZERO);
          BlockPos blockposition1 = basePos;
  
-@@ -1320,6 +1466,332 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -1320,6 +1466,334 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
  
      }
  
@@ -12380,7 +12380,9 @@ index c396580a9cfd86ff261bed439bb4662ae88010b5..2f55541136976a8a04a657d87a658b11
 +            this.wonGame = true;
 +            // TODO is there a better solution to this that DOESN'T skip the credits?
 +            this.seenCredits = true;
-+            this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, this.seenCredits ? 0.0F : 1.0F));
++            if (!this.seenCredits) {
++                this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0.0F));
++            }
 +            this.exitEndCredits();
 +            return true;
 +        } else {
@@ -12400,7 +12402,7 @@ index c396580a9cfd86ff261bed439bb4662ae88010b5..2f55541136976a8a04a657d87a658b11
      @Nullable
      @Override
      public Entity changeDimension(DimensionTransition teleportTarget) {
-@@ -2369,6 +2841,12 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -2369,6 +2843,12 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
      public void setCamera(@Nullable Entity entity) {
          Entity entity1 = this.getCamera();
  
@@ -12413,7 +12415,7 @@ index c396580a9cfd86ff261bed439bb4662ae88010b5..2f55541136976a8a04a657d87a658b11
          this.camera = (Entity) (entity == null ? this : entity);
          if (entity1 != this.camera) {
              // Paper start - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
-@@ -2922,7 +3400,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -2922,7 +3402,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
          this.experienceLevel = this.newLevel;
          this.totalExperience = this.newTotalExp;
          this.experienceProgress = 0;
@@ -17365,10 +17367,27 @@ index 3f5bb5c9ceb5b31fcc9ef0a7a6157e1e1cb2a09f..deb555743b15afcc22e694dcf1d8ceca
          return entity instanceof ThrownEnderpearl ? new Vec3(0.0D, -1.0D, 0.0D) : entity.getDeltaMovement();
      }
 diff --git a/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java b/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java
-index a35a426cc7778a51523f26057b5d61b8a3e23d5d..406f5699ebe50dad2ede6da9f39b70f518fd49ba 100644
+index a35a426cc7778a51523f26057b5d61b8a3e23d5d..e1c071e0b25c4678bf08313b6c60cf895a54aa02 100644
 --- a/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java
 +++ b/src/main/java/net/minecraft/world/level/block/EndPortalBlock.java
-@@ -126,6 +126,20 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
+@@ -70,15 +70,7 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
+             world.getCraftServer().getPluginManager().callEvent(event);
+             if (event.isCancelled()) return; // Paper - make cancellable
+             // CraftBukkit end
+-            if (!world.isClientSide && world.dimension() == Level.END && entity instanceof ServerPlayer) {
+-                ServerPlayer entityplayer = (ServerPlayer) entity;
+-
+-                if (world.paperConfig().misc.disableEndCredits) entityplayer.seenCredits = true; // Paper - Option to disable end credits
+-                if (!entityplayer.seenCredits) {
+-                    entityplayer.showEndCredits();
+-                    return;
+-                }
+-            }
++            // Folia - region threading - do not show credits
+ 
+             entity.setAsInsidePortal(this, pos);
+         }
+@@ -126,6 +118,20 @@ public class EndPortalBlock extends BaseEntityBlock implements Portal {
          }
      }
  
