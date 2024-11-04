@@ -1785,7 +1785,7 @@ index f03f968d1526fbcff1ae87376370ba5976c2b807..90d78ddf8518c0df307cdaa8b7cfb554
          } else {
              passenger.stopRiding();
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index 77164bd5d562a72d5936dc84a41071472421eeb5..93ceea16e436e9227bc983417b258c307156198e 100644
+index 20eeae6e968ecb5d67f16d0d2f56632e038a89b4..9acb477df682a27b4340e4068d6b81df1925fc0b 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
 @@ -1299,6 +1299,7 @@ public abstract class PlayerList {

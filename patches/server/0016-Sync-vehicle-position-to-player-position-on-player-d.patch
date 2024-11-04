@@ -7,7 +7,7 @@ This allows the player to be re-positioned before logging into
 the world without causing thread checks to trip on Folia.
 
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index 7503afc82ec13a7f5732d32d70ce47900a747352..77164bd5d562a72d5936dc84a41071472421eeb5 100644
+index 98064cb4c99929ed109dac928c302c87631ad539..20eeae6e968ecb5d67f16d0d2f56632e038a89b4 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
 @@ -516,7 +516,13 @@ public abstract class PlayerList {
