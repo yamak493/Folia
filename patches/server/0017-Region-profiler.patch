@@ -1375,7 +1375,7 @@ index fbc619a132c6ca6b1abab51ac230be29367e9c6e..97817400b70b2579f3a8750f7f33197a
                          if (exception instanceof ReportedException) {
                              ReportedException reportedexception = (ReportedException) exception;
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 9e5c063d1371d766c9e34dc8a6758fb760c164bd..511992c31d70e806bba68737048ca760bef1def0 100644
+index 84f1f7956065de039837ceeaeee30259a7df4118..4ed79a51c89d54a7b2ab65a99b5b09cc807f4d4e 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
 @@ -1654,6 +1654,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -1513,10 +1513,10 @@ index 6f746f5ce9751dce4912f7633c126788eb684bd0..74524dcd4539a31e9d0037cd607ffbfc
      // Paper end - optimise entity tracker
  
 diff --git a/src/main/java/net/minecraft/server/level/ServerChunkCache.java b/src/main/java/net/minecraft/server/level/ServerChunkCache.java
-index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a507b6981f9 100644
+index b0e41b79d357f7e1b189985b4752accc78f05bbb..f7311d6efc2119b9dbe062a439850a890c9bf6b8 100644
 --- a/src/main/java/net/minecraft/server/level/ServerChunkCache.java
 +++ b/src/main/java/net/minecraft/server/level/ServerChunkCache.java
-@@ -392,19 +392,26 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -397,19 +397,26 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
      @Override
      public void tick(BooleanSupplier shouldKeepTicking, boolean tickChunks) {
@@ -1543,7 +1543,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
              this.level.timings.chunks.stopTiming(); // Paper - timings
              this.chunkMap.tick();
          }
-@@ -419,6 +426,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -424,6 +431,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
      private void tickChunks() {
          io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.level.getCurrentWorldData(); // Folia - region threading
@@ -1551,7 +1551,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
          long chunksTicked = 0; // Paper - rewrite chunk system
          //long i = this.level.getGameTime(); // Folia - region threading
          long j = 1L; // Folia - region threading
-@@ -431,6 +439,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -436,6 +444,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
              gameprofilerfiller.push("filteringLoadedChunks");
              // Paper start - chunk tick iteration optimisations
              List<ServerChunkCache.ChunkAndHolder> list;
@@ -1559,7 +1559,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
              {
                  final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> tickingChunks =
                      ((ca.spottedleaf.moonrise.patches.chunk_system.level.ChunkSystemServerLevel) this.level).moonrise$getTickingChunks();
-@@ -447,6 +456,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -452,6 +461,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                      regionizedWorldData.iterationCopy, size // Folia - region threading
                  );
              }
@@ -1567,7 +1567,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
              // Paper end - chunk tick iteration optimisations
              Iterator iterator = null; // Paper - chunk tick iteration optimisations
              if (this.level.getServer().tickRateManager().runsNormally()) this.level.timings.chunkTicks.startTiming(); // Paper
-@@ -460,6 +470,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -465,6 +475,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                  // Paper start - Optional per player mob spawns
                  int naturalSpawnChunkCount = k;
                  NaturalSpawner.SpawnState spawnercreature_d; // moved down
@@ -1575,7 +1575,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
                  if ((this.spawnFriendlies || this.spawnEnemies) && this.level.paperConfig().entities.spawning.perPlayerMobSpawns) { // don't count mobs when animals and monsters are disabled
                      // re-set mob counts
                      for (ServerPlayer player : this.level.getLocalPlayers()) { // Folia - region threading
-@@ -479,6 +490,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -484,6 +495,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                  } else {
                      spawnercreature_d = NaturalSpawner.createState(naturalSpawnChunkCount, regionizedWorldData.getLoadedEntities(), this::getFullChunk, !this.level.paperConfig().entities.spawning.perPlayerMobSpawns ? new LocalMobCapCalculator(this.chunkMap) : null, false); // Folia - region threading - note: function only cares about loaded entities, doesn't need all
                  }
@@ -1583,7 +1583,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
                  // Paper end - Optional per player mob spawns
                  this.level.timings.countNaturalMobs.stopTiming(); // Paper - timings
  
-@@ -500,6 +512,9 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -505,6 +517,9 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                  boolean flag1 = this.level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) != 0L && this.level.getLevelData().getGameTime() % this.level.ticksPerSpawnCategory.getLong(org.bukkit.entity.SpawnCategory.ANIMAL) == 0L; // CraftBukkit
                  Iterator iterator1 = list.iterator();
  
@@ -1593,7 +1593,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
                  while (iterator1.hasNext()) {
                      ServerChunkCache.ChunkAndHolder chunkproviderserver_a = (ServerChunkCache.ChunkAndHolder) iterator1.next();
                      LevelChunk chunk1 = chunkproviderserver_a.chunk;
-@@ -508,10 +523,12 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -513,10 +528,12 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                      if (true && this.chunkMap.anyPlayerCloseEnoughForSpawning(chunkcoordintpair)) { // Paper - rewrite chunk system
                          chunk1.incrementInhabitedTime(j);
                          if (flag && (this.spawnEnemies || this.spawnFriendlies) && this.level.getWorldBorder().isWithinBounds(chunkcoordintpair) && this.chunkMap.anyPlayerCloseEnoughForSpawning(chunkcoordintpair, true)) { // Spigot
@@ -1606,7 +1606,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
                              this.level.tickChunk(chunk1, l);
                              // Paper start - rewrite chunk system
                              if ((++chunksTicked & 7L) == 0L) {
-@@ -521,19 +538,25 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -526,19 +543,25 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                          }
                      }
                  }
@@ -1632,7 +1632,7 @@ index e13ccac27fa4f4c23185f12c776e80970ab844e6..135fa024d81b962761f0edc6896a2a50
              {
                  final it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder> chunks = (it.unimi.dsi.fastutil.objects.ObjectArrayList<net.minecraft.server.level.ServerChunkCache.ChunkAndHolder>)list;
                  final ServerChunkCache.ChunkAndHolder[] raw = chunks.elements();
-@@ -547,6 +570,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -552,6 +575,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                      holder.holder().broadcastChanges(holder.chunk());
                  }
              }
