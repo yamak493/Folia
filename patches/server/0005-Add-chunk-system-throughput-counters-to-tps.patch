@@ -5,10 +5,10 @@ Subject: [PATCH] Add chunk system throughput counters to /tps
 
 
 diff --git a/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/task/ChunkFullTask.java b/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/task/ChunkFullTask.java
-index fbdf721e8b4cfe6cef4ee60c53c680cbfc858d88..8581b8771b8cc89ff7bdb63fbfd5628a1e7d4762 100644
+index 6ab353b0d2465c3680bb3c8d0852ba0f65c00fd2..4ad647a9f98cf1c11c45f85edcba3c29e343c236 100644
 --- a/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/task/ChunkFullTask.java
 +++ b/src/main/java/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/task/ChunkFullTask.java
-@@ -28,6 +28,9 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
+@@ -30,6 +30,9 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
      private final ChunkAccess fromChunk;
      private final PrioritisedExecutor.PrioritisedTask convertToFullTask;
  
@@ -16,9 +16,9 @@ index fbdf721e8b4cfe6cef4ee60c53c680cbfc858d88..8581b8771b8cc89ff7bdb63fbfd5628a
 +    public static final io.papermc.paper.util.IntervalledCounter chunkGenerates = new io.papermc.paper.util.IntervalledCounter(java.util.concurrent.TimeUnit.SECONDS.toNanos(15L));
 +
      public ChunkFullTask(final ChunkTaskScheduler scheduler, final ServerLevel world, final int chunkX, final int chunkZ,
-                          final NewChunkHolder chunkHolder, final ChunkAccess fromChunk, final PrioritisedExecutor.Priority priority) {
+                          final NewChunkHolder chunkHolder, final ChunkAccess fromChunk, final Priority priority) {
          super(scheduler, world, chunkX, chunkZ);
-@@ -41,6 +44,20 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
+@@ -43,6 +46,20 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
          return ChunkStatus.FULL;
      }
  
@@ -38,8 +38,8 @@ index fbdf721e8b4cfe6cef4ee60c53c680cbfc858d88..8581b8771b8cc89ff7bdb63fbfd5628a
 +
      @Override
      public void run() {
-         // See Vanilla ChunkPyramid#LOADING_PYRAMID.FULL for what this function should be doing
-@@ -55,6 +72,17 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
+         final PlatformHooks platformHooks = PlatformHooks.get();
+@@ -59,6 +76,17 @@ public final class ChunkFullTask extends ChunkProgressionTask implements Runnabl
                  ((ChunkSystemPoiManager)this.world.getPoiManager()).moonrise$checkConsistency(this.fromChunk);
              }
  

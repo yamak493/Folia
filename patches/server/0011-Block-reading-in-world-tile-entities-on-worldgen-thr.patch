@@ -7,10 +7,10 @@ The returned TE may be in the world, in which case it is unsafe
 for the current thread to modify or access its contents.
 
 diff --git a/src/main/java/net/minecraft/world/level/chunk/ImposterProtoChunk.java b/src/main/java/net/minecraft/world/level/chunk/ImposterProtoChunk.java
-index d7d332d8ba3442887e80d2c3d7bddb9de2674c2d..f135ed136aa01bf18b4bd107109db8f8ebf440d2 100644
+index 1eb8022f3e31603322e6c56516304afc9a11bbec..87ddae289972b8e0dd0b48a07e23c627b598bae3 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/ImposterProtoChunk.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/ImposterProtoChunk.java
-@@ -92,6 +92,11 @@ public class ImposterProtoChunk extends ProtoChunk implements ca.spottedleaf.moo
+@@ -91,6 +91,11 @@ public class ImposterProtoChunk extends ProtoChunk implements ca.spottedleaf.moo
      @Nullable
      @Override
      public BlockEntity getBlockEntity(BlockPos pos) {

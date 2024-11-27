@@ -6,10 +6,10 @@ Subject: [PATCH] Disable spark profiler
 It's not thread-safe. The plugin instead needs to be used.
 
 diff --git a/src/main/java/io/papermc/paper/SparksFly.java b/src/main/java/io/papermc/paper/SparksFly.java
-index 19c4aa20617f555d02f9c1c5a93b7204ab7251d8..4b30b05dcd99176715d49133fb99b96383a0ecbc 100644
+index 2ad5b9b0b7e18780ee73310451d9fa73f44c4bdb..b332645ed65928100f580221d8a9948bc77e362e 100644
 --- a/src/main/java/io/papermc/paper/SparksFly.java
 +++ b/src/main/java/io/papermc/paper/SparksFly.java
-@@ -109,7 +109,7 @@ public final class SparksFly {
+@@ -116,7 +116,7 @@ public final class SparksFly {
  
      private void enable() {
          if (!this.enabled) {
@@ -18,7 +18,7 @@ index 19c4aa20617f555d02f9c1c5a93b7204ab7251d8..4b30b05dcd99176715d49133fb99b963
                  this.enabled = true;
                  this.spark.enable();
              } else {
-@@ -161,7 +161,7 @@ public final class SparksFly {
+@@ -168,7 +168,7 @@ public final class SparksFly {
      }
  
      public static boolean isPluginPreferred() {

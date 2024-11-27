@@ -3,7 +3,7 @@ import io.papermc.paperweight.tasks.RebuildGitPatches
 plugins {
     java
     `maven-publish`
-    id("io.papermc.paperweight.patcher") version "1.7.3"
+    id("io.papermc.paperweight.patcher") version "1.7.5"
 }
 
 val paperMavenPublicUrl = "https://repo.papermc.io/repository/maven-public/"
