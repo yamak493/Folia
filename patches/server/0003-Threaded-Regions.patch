@@ -19094,6 +19094,19 @@ index 4640baec5bed6c2d53cc0f8ca1d273cc115abe9b..877f68f9abfc659f489d6571efc1b431
          @Override
          public void tick() {
              if (!this.blockEntity.isRemoved() && this.blockEntity.hasLevel()) {
+diff --git a/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java b/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
+index 018b24d7611c3fd11536441431abf8f125850129..ceea49a2b04d0493cfa8ad6629116e0c1a9c97b3 100644
+--- a/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
++++ b/src/main/java/net/minecraft/world/level/chunk/storage/SerializableChunkData.java
+@@ -562,7 +562,7 @@ public record SerializableChunkData(Registry<Biome> biomeRegistry, ChunkPos chun
+                 }
+             }
+ 
+-            ChunkAccess.PackedTicks ichunkaccess_a = chunk.getTicksForSerialization(world.getGameTime());
++            ChunkAccess.PackedTicks ichunkaccess_a = chunk.getTicksForSerialization(world.getRedstoneGameTime()); // Folia - region threading
+             ShortList[] ashortlist = (ShortList[]) Arrays.stream(chunk.getPostProcessing()).map((shortlist) -> {
+                 return shortlist != null ? new ShortArrayList(shortlist) : null;
+             }).toArray((k) -> {
 diff --git a/src/main/java/net/minecraft/world/level/dimension/end/EndDragonFight.java b/src/main/java/net/minecraft/world/level/dimension/end/EndDragonFight.java
 index b331c93c82c27f9456fec208a0c008c5bedfa8c4..e5513271a24711f46e9107cbe526d533afa54ca5 100644
 --- a/src/main/java/net/minecraft/world/level/dimension/end/EndDragonFight.java
