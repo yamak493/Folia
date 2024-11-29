@@ -1557,7 +1557,7 @@ index ee55c53d40dbf51f47627a6b56060e32fd215353..b261d166eb09386275ba52372cca56fc
          if (false) this.playerList.tick(); // Folia - region threading
          if (SharedConstants.IS_RUNNING_IN_IDE && this.tickRateManager.runsNormally()) {
 diff --git a/src/main/java/net/minecraft/server/level/ChunkMap.java b/src/main/java/net/minecraft/server/level/ChunkMap.java
-index 48fc7676252dbff47f59b65e6b9d9410e25778c5..dd63a17cdbf758aec2110924ef38ee3c1bc18fd1 100644
+index c6a2d2543a3616e99d253986a113a7cd07b05f0a..ad6d635971d0f5d23c923b1dc83c0b18e8f4a94a 100644
 --- a/src/main/java/net/minecraft/server/level/ChunkMap.java
 +++ b/src/main/java/net/minecraft/server/level/ChunkMap.java
 @@ -406,13 +406,18 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
@@ -1579,7 +1579,7 @@ index 48fc7676252dbff47f59b65e6b9d9410e25778c5..dd63a17cdbf758aec2110924ef38ee3c
          }
  
          gameprofilerfiller.pop();
-@@ -947,12 +952,17 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -941,12 +946,17 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
  
      // Paper start - optimise entity tracker
      private void newTrackerTick() {
@@ -1598,7 +1598,7 @@ index 48fc7676252dbff47f59b65e6b9d9410e25778c5..dd63a17cdbf758aec2110924ef38ee3c
              final Entity entity = trackerEntitiesRaw[i];
              final ChunkMap.TrackedEntity tracker = ((ca.spottedleaf.moonrise.patches.entity_tracker.EntityTrackerEntity)entity).moonrise$getTrackedEntity();
              if (tracker == null) {
-@@ -964,6 +974,8 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+@@ -958,6 +968,8 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
                  tracker.serverEntity.sendChanges();
              }
          }
@@ -1608,7 +1608,7 @@ index 48fc7676252dbff47f59b65e6b9d9410e25778c5..dd63a17cdbf758aec2110924ef38ee3c
      // Paper end - optimise entity tracker
  
 diff --git a/src/main/java/net/minecraft/server/level/ServerChunkCache.java b/src/main/java/net/minecraft/server/level/ServerChunkCache.java
-index f58dadcf5f3822fd18a0d1dfb775b3d7cd7abde9..220db29a8901fbbfbec2b95be994f0ea0144b98d 100644
+index 16001634fef7573e5363d2903e2b665bc12d3431..a5fc3187438467d24a3143a01188824bb7120b2a 100644
 --- a/src/main/java/net/minecraft/server/level/ServerChunkCache.java
 +++ b/src/main/java/net/minecraft/server/level/ServerChunkCache.java
 @@ -455,18 +455,25 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
@@ -1687,7 +1687,7 @@ index f58dadcf5f3822fd18a0d1dfb775b3d7cd7abde9..220db29a8901fbbfbec2b95be994f0ea
          // Paper end - Optional per player mob spawns
  
          regionizedWorldData.lastSpawnState = spawnercreature_d; // Folia - region threading
-@@ -603,6 +618,9 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -602,6 +617,9 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
  
          Iterator iterator = chunks.iterator();
  
@@ -1697,7 +1697,7 @@ index f58dadcf5f3822fd18a0d1dfb775b3d7cd7abde9..220db29a8901fbbfbec2b95be994f0ea
          while (iterator.hasNext()) {
              LevelChunk chunk = (LevelChunk) iterator.next();
              ChunkPos chunkcoordintpair = chunk.getPos();
-@@ -616,10 +634,15 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+@@ -615,10 +633,15 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
                  this.level.tickChunk(chunk, k);
              }
          }
