@@ -1198,7 +1198,7 @@ index df15b1139e71dfe10b8f24ec6d235b99f6d5006a..b1c07e582dbf0a203cf734fdbcd8387a
          @Override
 diff --git a/src/main/java/io/papermc/paper/threadedregions/commands/CommandProfiler.java b/src/main/java/io/papermc/paper/threadedregions/commands/CommandProfiler.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..3c6f0359bd6196eeb497bc2a43a82186b545df4e
+index 0000000000000000000000000000000000000000..dbc6ffd8fec4570de4abdb3aa0a16d0e0cc09353
 --- /dev/null
 +++ b/src/main/java/io/papermc/paper/threadedregions/commands/CommandProfiler.java
 @@ -0,0 +1,245 @@
@@ -1314,7 +1314,7 @@ index 0000000000000000000000000000000000000000..3c6f0359bd6196eeb497bc2a43a82186
 +        final RegionizedProfiler profiler = new RegionizedProfiler(
 +            ThreadLocalRandom.current().nextLong(), (long)Math.ceil(time * 1.0E9),
 +            (final RegionizedProfiler.ProfileResults results) -> {
-+                MCUtil.asyncExecutor.execute(() -> {
++                MCUtil.ASYNC_EXECUTOR.execute(() -> {
 +                    writeResults(results);
 +                    sender.sendMessage(
 +                        Component.text()
@@ -1336,7 +1336,7 @@ index 0000000000000000000000000000000000000000..3c6f0359bd6196eeb497bc2a43a82186
 +                    final ChunkPos center = region.getCenterChunk();
 +
 +                    if (data.profiler != null) {
-+                        MCUtil.asyncExecutor.execute(() -> {
++                        MCUtil.ASYNC_EXECUTOR.execute(() -> {
 +                            sender.sendMessage(
 +                                Component.text()
 +                                    .append(Component.text("Region #", NamedTextColor.DARK_GRAY))
@@ -1351,7 +1351,7 @@ index 0000000000000000000000000000000000000000..3c6f0359bd6196eeb497bc2a43a82186
 +                    }
 +
 +                    profiler.createProfiler(region);
-+                    MCUtil.asyncExecutor.execute(() -> {
++                    MCUtil.ASYNC_EXECUTOR.execute(() -> {
 +                        sender.sendMessage(
 +                            Component.text()
 +                                .append(Component.text("Started profiler #", NamedTextColor.DARK_GRAY))
