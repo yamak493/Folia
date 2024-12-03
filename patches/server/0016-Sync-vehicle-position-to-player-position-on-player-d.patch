@@ -7,10 +7,10 @@ This allows the player to be re-positioned before logging into
 the world without causing thread checks to trip on Folia.
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index 19eb204e5d3cd6ef8f2a31fae32e75dbf07ffb96..68a88928a3aae9d2ea6cd18088ede0a54c31d0d2 100644
+index 8c4f658ce87ef49d2b46e50d5957933e1b912b82..fb3ea176726fa01c2ab7220432121db4ad5e54ae 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-@@ -925,7 +925,13 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -922,7 +922,13 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
              if (world instanceof ServerLevel) {
                  ServerLevel worldserver = (ServerLevel) world;
                  CompoundTag nbttagcompound = ((CompoundTag) nbt.get()).getCompound("RootVehicle");

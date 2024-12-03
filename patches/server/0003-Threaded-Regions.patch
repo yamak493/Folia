@@ -12412,7 +12412,7 @@ index 585e2b43a0326f0b81597fa1234d3c67c76af550..cb2c0358fb462c4a5ebf94299119c208
                  for (ServerPlayer player : ServerLevel.this.server.getPlayerList().players) { // Paper - call onEntityRemove for all online players
                      player.getBukkitEntity().onEntityRemove(entity);
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490dff95144a8 100644
+index 5a8f396d47577f087abb415c972fd4f51e50faba..cb34ed2fe8d1bc087d57eca39f71286d81c7bb71 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
 @@ -221,7 +221,7 @@ import org.bukkit.inventory.MainHand;
@@ -12424,7 +12424,7 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
      private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_XZ = 32;
      private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_Y = 10;
      private static final int FLY_STAT_RECORDING_SPEED = 25;
-@@ -543,8 +543,152 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -543,8 +543,149 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
      }
      // CraftBukkit end
  
@@ -12526,21 +12526,30 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
 +        do {
 +            if (attemptCount[0] >= maxAttempts) {
 +                BlockPos sharedSpawn = world.getSharedSpawnPos();
-+                BlockPos selected = world.getWorldBorder().clampToBounds((double)sharedSpawn.getX(), (double)sharedSpawn.getY(), (double)sharedSpawn.getZ());
 +
 +                LOGGER.warn("Found no spawn in radius for player '" + player.getName() + "', ignoring radius");
 +
-+                // this call requires to return a location with loaded chunks, so we need to schedule a load here
-+                ca.spottedleaf.moonrise.common.util.ChunkSystem.scheduleChunkLoad(
-+                    world, selected.getX() >> 4, selected.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL,
-+                    true, ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
-+                    (unused) -> {
-+                        completeSpawn(world, selected, toComplete);
-+                    }
-+                );
++                selectSpawnWithoutRadius(world, player, sharedSpawn, toComplete);
 +                return;
 +            }
 +        } while (!trySpawnOrSchedule(world, player, random, attemptCount, maxAttempts, toComplete));
++    }
++
++
++    private static void selectSpawnWithoutRadius(ServerLevel world, ServerPlayer player, BlockPos spawn, ca.spottedleaf.concurrentutil.completable.CallbackCompletable<Location> toComplete) {
++        world.loadChunksForMoveAsync(player.getBoundingBoxAt(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5),
++            ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
++            (c) -> {
++                BlockPos ret = spawn;
++                while (!player.noCollisionNoLiquid(world, player.getBoundingBoxAt(ret.getX() + 0.5, ret.getY(), ret.getZ() + 0.5)) && ret.getY() < (double)world.getMaxY()) {
++                    ret = ret.above();
++                }
++                while (player.noCollisionNoLiquid(world, player.getBoundingBoxAt(ret.getX() + 0.5, ret.getY() - 1, ret.getZ() + 0.5)) && ret.getY() > (double)(world.getMinY() + 1)) {
++                    ret = ret.below();
++                }
++                toComplete.complete(io.papermc.paper.util.MCUtil.toLocation(world, Vec3.atBottomCenterOf(ret), world.levelData.getSpawnAngle(), 0.0f));
++            }
++        );
 +    }
 +
 +    public static void fudgeSpawnLocation(ServerLevel world, ServerPlayer player, ca.spottedleaf.concurrentutil.completable.CallbackCompletable<Location> toComplete) { // Folia - region threading
@@ -12549,19 +12558,7 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
 +        if (world.dimensionType().hasSkyLight() && world.serverLevelData.getGameType() != GameType.ADVENTURE) { // CraftBukkit
 +            selectSpawn(world, player, player.random, new int[1], 500, toComplete);
 +        } else {
-+            world.loadChunksForMoveAsync(player.getBoundingBoxAt(blockposition.getX() + 0.5, blockposition.getY(), blockposition.getZ() + 0.5),
-+                ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
-+                (c) -> {
-+                    BlockPos ret = blockposition;
-+                    while (!player.noCollisionNoLiquid(world, player.getBoundingBoxAt(ret.getX() + 0.5, ret.getY(), ret.getZ() + 0.5)) && ret.getY() < (double)world.getMaxY()) {
-+                        ret = ret.above();
-+                    }
-+                    while (player.noCollisionNoLiquid(world, player.getBoundingBoxAt(ret.getX() + 0.5, ret.getY() - 1, ret.getZ() + 0.5)) && ret.getY() > (double)(world.getMinY() + 1)) {
-+                        ret = ret.below();
-+                    }
-+                    toComplete.complete(io.papermc.paper.util.MCUtil.toLocation(world, Vec3.atBottomCenterOf(ret), world.levelData.getSpawnAngle(), 0.0f));
-+                }
-+            );
++            selectSpawnWithoutRadius(world, player, blockposition, toComplete);
 +        }
 +
 +    }
@@ -12577,7 +12574,7 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
          AABB axisalignedbb = this.getDimensions(Pose.STANDING).makeBoundingBox(Vec3.ZERO);
          BlockPos blockposition1 = basePos;
  
-@@ -885,11 +1029,18 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -885,11 +1026,18 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
  
                              if (worldserver != null) {
                                  Entity entity = EntityType.loadEntityRecursive(nbttagcompound, worldserver, EntitySpawnReason.LOAD, (entity1) -> {
@@ -12598,7 +12595,7 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
                                  } else {
                                      ServerPlayer.LOGGER.warn("Failed to spawn player ender pearl in level ({}), skipping", optional1.get());
                                  }
-@@ -1581,6 +1732,323 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -1581,6 +1729,323 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
  
      }
  
@@ -12922,7 +12919,7 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
      @Nullable
      @Override
      public ServerPlayer teleport(TeleportTransition teleportTarget) {
-@@ -2625,6 +3093,12 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -2625,6 +3090,12 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
      public void setCamera(@Nullable Entity entity) {
          Entity entity1 = this.getCamera();
  
@@ -12935,7 +12932,7 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
          this.camera = (Entity) (entity == null ? this : entity);
          if (entity1 != this.camera) {
              // Paper start - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
-@@ -3118,11 +3592,11 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -3118,11 +3589,11 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
      }
  
      public void registerEnderPearl(ThrownEnderpearl enderPearl) {
@@ -12949,7 +12946,7 @@ index 5a8f396d47577f087abb415c972fd4f51e50faba..f2884eefe00a35e19c83e069f65490df
      }
  
      public Set<ThrownEnderpearl> getEnderPearls() {
-@@ -3281,7 +3755,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
+@@ -3281,7 +3752,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
          this.experienceLevel = this.newLevel;
          this.totalExperience = this.newTotalExp;
          this.experienceProgress = 0;
