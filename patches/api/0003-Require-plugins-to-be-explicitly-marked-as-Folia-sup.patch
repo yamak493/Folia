@@ -31,7 +31,7 @@ index 3c768d5ccf490e962d9638e92d4ea7c85670bad8..2dbc9fc268850c85e4e8d38da05586a0
 +
  }
 diff --git a/src/main/java/org/bukkit/plugin/PluginDescriptionFile.java b/src/main/java/org/bukkit/plugin/PluginDescriptionFile.java
-index a857e46fa6f0c212db93193e1fdd8b0ea9c33c38..90cd9568363a7532d600b627de605c12a7b816c7 100644
+index 6dfd51996893ca82b11a540cc18234e0b504f7ba..ff313bf0374c318971860a26f1629f708a5fec26 100644
 --- a/src/main/java/org/bukkit/plugin/PluginDescriptionFile.java
 +++ b/src/main/java/org/bukkit/plugin/PluginDescriptionFile.java
 @@ -267,6 +267,19 @@ public final class PluginDescriptionFile implements io.papermc.paper.plugin.conf

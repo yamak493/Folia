@@ -29,10 +29,10 @@ index 41bf71d116ffc5431586ce54abba7f8def6c1dcf..1cf9a7677449ab8f03fb23d835e3fadc
      }
  
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index ad358909318a7e52d43e9dfb5cc7e6aa5674b9fd..451d4cf162e39acd7ed215f82a5a84f6be6e166a 100644
+index 75929ae02677637500229b7b635479f92e3bd177..20fe53cc8e9edfc7b7d50f23379e0044e520c84d 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -3214,6 +3214,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -3244,6 +3244,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              if (!force && (!this.canRide(entity) || !entity.canAddPassenger(this))) {
                  return false;
              } else {
@@ -40,7 +40,7 @@ index ad358909318a7e52d43e9dfb5cc7e6aa5674b9fd..451d4cf162e39acd7ed215f82a5a84f6
                  // CraftBukkit start
                  if (entity.getBukkitEntity() instanceof Vehicle && this.getBukkitEntity() instanceof LivingEntity) {
                      VehicleEnterEvent event = new VehicleEnterEvent((Vehicle) entity.getBukkitEntity(), this.getBukkitEntity());
-@@ -3235,6 +3236,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -3265,6 +3266,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
                      return false;
                  }
                  // CraftBukkit end
@@ -48,7 +48,7 @@ index ad358909318a7e52d43e9dfb5cc7e6aa5674b9fd..451d4cf162e39acd7ed215f82a5a84f6
                  if (this.isPassenger()) {
                      this.stopRiding();
                  }
-@@ -3318,6 +3320,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -3348,6 +3350,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              throw new IllegalStateException("Use x.stopRiding(y), not y.removePassenger(x)");
          } else {
              // CraftBukkit start
@@ -56,7 +56,7 @@ index ad358909318a7e52d43e9dfb5cc7e6aa5674b9fd..451d4cf162e39acd7ed215f82a5a84f6
              CraftEntity craft = (CraftEntity) entity.getBukkitEntity().getVehicle();
              Entity orig = craft == null ? null : craft.getHandle();
              if (this.getBukkitEntity() instanceof Vehicle && entity.getBukkitEntity() instanceof LivingEntity) {
-@@ -3345,6 +3348,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -3375,6 +3378,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
                  return false;
              }
              // CraftBukkit end
@@ -740,27 +740,6 @@ index 267f3c85058ef7c73e372c04493cfa6c907e44bb..df838d551fa08895e390eb793506e2f3
      public Creaking getHandle() {
 +        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this.entity, "Accessing entity state off owning region's thread"); // Folia - region threading
          return (Creaking) this.entity;
-     }
- 
-diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftCreakingTransient.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftCreakingTransient.java
-index 17d55c41fa9c5f836e47e3c2a6947960411417c2..f1c6c8df621bca8c84af41cccd546f8925f4b104 100644
---- a/src/main/java/org/bukkit/craftbukkit/entity/CraftCreakingTransient.java
-+++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftCreakingTransient.java
-@@ -9,8 +9,16 @@ public class CraftCreakingTransient extends CraftCreaking implements org.bukkit.
-         super(server, entity);
-     }
- 
-+    // Folia start - region threading
-+    @Override
-+    public CreakingTransient getHandleRaw() {
-+        return (CreakingTransient)this.entity;
-+    }
-+    // Folia end - region threading
-+
-     @Override
-     public CreakingTransient getHandle() {
-+        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this.entity, "Accessing entity state off owning region's thread"); // Folia - region threading
-         return (CreakingTransient) this.entity;
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftCreature.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftCreature.java
@@ -1731,7 +1710,7 @@ index e9f471e60af0725ec34e2985d63ae9ea9f88590a..cd824fc65ac2b1fe55710da4700f7c31
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-index d0c409f4efad289e3e325f44b500fc72589d89d4..828d371cda28d68246c721a44331bd3f145db3a5 100644
+index 4f98d138a275a6c34528b7a5148ef265bc38d6b5..228f7fbce72b7828905e21f21525371a92ec07d4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
 @@ -487,6 +487,13 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
@@ -1968,10 +1947,10 @@ index e8ece01669373ecf6552d33b2ed72668524e2650..fbb5c2e2a136cd03eb1f4b4b5ef289d6
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftMinecartTNT.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftMinecartTNT.java
-index 1fe06d3958295acc8211b7837b172262beb87f92..a35f88cf511c7d0231b1d973250b90b72eaec78c 100644
+index 15184e7fc3aeb388fb9de6be2ad72f98fee52044..f18093c5ccacfb55e7c6133cf5212c464e41ead4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftMinecartTNT.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftMinecartTNT.java
-@@ -62,8 +62,16 @@ public final class CraftMinecartTNT extends CraftMinecart implements ExplosiveMi
+@@ -72,8 +72,16 @@ public final class CraftMinecartTNT extends CraftMinecart implements ExplosiveMi
          this.getHandle().explode(power);
      }
  
@@ -2309,7 +2288,7 @@ index 2638c341bc02f201f7ab17fdebcdbdf3a7ec05bf..074b2919be2b5544b0a46e6cd32f6c57
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 33e710ed34832876edb138b13cf259c18052333a..b18a2733a03d908b4faa16b2d829d1b96b2d9411 100644
+index 5ebcd6b8edc76572a3fffead4735fd5824a083f1..95047bf77be54af6968a6e77f13dd01aa989b4d8 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -674,7 +674,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {

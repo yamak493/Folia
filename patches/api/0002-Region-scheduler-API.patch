@@ -7,7 +7,7 @@ Add both a location based scheduler, an entity based scheduler,
 and a global region scheduler.
 
 diff --git a/src/main/java/org/bukkit/plugin/SimplePluginManager.java b/src/main/java/org/bukkit/plugin/SimplePluginManager.java
-index b878e7167cfcdea0e224c182b40abeadd339d3b3..9611e8e254b4fa9579dc9ffd5198182c43819c56 100644
+index 001465eedafa51ac027a4db51cba6223edfe1171..468f5646da7bc413a6e91e82379e6554cc8b459d 100644
 --- a/src/main/java/org/bukkit/plugin/SimplePluginManager.java
 +++ b/src/main/java/org/bukkit/plugin/SimplePluginManager.java
 @@ -557,9 +557,9 @@ public final class SimplePluginManager implements PluginManager {
@@ -23,7 +23,7 @@ index b878e7167cfcdea0e224c182b40abeadd339d3b3..9611e8e254b4fa9579dc9ffd5198182c
              }
  
 diff --git a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java b/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
-index 487b5ca23159b531475c3d650894be707b49914e..31b90d1c2259a8f200b0589909dbbfe4cc526989 100644
+index 5c277ac7a61df8106f7c13a1ad8ccb1509338699..446c115f19c4dde0d5e269f8d120bc51ad3898e0 100644
 --- a/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
 +++ b/src/main/java/org/bukkit/scheduler/BukkitScheduler.java
 @@ -7,6 +7,15 @@ import java.util.function.Consumer;
