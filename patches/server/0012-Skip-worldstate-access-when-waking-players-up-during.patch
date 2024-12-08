@@ -9,7 +9,7 @@ data deserialization and is racey even in Vanilla. But in Folia,
 some accesses may throw and as such we need to fix this directly.
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index 44c8d196b31c84ff6179d345808a10c0604206ad..93a341618bf53900d143f429b94ea295dd973f2c 100644
+index 130643b97fdab3bf89fc87afd6d4e0b922dac538..54c610bb14f8af6026c91179e402ebc66ffbf49c 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
 @@ -794,7 +794,7 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple

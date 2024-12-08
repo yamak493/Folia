@@ -7,7 +7,7 @@ This allows the player to be re-positioned before logging into
 the world without causing thread checks to trip on Folia.
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index 93a341618bf53900d143f429b94ea295dd973f2c..b7fe3a1119f927bf4fb4d5855f758a16a76ec779 100644
+index 54c610bb14f8af6026c91179e402ebc66ffbf49c..23f852ede94bce4d000c8fcaa8fba5d4800b533c 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
 @@ -920,7 +920,13 @@ public class ServerPlayer extends net.minecraft.world.entity.player.Player imple
