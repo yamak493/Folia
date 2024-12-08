@@ -1463,10 +1463,10 @@ index d6eb8f495688a1b65a4c419aa3ee655cd8eb322a..f338b273613840ed366ab13b528373e7
                          if (exception instanceof ReportedException) {
                              ReportedException reportedexception = (ReportedException) exception;
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105e323089a 100644
+index 25b4b0d531f0698338ffeac686013a4631d60c00..1676c4abb3f6f71bb7b25351aa58b4e127786fca 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -1714,6 +1714,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1713,6 +1713,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      // Folia start - region threading
      public void tickServer(long startTime, long scheduledEnd, long targetBuffer,
                             io.papermc.paper.threadedregions.TickRegions.TickRegionData region) {
@@ -1474,7 +1474,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
          // Folia end - region threading
          org.spigotmc.WatchdogThread.tick(); // Spigot
          long i = startTime; // Folia - region threading
-@@ -1752,6 +1753,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1751,6 +1752,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              }
          }
  
@@ -1482,7 +1482,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
          // Folia start - region threading
          if (region != null) {
              region.world.getCurrentWorldData().updateTickData();
-@@ -1775,10 +1777,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1774,10 +1776,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent((int)region.getCurrentTick()).callEvent(); // Paper - Server Tick Events // Folia - region threading
          // Folia start - region threading
          if (region != null) {
@@ -1499,7 +1499,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
              for (Entity entity : region.world.getCurrentWorldData().getLocalEntitiesCopy()) {
                  if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(entity) || entity.isRemoved()) {
                      continue;
-@@ -1786,8 +1794,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1785,8 +1793,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  org.bukkit.craftbukkit.entity.CraftEntity bukkit = entity.getBukkitEntityRaw();
                  if (bukkit != null) {
                      bukkit.taskScheduler.executeTick();
@@ -1511,7 +1511,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
          }
          // Folia end - region threading
          if (region == null) this.tickRateManager.tick(); // Folia - region threading
-@@ -1806,6 +1817,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1805,6 +1816,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          }
          profiler.push("save");
          final boolean fullSave = autosavePeriod > 0 && io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick() % autosavePeriod == 0; // Folia - region threading
@@ -1519,7 +1519,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
          try {
              this.isSaving = true;
              if (playerSaveInterval > 0) {
-@@ -1819,6 +1831,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1818,6 +1830,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          } finally {
              this.isSaving = false;
          }
@@ -1527,7 +1527,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
          profiler.pop();
          // Paper end - Incremental chunk and player saving
  
-@@ -1901,6 +1914,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1900,6 +1913,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      }
  
      protected void tickChildren(BooleanSupplier shouldKeepTicking, io.papermc.paper.threadedregions.TickRegions.TickRegionData region) { // Folia - region threading
@@ -1535,7 +1535,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
          final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData(); // Folia - regionised ticking
          ProfilerFiller gameprofilerfiller = Profiler.get();
  
-@@ -1965,7 +1979,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1964,7 +1978,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              gameprofilerfiller.push("tick");
  
              try {
@@ -1545,7 +1545,7 @@ index 9fa5c1628f2df441de47a38e732e7b033c3e2448..be6dc4c066efd66279301f5796451105
              } catch (Throwable throwable) {
                  CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception ticking world");
  
-@@ -1980,8 +1996,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1979,8 +1995,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          if (region == null) this.isIteratingOverLevels = false; // Paper - Throw exception on world create while being ticked // Folia - region threading
  
          gameprofilerfiller.popPush("connection");

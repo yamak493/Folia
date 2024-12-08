@@ -46,10 +46,10 @@ index 2da91ed6363c0851e4c459188f5e8ef5475e0c97..8d2b5fec6fe27dca3ce01ba1ce505061
      standardInput = System.`in`
      workingDir = rootProject.layout.projectDirectory
 diff --git a/src/main/java/com/destroystokyo/paper/Metrics.java b/src/main/java/com/destroystokyo/paper/Metrics.java
-index 4b002e8b75d117b726b0de274a76d3596fce015b..cb60d58d4a7556dd896f31d0cd249f860bb3ef84 100644
+index 8f62879582195d8ae4f64bd23f752fa133b1c973..f5ff71e31516327be71924926938f1c9f0e503df 100644
 --- a/src/main/java/com/destroystokyo/paper/Metrics.java
 +++ b/src/main/java/com/destroystokyo/paper/Metrics.java
-@@ -593,7 +593,7 @@ public class Metrics {
+@@ -592,7 +592,7 @@ public class Metrics {
              boolean logFailedRequests = config.getBoolean("logFailedRequests", false);
              // Only start Metrics, if it's enabled in the config
              if (config.getBoolean("enabled", true)) {
@@ -58,7 +58,7 @@ index 4b002e8b75d117b726b0de274a76d3596fce015b..cb60d58d4a7556dd896f31d0cd249f86
  
                  metrics.addCustomChart(new Metrics.SimplePie("minecraft_version", () -> {
                      String minecraftVersion = Bukkit.getVersion();
-@@ -607,11 +607,11 @@ public class Metrics {
+@@ -606,11 +606,11 @@ public class Metrics {
                  final String implVersion = org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion();
                  if (implVersion != null) {
                      final String buildOrHash = implVersion.substring(implVersion.lastIndexOf('-') + 1);
