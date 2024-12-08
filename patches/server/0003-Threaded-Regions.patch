@@ -10355,44 +10355,34 @@ index c13b6f14c3061710c2b27034db240cc94ec0fcb5..854897f5fcc8109a69cabc7d4fef1a23
              boolean result;
              if (target instanceof ServerPlayer player) {
 diff --git a/src/main/java/net/minecraft/server/commands/TimeCommand.java b/src/main/java/net/minecraft/server/commands/TimeCommand.java
-index 8b83d747de831878ff45dc74b4ae7cd9efb21d8c..81a1797c7bbfba6420c160f5558ca79496787561 100644
+index 8b83d747de831878ff45dc74b4ae7cd9efb21d8c..92214e96d4b174dfac8a1d6bb3a195571aa91bc6 100644
 --- a/src/main/java/net/minecraft/server/commands/TimeCommand.java
 +++ b/src/main/java/net/minecraft/server/commands/TimeCommand.java
-@@ -58,6 +58,7 @@ public class TimeCommand {
-         while (iterator.hasNext()) {
-             ServerLevel worldserver = (ServerLevel) iterator.next();
- 
-+            io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> { // Folia - region threading
-             // CraftBukkit start
-             TimeSkipEvent event = new TimeSkipEvent(worldserver.getWorld(), TimeSkipEvent.SkipReason.COMMAND, time - worldserver.getDayTime());
-             Bukkit.getPluginManager().callEvent(event);
-@@ -65,6 +66,7 @@ public class TimeCommand {
-                 worldserver.setDayTime((long) worldserver.getDayTime() + event.getSkipAmount());
-             }
-             // CraftBukkit end
-+            }); // Folia - region threading
-         }
- 
-         source.getServer().forceTimeSynchronization();
-@@ -80,6 +82,7 @@ public class TimeCommand {
-         while (iterator.hasNext()) {
-             ServerLevel worldserver = (ServerLevel) iterator.next();
- 
-+            io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> { // Folia - region threading
-             // CraftBukkit start
-             TimeSkipEvent event = new TimeSkipEvent(worldserver.getWorld(), TimeSkipEvent.SkipReason.COMMAND, time);
-             Bukkit.getPluginManager().callEvent(event);
-@@ -87,14 +90,17 @@ public class TimeCommand {
-                 worldserver.setDayTime(worldserver.getDayTime() + event.getSkipAmount());
-             }
-             // CraftBukkit end
-+            }); // Folia - region threading
-         }
+@@ -55,6 +55,7 @@ public class TimeCommand {
+     public static int setTime(CommandSourceStack source, int time) {
+         Iterator iterator = io.papermc.paper.configuration.GlobalConfiguration.get().commands.timeCommandAffectsAllWorlds ? source.getServer().getAllLevels().iterator() : com.google.common.collect.Iterators.singletonIterator(source.getLevel()); // CraftBukkit - SPIGOT-6496: Only set the time for the world the command originates in // Paper - add config option for spigot's change
  
 +        io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> { // Folia - region threading
-         source.getServer().forceTimeSynchronization();
-         int j = TimeCommand.getDayTime(source.getLevel());
+         while (iterator.hasNext()) {
+             ServerLevel worldserver = (ServerLevel) iterator.next();
  
+@@ -71,12 +72,14 @@ public class TimeCommand {
+         source.sendSuccess(() -> {
+             return Component.translatable("commands.time.set", time);
+         }, true);
+-        return TimeCommand.getDayTime(source.getLevel());
++        }); // Folia - region threading
++        return 0; // Folia - region threading
+     }
+ 
+     public static int addTime(CommandSourceStack source, int time) {
+         Iterator iterator = io.papermc.paper.configuration.GlobalConfiguration.get().commands.timeCommandAffectsAllWorlds ? source.getServer().getAllLevels().iterator() : com.google.common.collect.Iterators.singletonIterator(source.getLevel()); // CraftBukkit - SPIGOT-6496: Only set the time for the world the command originates in // Paper - add config option for spigot's change
+ 
++        io.papermc.paper.threadedregions.RegionizedServer.getInstance().addTask(() -> { // Folia - region threading
+         while (iterator.hasNext()) {
+             ServerLevel worldserver = (ServerLevel) iterator.next();
+ 
+@@ -95,6 +98,7 @@ public class TimeCommand {
          source.sendSuccess(() -> {
              return Component.translatable("commands.time.set", j);
          }, true);
