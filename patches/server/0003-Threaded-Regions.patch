@@ -7766,7 +7766,7 @@ index 13bd145b1e8006a53c22f5dc0c78f29b540c7663..6d87797523337725141f271087f80065
  
      protected CommandSourceStack(CommandSource output, Vec3 pos, Vec2 rot, ServerLevel world, int level, String name, Component displayName, MinecraftServer server, @Nullable Entity entity, boolean silent, CommandResultCallback resultStorer, EntityAnchorArgument.Anchor entityAnchor, CommandSigningContext signedArguments, TaskChainer messageChainTaskQueue) {
 diff --git a/src/main/java/net/minecraft/commands/Commands.java b/src/main/java/net/minecraft/commands/Commands.java
-index 64bf4444ffba25cb40743a32267aa790ad1738f9..c54b897b0e14ac974a903729918a45a9eeec236b 100644
+index 517cb238ec280aadd1fc54bcb675ed386e798eaf..7f16e3040f4686ffe6338290db33d2733bd6659f 100644
 --- a/src/main/java/net/minecraft/commands/Commands.java
 +++ b/src/main/java/net/minecraft/commands/Commands.java
 @@ -163,13 +163,13 @@ public class Commands {
@@ -14341,7 +14341,7 @@ index e9df8f8541b8a1b85c7d2925ff3cba813007a1ef..d3f2775a68121ca80ef55ea4c280a0c9
              return blockToFallLocation(blockState);
          } else {
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 1b547be0fe97119edf4f29666cfe0037e0c778e0..b7d9835b68100e11570a8be4e31590dc0b112026 100644
+index 7ac7d0729705cb02f22277be3c467aed4f69ec0e..35ff983cd84cb610b70e193220a97a3a5406252f 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
 @@ -186,7 +186,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
@@ -20736,10 +20736,10 @@ index b25b10c24a379097233e61bcc10add841b6a7115..5168cf0d58013aecfd80d37fb698014f
              return java.util.Collections.emptySet();
          }
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 20f64850cb42d986358f01ffcdb42187e1684bca..60053f73f1992f4a11edb6af89f31574bcc32fc7 100644
+index 6a647cab8b2e476987931486e290703b8726f2c7..f2a847e590c72eee91a053cecdc691c53751ca3a 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -657,7 +657,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -665,7 +665,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public void kickPlayer(String message) {
@@ -20748,7 +20748,7 @@ index 20f64850cb42d986358f01ffcdb42187e1684bca..60053f73f1992f4a11edb6af89f31574
          this.getHandle().transferCookieConnection.kickPlayer(CraftChatMessage.fromStringOrEmpty(message, true), org.bukkit.event.player.PlayerKickEvent.Cause.PLUGIN); // Paper - kick event cause
      }
  
-@@ -1413,6 +1413,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -1421,6 +1421,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public boolean teleport(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
@@ -20760,7 +20760,7 @@ index 20f64850cb42d986358f01ffcdb42187e1684bca..60053f73f1992f4a11edb6af89f31574
          Set<io.papermc.paper.entity.TeleportFlag.Relative> relativeArguments;
          Set<io.papermc.paper.entity.TeleportFlag> allFlags;
          if (flags.length == 0) {
-@@ -2077,7 +2082,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -2085,7 +2090,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
      private void unregisterEntity(Entity other) {
          // Paper end
          ChunkMap tracker = ((ServerLevel) this.getHandle().level()).getChunkSource().chunkMap;
@@ -20769,7 +20769,7 @@ index 20f64850cb42d986358f01ffcdb42187e1684bca..60053f73f1992f4a11edb6af89f31574
          if (entry != null) {
              entry.removePlayer(this.getHandle());
          }
-@@ -2174,7 +2179,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -2182,7 +2187,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
              if (original != null) otherPlayer.setUUID(original); // Paper - uuid override
          }
  
@@ -20778,7 +20778,7 @@ index 20f64850cb42d986358f01ffcdb42187e1684bca..60053f73f1992f4a11edb6af89f31574
          if (entry != null && !entry.seenBy.contains(this.getHandle().connection)) {
              entry.updatePlayer(this.getHandle());
          }
-@@ -3355,7 +3360,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -3363,7 +3368,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
          {
              if ( CraftPlayer.this.getHealth() <= 0 && CraftPlayer.this.isOnline() )
              {
