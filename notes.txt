@@ -1,2 +1,0 @@
-change dragonParts to use concurrent map and look at getEntities usage
-
