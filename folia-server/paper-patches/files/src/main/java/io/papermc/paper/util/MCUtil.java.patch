@@ -1,0 +1,41 @@
+--- a/src/main/java/io/papermc/paper/util/MCUtil.java
++++ b/src/main/java/io/papermc/paper/util/MCUtil.java
+@@ -94,6 +_,7 @@
+      */
+     public static void ensureMain(String reason, Runnable run) {
+         if (!isMainThread()) {
++            if (true) throw new UnsupportedOperationException(); // Folia - region threading
+             if (reason != null) {
+                 MinecraftServer.LOGGER.warn("Asynchronous " + reason + "!", new IllegalStateException());
+             }
+@@ -147,6 +_,30 @@
+     public static Location toLocation(Level world, BlockPos pos) {
+         return new Location(world.getWorld(), pos.getX(), pos.getY(), pos.getZ());
+     }
++
++    // Folia start - TODO MERGE INTO MCUTIL
++    /**
++     * Converts a NMS World/Vector to Bukkit Location
++     * @param world
++     * @param pos
++     * @return
++     */
++    public static Location toLocation(Level world, Vec3 pos) {
++        return new Location(world.getWorld(), pos.x(), pos.y(), pos.z());
++    }
++
++    /**
++     * Converts a NMS World/Vector to Bukkit Location
++     * @param world
++     * @param pos
++     * @param yaw
++     * @param pitch
++     * @return
++     */
++    public static Location toLocation(Level world, Vec3 pos, float yaw, float pitch) {
++        return new Location(world.getWorld(), pos.x(), pos.y(), pos.z(), yaw, pitch);
++    }
++    // Folia end - TODO MERGE INTO MCUTIL
+ 
+     public static BlockPos toBlockPosition(Location loc) {
+         return new BlockPos(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());

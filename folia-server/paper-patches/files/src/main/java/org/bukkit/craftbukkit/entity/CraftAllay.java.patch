@@ -1,0 +1,19 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftAllay.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftAllay.java
+@@ -16,8 +_,16 @@
+         super(server, entity);
+     }
+ 
++    // Folia start - region threading
++    @Override
++    public Allay getHandleRaw() {
++        return (Allay)this.entity;
++    }
++    // Folia end - region threading
++
+     @Override
+     public Allay getHandle() {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this.entity, "Accessing entity state off owning region's thread"); // Folia - region threading
+         return (Allay) this.entity;
+     }
+ 

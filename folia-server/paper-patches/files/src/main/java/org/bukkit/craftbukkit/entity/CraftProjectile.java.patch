@@ -1,0 +1,19 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftProjectile.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftProjectile.java
+@@ -12,8 +_,16 @@
+ 
+     // Paper - moved to AbstractProjectile
+ 
++    // Folia start - region threading
++    @Override
++    public net.minecraft.world.entity.projectile.Projectile getHandleRaw() {
++        return (net.minecraft.world.entity.projectile.Projectile)this.entity;
++    }
++    // Folia end - region threading
++
+     @Override
+     public net.minecraft.world.entity.projectile.Projectile getHandle() {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this.entity, "Accessing entity state off owning region's thread"); // Folia - region threading
+         return (net.minecraft.world.entity.projectile.Projectile) this.entity;
+     }
+ 

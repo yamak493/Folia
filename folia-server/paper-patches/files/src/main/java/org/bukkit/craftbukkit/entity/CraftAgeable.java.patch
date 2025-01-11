@@ -1,0 +1,19 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftAgeable.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftAgeable.java
+@@ -63,8 +_,16 @@
+         }
+     }
+ 
++    // Folia start - region threading
++    @Override
++    public AgeableMob getHandleRaw() {
++        return (AgeableMob)this.entity;
++    }
++    // Folia end - region threading
++
+     @Override
+     public AgeableMob getHandle() {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this.entity, "Accessing entity state off owning region's thread"); // Folia - region threading
+         return (AgeableMob) this.entity;
+     }
+ 

@@ -1,0 +1,201 @@
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
+@@ -75,6 +_,11 @@
+     }
+ 
+     public net.minecraft.world.level.block.state.BlockState getNMS() {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         return this.world.getBlockState(this.position);
+     }
+ 
+@@ -157,6 +_,11 @@
+     }
+ 
+     private void setData(final byte data, int flag) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         this.world.setBlock(this.position, CraftMagicNumbers.getBlock(this.getType(), data), flag);
+     }
+ 
+@@ -198,6 +_,11 @@
+     }
+ 
+     public static boolean setTypeAndData(LevelAccessor world, BlockPos position, net.minecraft.world.level.block.state.BlockState old, net.minecraft.world.level.block.state.BlockState blockData, boolean applyPhysics) {
++        // Folia start - region threading
++        if (world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, position, "Cannot modify world asynchronously");
++        }
++        // Folia end - region threading
+         // SPIGOT-611: need to do this to prevent glitchiness. Easier to handle this here (like /setblock) than to fix weirdness in tile entity cleanup
+         if (old.hasBlockEntity() && blockData.getBlock() != old.getBlock()) { // SPIGOT-3725 remove old tile entity if block changes
+             // SPIGOT-4612: faster - just clear tile
+@@ -343,18 +_,33 @@
+ 
+     @Override
+     public Biome getBiome() {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         return this.getWorld().getBiome(this.getX(), this.getY(), this.getZ());
+     }
+ 
+     // Paper start
+     @Override
+     public Biome getComputedBiome() {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         return this.getWorld().getComputedBiome(this.getX(), this.getY(), this.getZ());
+     }
+     // Paper end
+ 
+     @Override
+     public void setBiome(Biome bio) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         this.getWorld().setBiome(this.getX(), this.getY(), this.getZ(), bio);
+     }
+ 
+@@ -402,6 +_,11 @@
+ 
+     @Override
+     public boolean isBlockFaceIndirectlyPowered(BlockFace face) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         int power = this.world.getMinecraftWorld().getSignal(this.position, CraftBlock.blockFaceToNotch(face));
+ 
+         Block relative = this.getRelative(face);
+@@ -414,6 +_,11 @@
+ 
+     @Override
+     public int getBlockPower(BlockFace face) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         int power = 0;
+         net.minecraft.world.level.Level world = this.world.getMinecraftWorld();
+         int x = this.getX();
+@@ -500,6 +_,11 @@
+ 
+     @Override
+     public boolean breakNaturally(ItemStack item, boolean triggerEffect, boolean dropExperience) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         // Paper end
+         // Order matters here, need to drop before setting to air so skulls can get their data
+         net.minecraft.world.level.block.state.BlockState iblockdata = this.getNMS();
+@@ -543,21 +_,27 @@
+ 
+     @Override
+     public boolean applyBoneMeal(BlockFace face) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         Direction direction = CraftBlock.blockFaceToNotch(face);
+         BlockFertilizeEvent event = null;
+         ServerLevel world = this.getCraftWorld().getHandle();
+         UseOnContext context = new UseOnContext(world, null, InteractionHand.MAIN_HAND, Items.BONE_MEAL.getDefaultInstance(), new BlockHitResult(Vec3.ZERO, direction, this.getPosition(), false));
+ 
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = world.getCurrentWorldData(); // Folia - region threading
+         // SPIGOT-6895: Call StructureGrowEvent and BlockFertilizeEvent
+-        world.captureTreeGeneration = true;
++        worldData.captureTreeGeneration = true; // Folia - region threading
+         InteractionResult result = BoneMealItem.applyBonemeal(context);
+-        world.captureTreeGeneration = false;
++        worldData.captureTreeGeneration = false; // Folia - region threading
+ 
+-        if (world.capturedBlockStates.size() > 0) {
+-            TreeType treeType = SaplingBlock.treeType;
+-            SaplingBlock.treeType = null;
+-            List<BlockState> blocks = new ArrayList<>(world.capturedBlockStates.values());
+-            world.capturedBlockStates.clear();
++        if (worldData.capturedBlockStates.size() > 0) { // Folia - region threading
++            TreeType treeType = SaplingBlock.treeTypeRT.get(); // Folia - region threading
++            SaplingBlock.treeTypeRT.set(null); // Folia - region threading
++            List<BlockState> blocks = new ArrayList<>(worldData.capturedBlockStates.values()); // Folia - region threading
++            worldData.capturedBlockStates.clear(); // Folia - region threading
+             StructureGrowEvent structureEvent = null;
+ 
+             if (treeType != null) {
+@@ -644,6 +_,11 @@
+ 
+     @Override
+     public RayTraceResult rayTrace(Location start, Vector direction, double maxDistance, FluidCollisionMode fluidCollisionMode) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         Preconditions.checkArgument(start != null, "Location start cannot be null");
+         Preconditions.checkArgument(this.getWorld().equals(start.getWorld()), "Location start cannot be a different world");
+         start.checkFinite();
+@@ -685,6 +_,11 @@
+ 
+     @Override
+     public boolean canPlace(BlockData data) {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         Preconditions.checkArgument(data != null, "BlockData cannot be null");
+         net.minecraft.world.level.block.state.BlockState iblockdata = ((CraftBlockData) data).getState();
+         net.minecraft.world.level.Level world = this.world.getMinecraftWorld();
+@@ -719,18 +_,32 @@
+ 
+     @Override
+     public void tick() {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         final ServerLevel level = this.world.getMinecraftWorld();
+         this.getNMS().tick(level, this.position, level.random);
+     }
+ 
+-
+     @Override
+     public void fluidTick() {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         this.getNMSFluid().tick(this.world.getMinecraftWorld(), this.position, this.getNMS());
+     }
+ 
+     @Override
+     public void randomTick() {
++        // Folia start - region threading
++        if (this.world instanceof ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, this.position, "Cannot read world asynchronously");
++        }
++        // Folia end - region threading
+         final ServerLevel level = this.world.getMinecraftWorld();
+         this.getNMS().randomTick(level, this.position, level.random);
+     }

@@ -1,0 +1,25 @@
+--- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlockState.java
++++ b/src/main/java/org/bukkit/craftbukkit/block/CraftBlockState.java
+@@ -215,6 +_,12 @@
+         LevelAccessor access = this.getWorldHandle();
+         CraftBlock block = this.getBlock();
+ 
++        // Folia start - region threading
++        if (access instanceof net.minecraft.server.level.ServerLevel serverWorld) {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(serverWorld, position, "Cannot modify world asynchronously");
++        }
++        // Folia end - region threading
++
+         if (block.getType() != this.getType()) {
+             if (!force) {
+                 return false;
+@@ -350,6 +_,9 @@
+ 
+     @Override
+     public java.util.Collection<org.bukkit.inventory.ItemStack> getDrops(org.bukkit.inventory.ItemStack item, org.bukkit.entity.Entity entity) {
++        // Folia start - region threading
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(world.getHandle(), position, "Cannot modify world asynchronously");
++        // Folia end - region threading
+         this.requirePlaced();
+         net.minecraft.world.item.ItemStack nms = org.bukkit.craftbukkit.inventory.CraftItemStack.asNMSCopy(item);
+ 

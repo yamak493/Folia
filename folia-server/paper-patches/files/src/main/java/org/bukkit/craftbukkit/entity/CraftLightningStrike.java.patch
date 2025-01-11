@@ -1,0 +1,19 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLightningStrike.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLightningStrike.java
+@@ -41,8 +_,16 @@
+         this.getHandle().setCause((player != null) ? ((CraftPlayer) player).getHandle() : null);
+     }
+ 
++    // Folia start - region threading
++    @Override
++    public LightningBolt getHandleRaw() {
++        return (LightningBolt)this.entity;
++    }
++    // Folia end - region threading
++
+     @Override
+     public LightningBolt getHandle() {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this.entity, "Accessing entity state off owning region's thread"); // Folia - region threading
+         return (LightningBolt) this.entity;
+     }
+ 

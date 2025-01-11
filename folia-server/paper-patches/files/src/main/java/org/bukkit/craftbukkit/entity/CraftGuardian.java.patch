@@ -1,0 +1,19 @@
+--- a/src/main/java/org/bukkit/craftbukkit/entity/CraftGuardian.java
++++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftGuardian.java
+@@ -13,8 +_,16 @@
+         super(server, entity);
+     }
+ 
++    // Folia start - region threading
++    @Override
++    public net.minecraft.world.entity.monster.Guardian getHandleRaw() {
++        return (net.minecraft.world.entity.monster.Guardian)this.entity;
++    }
++    // Folia end - region threading
++
+     @Override
+     public net.minecraft.world.entity.monster.Guardian getHandle() {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this.entity, "Accessing entity state off owning region's thread"); // Folia - region threading
+         return (net.minecraft.world.entity.monster.Guardian) super.getHandle();
+     }
+ 
