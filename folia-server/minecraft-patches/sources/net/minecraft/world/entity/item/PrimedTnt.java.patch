@@ -1,0 +1,22 @@
+--- a/net/minecraft/world/entity/item/PrimedTnt.java
++++ b/net/minecraft/world/entity/item/PrimedTnt.java
+@@ -98,8 +_,8 @@
+ 
+     @Override
+     public void tick() {
+-        if (this.level().spigotConfig.maxTntTicksPerTick > 0 && ++this.level().spigotConfig.currentPrimedTnt > this.level().spigotConfig.maxTntTicksPerTick) { return; } // Spigot
+-        this.handlePortal();
++        if (this.level().spigotConfig.maxTntTicksPerTick > 0 && ++this.level().getCurrentWorldData().currentPrimedTnt > this.level().spigotConfig.maxTntTicksPerTick) { return; } // Spigot // Folia - region threading
++        //this.handlePortal(); // Folia - region threading
+         this.applyGravity();
+         this.move(MoverType.SELF, this.getDeltaMovement());
+         this.applyEffectsFromBlocks();
+@@ -137,7 +_,7 @@
+              */
+             // Send position and velocity updates to nearby players on every tick while the TNT is in water.
+             // This does pretty well at keeping their clients in sync with the server.
+-            net.minecraft.server.level.ChunkMap.TrackedEntity ete = ((net.minecraft.server.level.ServerLevel) this.level()).getChunkSource().chunkMap.entityMap.get(this.getId());
++            net.minecraft.server.level.ChunkMap.TrackedEntity ete = this.moonrise$getTrackedEntity(); // Folia - region threading
+             if (ete != null) {
+                 net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket velocityPacket = new net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket(this);
+                 net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket positionPacket = net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket.teleport(this.getId(), net.minecraft.world.entity.PositionMoveRotation.of(this), java.util.Set.of(), this.onGround);

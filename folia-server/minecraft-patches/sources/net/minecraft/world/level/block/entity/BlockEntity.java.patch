@@ -1,0 +1,33 @@
+--- a/net/minecraft/world/level/block/entity/BlockEntity.java
++++ b/net/minecraft/world/level/block/entity/BlockEntity.java
+@@ -26,7 +_,7 @@
+ import org.slf4j.Logger;
+ 
+ public abstract class BlockEntity {
+-    static boolean ignoreBlockEntityUpdates; // Paper - Perf: Optimize Hoppers
++    static final ThreadLocal<Boolean> IGNORE_TILE_UPDATES = ThreadLocal.withInitial(() -> Boolean.FALSE); // Paper - Perf: Optimize Hoppers // Folia - region threading
+     // CraftBukkit start - data containers
+     private static final org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry DATA_TYPE_REGISTRY = new org.bukkit.craftbukkit.persistence.CraftPersistentDataTypeRegistry();
+     public org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer persistentDataContainer;
+@@ -40,6 +_,12 @@
+     private BlockState blockState;
+     private DataComponentMap components = DataComponentMap.EMPTY;
+ 
++    // Folia start - region ticking
++    public void updateTicks(final long fromTickOffset, final long fromRedstoneTimeOffset) {
++
++    }
++    // Folia end - region ticking
++
+     public BlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
+         this.type = type;
+         this.worldPosition = pos.immutable();
+@@ -197,7 +_,7 @@
+ 
+     public void setChanged() {
+         if (this.level != null) {
+-            if (ignoreBlockEntityUpdates) return; // Paper - Perf: Optimize Hoppers
++            if (IGNORE_TILE_UPDATES.get().booleanValue()) return; // Paper - Perf: Optimize Hoppers // Folia - region threading
+             setChanged(this.level, this.worldPosition, this.blockState);
+         }
+     }

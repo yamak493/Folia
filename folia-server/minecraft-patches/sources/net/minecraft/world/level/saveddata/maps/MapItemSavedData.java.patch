@@ -1,0 +1,172 @@
+--- a/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
++++ b/net/minecraft/world/level/saveddata/maps/MapItemSavedData.java
+@@ -201,7 +_,7 @@
+     }
+ 
+     @Override
+-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
++    public synchronized CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) { // Folia - make map data thread-safe
+         ResourceLocation.CODEC
+             .encodeStart(NbtOps.INSTANCE, this.dimension.location())
+             .resultOrPartial(LOGGER::error)
+@@ -244,7 +_,7 @@
+         return tag;
+     }
+ 
+-    public MapItemSavedData locked() {
++    public synchronized MapItemSavedData locked() { // Folia - make map data thread-safe
+         MapItemSavedData mapItemSavedData = new MapItemSavedData(
+             this.centerX, this.centerZ, this.scale, this.trackingPosition, this.unlimitedTracking, true, this.dimension
+         );
+@@ -255,7 +_,7 @@
+         return mapItemSavedData;
+     }
+ 
+-    public MapItemSavedData scaled() {
++    public synchronized MapItemSavedData scaled() { // Folia - make map data thread-safe
+         return createFresh(this.centerX, this.centerZ, (byte)Mth.clamp(this.scale + 1, 0, 4), this.trackingPosition, this.unlimitedTracking, this.dimension);
+     }
+ 
+@@ -264,7 +_,8 @@
+         return itemStack -> itemStack == stack || itemStack.is(stack.getItem()) && Objects.equals(mapId, itemStack.get(DataComponents.MAP_ID));
+     }
+ 
+-    public void tickCarriedBy(Player player, ItemStack mapStack) {
++    public synchronized void tickCarriedBy(Player player, ItemStack mapStack) { // Folia - make map data thread-safe
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(player, "Ticking map player in incorrect region"); // Folia - region threading
+         if (!this.carriedByPlayers.containsKey(player)) {
+             MapItemSavedData.HoldingPlayer holdingPlayer = new MapItemSavedData.HoldingPlayer(player);
+             this.carriedByPlayers.put(player, holdingPlayer);
+@@ -413,7 +_,7 @@
+ 
+     private byte calculateRotation(@Nullable LevelAccessor level, double yRot) {
+         if (this.dimension == Level.NETHER && level != null) {
+-            int i = (int)(level.getLevelData().getDayTime() / 10L);
++            int i = (int)(level.dayTime() / 10L); // Folia - region threading
+             return (byte)(i * i * 34187121 + i * 121 >> 15 & 15);
+         } else {
+             double d = yRot < 0.0 ? yRot - 8.0 : yRot + 8.0;
+@@ -447,25 +_,27 @@
+     }
+ 
+     @Nullable
+-    public Packet<?> getUpdatePacket(MapId mapId, Player player) {
++    public synchronized Packet<?> getUpdatePacket(MapId mapId, Player player) { // Folia - make map data thread-safe
+         MapItemSavedData.HoldingPlayer holdingPlayer = this.carriedByPlayers.get(player);
+         return holdingPlayer == null ? null : holdingPlayer.nextUpdatePacket(mapId);
+     }
+ 
+-    public void setColorsDirty(int x, int z) {
+-        this.setDirty();
++    public synchronized void setColorsDirty(int x, int z) { // Folia - make map data thread-safe
++        //this.setDirty(); // Folia - make dirty only after updating data - moved down
+ 
+         for (MapItemSavedData.HoldingPlayer holdingPlayer : this.carriedBy) {
+             holdingPlayer.markColorsDirty(x, z);
+         }
++        this.setDirty(); // Folia - make dirty only after updating data - moved from above
+     }
+ 
+-    public void setDecorationsDirty() {
+-        this.setDirty();
++    public synchronized void setDecorationsDirty() { // Folia - make map data thread-safe
++        //this.setDirty(); // Folia - make dirty only after updating data - moved down
+         this.carriedBy.forEach(MapItemSavedData.HoldingPlayer::markDecorationsDirty);
++        this.setDirty(); // Folia - make dirty only after updating data - moved from above
+     }
+ 
+-    public MapItemSavedData.HoldingPlayer getHoldingPlayer(Player player) {
++    public synchronized MapItemSavedData.HoldingPlayer getHoldingPlayer(Player player) { // Folia - make map data thread-safe
+         MapItemSavedData.HoldingPlayer holdingPlayer = this.carriedByPlayers.get(player);
+         if (holdingPlayer == null) {
+             holdingPlayer = new MapItemSavedData.HoldingPlayer(player);
+@@ -476,7 +_,7 @@
+         return holdingPlayer;
+     }
+ 
+-    public boolean toggleBanner(LevelAccessor accessor, BlockPos pos) {
++    public synchronized boolean toggleBanner(LevelAccessor accessor, BlockPos pos) { // Folia - make map data thread-safe
+         double d = pos.getX() + 0.5;
+         double d1 = pos.getZ() + 0.5;
+         int i = 1 << this.scale;
+@@ -484,7 +_,7 @@
+         double d3 = (d1 - this.centerZ) / i;
+         int i1 = 63;
+         if (d2 >= -63.0 && d3 >= -63.0 && d2 <= 63.0 && d3 <= 63.0) {
+-            MapBanner mapBanner = MapBanner.fromWorld(accessor, pos);
++            MapBanner mapBanner = accessor.getChunkIfLoadedImmediately(pos.getX() >> 4, pos.getZ() >> 4) == null || !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(accessor.getMinecraftWorld(), pos) ? null : MapBanner.fromWorld(accessor, pos); // Folia - make map data thread-safe - don't sync load or read data we do not own
+             if (mapBanner == null) {
+                 return false;
+             }
+@@ -504,7 +_,7 @@
+         return false;
+     }
+ 
+-    public void checkBanners(BlockGetter reader, int x, int z) {
++    public synchronized void checkBanners(BlockGetter reader, int x, int z) { // Folia - make map data thread-safe
+         Iterator<MapBanner> iterator = this.bannerMarkers.values().iterator();
+ 
+         while (iterator.hasNext()) {
+@@ -523,13 +_,13 @@
+         return this.bannerMarkers.values();
+     }
+ 
+-    public void removedFromFrame(BlockPos pos, int entityId) {
++    public synchronized void removedFromFrame(BlockPos pos, int entityId) { // Folia - make map data thread-safe
+         this.removeDecoration(getFrameKey(entityId));
+         this.frameMarkers.remove(MapFrame.frameId(pos));
+         this.setDirty();
+     }
+ 
+-    public boolean updateColor(int x, int z, byte color) {
++    public synchronized boolean updateColor(int x, int z, byte color) { // Folia - make map data thread-safe
+         byte b = this.colors[x + z * 128];
+         if (b != color) {
+             this.setColor(x, z, color);
+@@ -539,12 +_,12 @@
+         }
+     }
+ 
+-    public void setColor(int x, int z, byte color) {
++    public synchronized void setColor(int x, int z, byte color) { // Folia - make map data thread-safe
+         this.colors[x + z * 128] = color;
+         this.setColorsDirty(x, z);
+     }
+ 
+-    public boolean isExplorationMap() {
++    public synchronized boolean isExplorationMap() { // Folia - make map data thread-safe
+         for (MapDecoration mapDecoration : this.decorations.values()) {
+             if (mapDecoration.type().value().explorationMapElement()) {
+                 return true;
+@@ -554,7 +_,7 @@
+         return false;
+     }
+ 
+-    public void addClientSideDecorations(List<MapDecoration> decorations) {
++    public synchronized void addClientSideDecorations(List<MapDecoration> decorations) { // Folia - make map data thread-safe
+         this.decorations.clear();
+         this.trackedDecorationCount = 0;
+ 
+@@ -571,7 +_,7 @@
+         return this.decorations.values();
+     }
+ 
+-    public boolean isTrackedCountOverLimit(int trackedCount) {
++    public synchronized boolean isTrackedCountOverLimit(int trackedCount) { // Folia - make map data thread-safe
+         return this.trackedDecorationCount >= trackedCount;
+     }
+ 
+@@ -726,11 +_,13 @@
+         }
+ 
+         public void applyToMap(MapItemSavedData savedData) {
++            synchronized (savedData) { // Folia - make map data thread-safe
+             for (int i = 0; i < this.width; i++) {
+                 for (int i1 = 0; i1 < this.height; i1++) {
+                     savedData.setColor(this.startX + i, this.startY + i1, this.mapColors[i + i1 * this.width]);
+                 }
+             }
++            } // Folia - make map data thread-safe
+         }
+     }
+ }

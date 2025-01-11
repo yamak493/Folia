@@ -1,0 +1,33 @@
+--- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
++++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
+@@ -1359,10 +_,10 @@
+     private void completeStatusConsumers(ChunkStatus status, final ChunkAccess chunk) {
+         // Update progress listener for LevelLoadingScreen
+         if (chunk != null) {
+-            final ChunkProgressListener progressListener = this.world.getChunkSource().chunkMap.progressListener;
++            final ChunkProgressListener progressListener = null; // Folia - threaded regions
+             if (progressListener != null) {
+                 final ChunkStatus finalStatus = status;
+-                this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
++                this.scheduler.scheduleChunkTaskEventually(this.chunkX, this.chunkZ, () -> { // Folia - threaded regions
+                     progressListener.onStatusChange(this.vanillaChunkHolder.getPos(), finalStatus);
+                 });
+             }
+@@ -1383,7 +_,7 @@
+         }
+ 
+         // must be scheduled to main, we do not trust the callback to not do anything stupid
+-        this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
++        this.scheduler.scheduleChunkTaskEventually(this.chunkX, this.chunkZ, () -> { // Folia - region threading
+             for (final Consumer<ChunkAccess> consumer : consumers) {
+                 try {
+                     consumer.accept(chunk);
+@@ -1411,7 +_,7 @@
+         }
+ 
+         // must be scheduled to main, we do not trust the callback to not do anything stupid
+-        this.scheduler.scheduleChunkTask(this.chunkX, this.chunkZ, () -> {
++        this.scheduler.scheduleChunkTaskEventually(this.chunkX, this.chunkZ, () -> { // Folia - region threading
+             for (final Consumer<LevelChunk> consumer : consumers) {
+                 try {
+                     consumer.accept(chunk);

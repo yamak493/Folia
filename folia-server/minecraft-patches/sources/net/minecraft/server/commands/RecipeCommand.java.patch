@@ -1,0 +1,30 @@
+--- a/net/minecraft/server/commands/RecipeCommand.java
++++ b/net/minecraft/server/commands/RecipeCommand.java
+@@ -81,7 +_,12 @@
+         int i = 0;
+ 
+         for (ServerPlayer serverPlayer : targets) {
+-            i += serverPlayer.awardRecipes(recipes);
++            // Folia start - region threading
++            ++i;
++            serverPlayer.getBukkitEntity().taskScheduler.schedule((ServerPlayer player) -> {
++                player.awardRecipes(recipes);
++            }, null, 1L);
++            // Folia end - region threading
+         }
+ 
+         if (i == 0) {
+@@ -103,7 +_,12 @@
+         int i = 0;
+ 
+         for (ServerPlayer serverPlayer : targets) {
+-            i += serverPlayer.resetRecipes(recipes);
++            // Folia start - region threading
++            ++i;
++            serverPlayer.getBukkitEntity().taskScheduler.schedule((ServerPlayer player) -> {
++                player.resetRecipes(recipes);
++            }, null, 1L);
++            // Folia end - region threading
+         }
+ 
+         if (i == 0) {

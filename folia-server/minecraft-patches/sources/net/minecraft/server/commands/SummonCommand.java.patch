@@ -1,0 +1,26 @@
+--- a/net/minecraft/server/commands/SummonCommand.java
++++ b/net/minecraft/server/commands/SummonCommand.java
+@@ -88,12 +_,18 @@
+             if (entity == null) {
+                 throw ERROR_FAILED.create();
+             } else {
+-                if (randomizeProperties && entity instanceof Mob) {
+-                    ((Mob)entity)
+-                        .finalizeSpawn(source.getLevel(), source.getLevel().getCurrentDifficultyAt(entity.blockPosition()), EntitySpawnReason.COMMAND, null);
+-                }
++                // Folia start - region threading
++                io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue(
++                        level, entity.chunkPosition().x, entity.chunkPosition().z, () -> {
++                            if (randomizeProperties && entity instanceof Mob) {
++                                ((Mob)entity)
++                                        .finalizeSpawn(source.getLevel(), source.getLevel().getCurrentDifficultyAt(entity.blockPosition()), EntitySpawnReason.COMMAND, null);
++                            }
++                            level.tryAddFreshEntityWithPassengers(entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.COMMAND);
++                        });
++                // Folia end - region threading
+ 
+-                if (!level.tryAddFreshEntityWithPassengers(entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.COMMAND)) { // CraftBukkit - pass a spawn reason of "COMMAND"
++                if (false) { // CraftBukkit - pass a spawn reason of "COMMAND" // Folia - region threading
+                     throw ERROR_DUPLICATE_UUID.create();
+                 } else {
+                     return entity;

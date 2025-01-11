@@ -1,0 +1,39 @@
+--- a/net/minecraft/server/dedicated/DedicatedServer.java
++++ b/net/minecraft/server/dedicated/DedicatedServer.java
+@@ -425,7 +_,7 @@
+     @Override
+     public void tickConnection() {
+         super.tickConnection();
+-        this.handleConsoleInputs();
++        // Folia - region threading
+     }
+ 
+     @Override
+@@ -732,7 +_,8 @@
+ 
+     public String runCommand(RconConsoleSource rconConsoleSource, String s) {
+         rconConsoleSource.prepareForCommand();
+-        this.executeBlocking(() -> {
++        final java.util.concurrent.atomic.AtomicReference<String> command = new java.util.concurrent.atomic.AtomicReference<>(s); // Folia start - region threading
++        Runnable sync = () -> { // Folia - region threading
+             CommandSourceStack wrapper = rconConsoleSource.createCommandSourceStack();
+             org.bukkit.event.server.RemoteServerCommandEvent event = new org.bukkit.event.server.RemoteServerCommandEvent(rconConsoleSource.getBukkitSender(wrapper), s);
+             this.server.getPluginManager().callEvent(event);
+@@ -741,7 +_,16 @@
+             }
+             ConsoleInput serverCommand = new ConsoleInput(event.getCommand(), wrapper);
+             this.server.dispatchServerCommand(event.getSender(), serverCommand);
+-        });
++        }; // Folia start - region threading
++        java.util.concurrent.CompletableFuture
++            .runAsync(sync, io.papermc.paper.threadedregions.RegionizedServer.getInstance()::addTask)
++            .whenComplete((Void r, Throwable t) -> {
++                if (t != null) {
++                    LOGGER.error("Error handling command for rcon: " + s, t);
++                }
++            })
++            .join();
++        // Folia end - region threading
+         return rconConsoleSource.getCommandResponse();
+         // CraftBukkit end
+     }

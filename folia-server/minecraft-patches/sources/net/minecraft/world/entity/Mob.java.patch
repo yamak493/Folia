@@ -1,0 +1,61 @@
+--- a/net/minecraft/world/entity/Mob.java
++++ b/net/minecraft/world/entity/Mob.java
+@@ -254,8 +_,20 @@
+     @Nullable
+     @Override
+     public LivingEntity getTarget() {
+-        return this.target;
+-    }
++        // Folia start - region threading
++        if (this.target != null && (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.target) || this.target.isRemoved())) {
++            this.target = null;
++            return null;
++        }
++        // Folia end - region threading
++        return this.target;
++    }
++
++    // Folia start - region threading
++    public LivingEntity getTargetRaw() {
++        return this.target;
++    }
++    // Folia end - region threading
+ 
+     @Nullable
+     protected final LivingEntity getTargetFromBrain() {
+@@ -268,7 +_,7 @@
+     }
+ 
+     public boolean setTarget(LivingEntity target, EntityTargetEvent.TargetReason reason, boolean fireEvent) {
+-        if (this.getTarget() == target) {
++        if (this.getTargetRaw() == target) { // Folia - region threading
+             return false;
+         }
+         if (fireEvent) {
+@@ -1663,12 +_,26 @@
+     @Override
+     protected void removeAfterChangingDimensions() {
+         super.removeAfterChangingDimensions();
++        // Folia start - region threading - move inventory clearing until after the dimension change - move into postRemoveAfterChangingDimensions
++//        this.getAllSlots().forEach(itemStack -> {
++//            if (!itemStack.isEmpty()) {
++//                itemStack.setCount(0);
++//            }
++//        });
++        // Folia end - region threading - move inventory clearing until after the dimension change - move into postRemoveAfterChangingDimensions
++    }
++
++    // Folia start - region threading
++    @Override
++    protected void postRemoveAfterChangingDimensions() {
++        super.postRemoveAfterChangingDimensions();
+         this.getAllSlots().forEach(itemStack -> {
+             if (!itemStack.isEmpty()) {
+                 itemStack.setCount(0);
+             }
+         });
+     }
++    // Folia end - region threading
+ 
+     @Nullable
+     @Override

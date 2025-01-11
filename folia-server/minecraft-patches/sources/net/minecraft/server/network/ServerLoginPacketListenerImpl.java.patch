@@ -1,0 +1,33 @@
+--- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
+@@ -111,7 +_,11 @@
+         // Paper end - Do not allow logins while the server is shutting down
+ 
+         if (this.state == ServerLoginPacketListenerImpl.State.VERIFYING) {
+-            if (this.connection.isConnected()) { // Paper - prevent logins to be processed even though disconnect was called
++            // Folia start - region threading - rewrite login process
++            String name = this.authenticatedProfile.getName();
++            java.util.UUID uniqueId = this.authenticatedProfile.getId();
++            if (this.server.getPlayerList().pushPendingJoin(name, uniqueId, this.connection)) {
++            // Folia end - region threading - rewrite login process
+             this.verifyLoginAndFinishConnectionSetup(Objects.requireNonNull(this.authenticatedProfile));
+             } // Paper - prevent logins to be processed even though disconnect was called
+         }
+@@ -250,7 +_,7 @@
+                     );
+             }
+ 
+-            boolean flag = playerList.disconnectAllPlayersWithProfile(profile, this.player); // CraftBukkit - add player reference
++            boolean flag = false && playerList.disconnectAllPlayersWithProfile(profile, this.player); // CraftBukkit - add player reference // Folia - rewrite login process - always false here
+             if (flag) {
+                 this.state = ServerLoginPacketListenerImpl.State.WAITING_FOR_DUPE_DISCONNECT;
+             } else {
+@@ -362,7 +_,7 @@
+         uniqueId = gameprofile.getId();
+         // Paper end - Add more fields to AsyncPlayerPreLoginEvent
+ 
+-        if (PlayerPreLoginEvent.getHandlerList().getRegisteredListeners().length != 0) {
++        if (false && PlayerPreLoginEvent.getHandlerList().getRegisteredListeners().length != 0) { // Folia - region threading
+             final PlayerPreLoginEvent event = new PlayerPreLoginEvent(playerName, address, uniqueId);
+             if (asyncEvent.getResult() != PlayerPreLoginEvent.Result.ALLOWED) {
+                 event.disallow(asyncEvent.getResult(), asyncEvent.kickMessage()); // Paper - Adventure

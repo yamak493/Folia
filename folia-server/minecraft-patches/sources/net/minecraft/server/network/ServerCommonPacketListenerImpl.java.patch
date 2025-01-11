@@ -1,0 +1,89 @@
+--- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
++++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
+@@ -96,6 +_,10 @@
+         }
+     }
+ 
++    // Folia start - region threading
++    private boolean handledDisconnect = false;
++    // Folia end - region threading
++
+     @Override
+     public void onDisconnect(DisconnectionDetails details) {
+         // Paper start - Fix kick event leave message not being sent
+@@ -104,10 +_,18 @@
+ 
+     public void onDisconnect(DisconnectionDetails info, @Nullable net.kyori.adventure.text.Component quitMessage) {
+         // Paper end - Fix kick event leave message not being sent
++        // Folia start - region threading
++        if (this.handledDisconnect) {
++            // avoid retiring scheduler twice
++            return;
++        }
++        this.handledDisconnect = true;
++        // Folia end - region threading
+         if (this.isSingleplayerOwner()) {
+             LOGGER.info("Stopping singleplayer server as player logged out");
+             this.server.halt(false);
+         }
++        this.player.getBukkitEntity().taskScheduler.retire(); // Folia - region threading
+     }
+ 
+     @Override
+@@ -330,24 +_,8 @@
+         if (this.processedDisconnect) {
+             return;
+         }
+-        if (!this.cserver.isPrimaryThread()) {
+-            org.bukkit.craftbukkit.util.Waitable waitable = new org.bukkit.craftbukkit.util.Waitable() {
+-                @Override
+-                protected Object evaluate() {
+-                    ServerCommonPacketListenerImpl.this.disconnect(disconnectionDetails, cause); // Paper - kick event causes
+-                    return null;
+-                }
+-            };
+-
+-            this.server.processQueue.add(waitable);
+-
+-            try {
+-                waitable.get();
+-            } catch (InterruptedException e) {
+-                Thread.currentThread().interrupt();
+-            } catch (java.util.concurrent.ExecutionException e) {
+-                throw new RuntimeException(e);
+-            }
++        if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.player)) { // Folia - region threading
++            this.connection.disconnectSafely(disconnectionDetails, cause); // Folia - region threading - it HAS to be delayed/async to avoid deadlock if we try to wait for another region
+             return;
+         }
+ 
+@@ -378,7 +_,7 @@
+         this.onDisconnect(disconnectionDetails, leaveMessage); // CraftBukkit - fire quit instantly // Paper - use kick event leave message
+         this.connection.setReadOnly();
+         // CraftBukkit - Don't wait
+-        this.server.scheduleOnMain(this.connection::handleDisconnection); // Paper
++        //this.server.scheduleOnMain(this.connection::handleDisconnection); // Paper // Folia - region threading
+     }
+ 
+     // Paper start - add proper async disconnect
+@@ -391,19 +_,7 @@
+     }
+ 
+     public void disconnectAsync(DisconnectionDetails disconnectionInfo, org.bukkit.event.player.PlayerKickEvent.Cause cause) {
+-        if (this.cserver.isPrimaryThread()) {
+-            this.disconnect(disconnectionInfo, cause);
+-            return;
+-        }
+-
+-        this.connection.setReadOnly();
+-        this.server.scheduleOnMain(() -> {
+-            ServerCommonPacketListenerImpl.this.disconnect(disconnectionInfo, cause);
+-            if (ServerCommonPacketListenerImpl.this.player.quitReason == null) {
+-                // cancelled
+-                ServerCommonPacketListenerImpl.this.connection.enableAutoRead();
+-            }
+-        });
++        this.disconnect(disconnectionInfo, cause); // Folia - threaded regions
+     }
+     // Paper end - add proper async disconnect
+ 

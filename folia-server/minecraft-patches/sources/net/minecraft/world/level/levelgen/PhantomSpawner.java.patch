@@ -1,0 +1,38 @@
+--- a/net/minecraft/world/level/levelgen/PhantomSpawner.java
++++ b/net/minecraft/world/level/levelgen/PhantomSpawner.java
+@@ -19,7 +_,7 @@
+ import net.minecraft.world.level.material.FluidState;
+ 
+ public class PhantomSpawner implements CustomSpawner {
+-    private int nextTick;
++    //private int nextTick; // Folia - region threading
+ 
+     @Override
+     public int tick(ServerLevel level, boolean spawnEnemies, boolean spawnFriendlies) {
+@@ -34,21 +_,22 @@
+             }
+             // Paper end - Ability to control player's insomnia and phantoms
+             RandomSource randomSource = level.random;
+-            this.nextTick--;
+-            if (this.nextTick > 0) {
++            io.papermc.paper.threadedregions.RegionizedWorldData worldData = level.getCurrentWorldData(); // Folia - region threading
++            worldData.phantomSpawnerNextTick--; // Folia - region threading
++            if (worldData.phantomSpawnerNextTick > 0) { // Folia - region threading
+                 return 0;
+             } else {
+                 // Paper start - Ability to control player's insomnia and phantoms
+                 int spawnAttemptMinSeconds = level.paperConfig().entities.behavior.phantomsSpawnAttemptMinSeconds;
+                 int spawnAttemptMaxSeconds = level.paperConfig().entities.behavior.phantomsSpawnAttemptMaxSeconds;
+-                this.nextTick += (spawnAttemptMinSeconds + randomSource.nextInt(spawnAttemptMaxSeconds - spawnAttemptMinSeconds + 1)) * 20;
++                worldData.phantomSpawnerNextTick += (spawnAttemptMinSeconds + randomSource.nextInt(spawnAttemptMaxSeconds - spawnAttemptMinSeconds + 1)) * 20;  // Folia - region threading
+                 // Paper end - Ability to control player's insomnia and phantoms
+                 if (level.getSkyDarken() < 5 && level.dimensionType().hasSkyLight()) {
+                     return 0;
+                 } else {
+                     int i = 0;
+ 
+-                    for (ServerPlayer serverPlayer : level.players()) {
++                    for (ServerPlayer serverPlayer : level.getLocalPlayers()) { // Folia - region threading
+                         if (!serverPlayer.isSpectator() && (!level.paperConfig().entities.behavior.phantomsDoNotSpawnOnCreativePlayers || !serverPlayer.isCreative())) { // Paper - Add phantom creative and insomniac controls
+                             BlockPos blockPos = serverPlayer.blockPosition();
+                             if (!level.dimensionType().hasSkyLight() || blockPos.getY() >= level.getSeaLevel() && level.canSeeSky(blockPos)) {

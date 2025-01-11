@@ -1,0 +1,24 @@
+--- a/net/minecraft/world/level/saveddata/maps/MapIndex.java
++++ b/net/minecraft/world/level/saveddata/maps/MapIndex.java
+@@ -34,17 +_,21 @@
+ 
+     @Override
+     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
++        synchronized (this.usedAuxIds) { // Folia - make map data thread-safe
+         for (Entry<String> entry : this.usedAuxIds.object2IntEntrySet()) {
+             tag.putInt(entry.getKey(), entry.getIntValue());
+         }
++        } // Folia - make map data thread-safe
+ 
+         return tag;
+     }
+ 
+     public MapId getFreeAuxValueForMap() {
++        synchronized (this.usedAuxIds) { // Folia - make map data thread-safe
+         int i = this.usedAuxIds.getInt("map") + 1;
+         this.usedAuxIds.put("map", i);
+         this.setDirty();
+         return new MapId(i);
++        } // Folia - make map data thread-safe
+     }
+ }

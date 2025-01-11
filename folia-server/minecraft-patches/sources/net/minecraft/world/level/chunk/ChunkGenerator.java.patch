@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/level/chunk/ChunkGenerator.java
++++ b/net/minecraft/world/level/chunk/ChunkGenerator.java
+@@ -327,7 +_,7 @@
+     }
+ 
+     private static boolean tryAddReference(StructureManager structureManager, StructureStart structureStart) {
+-        if (structureStart.canBeReferenced()) {
++        if (structureStart.tryReference()) { // Folia - region threading
+             structureManager.addReference(structureStart);
+             return true;
+         } else {

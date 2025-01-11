@@ -1,0 +1,404 @@
+--- a/net/minecraft/world/level/Level.java
++++ b/net/minecraft/world/level/Level.java
+@@ -115,10 +_,10 @@
+     public static final int TICKS_PER_DAY = 24000;
+     public static final int MAX_ENTITY_SPAWN_Y = 20000000;
+     public static final int MIN_ENTITY_SPAWN_Y = -20000000;
+-    public final List<TickingBlockEntity> blockEntityTickers = Lists.newArrayList(); // Paper - public
+-    protected final NeighborUpdater neighborUpdater;
+-    private final List<TickingBlockEntity> pendingBlockEntityTickers = Lists.newArrayList();
+-    private boolean tickingBlockEntities;
++    //public final List<TickingBlockEntity> blockEntityTickers = Lists.newArrayList(); // Paper - public // Folia - region threading
++    public final int neighbourUpdateMax; //protected final NeighborUpdater neighborUpdater; // Folia - region threading
++    //private final List<TickingBlockEntity> pendingBlockEntityTickers = Lists.newArrayList(); // Folia - region threading
++    //private boolean tickingBlockEntities; // Folia - region threading
+     public final Thread thread;
+     private final boolean isDebug;
+     private int skyDarken;
+@@ -128,7 +_,7 @@
+     public float rainLevel;
+     protected float oThunderLevel;
+     public float thunderLevel;
+-    public final RandomSource random = new ca.spottedleaf.moonrise.common.util.ThreadUnsafeRandom(net.minecraft.world.level.levelgen.RandomSupport.generateUniqueSeed()); // Paper - replace random
++    public final RandomSource random = io.papermc.paper.threadedregions.util.ThreadLocalRandomSource.INSTANCE; // Paper - replace random // Folia - region threading
+     @Deprecated
+     private final RandomSource threadSafeRandom = RandomSource.createThreadSafe();
+     private final Holder<DimensionType> dimensionTypeRegistration;
+@@ -139,28 +_,17 @@
+     private final ResourceKey<Level> dimension;
+     private final RegistryAccess registryAccess;
+     private final DamageSources damageSources;
+-    private long subTickCount;
++    private final java.util.concurrent.atomic.AtomicLong subTickCount = new java.util.concurrent.atomic.AtomicLong(); //private long subTickCount; // Folia - region threading
+ 
+     // CraftBukkit start Added the following
+     private final CraftWorld world;
+     public boolean pvpMode;
+     public org.bukkit.generator.ChunkGenerator generator;
+ 
+-    public boolean preventPoiUpdated = false; // CraftBukkit - SPIGOT-5710
+-    public boolean captureBlockStates = false;
+-    public boolean captureTreeGeneration = false;
+-    public boolean isBlockPlaceCancelled = false; // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent
+-    public Map<BlockPos, org.bukkit.craftbukkit.block.CraftBlockState> capturedBlockStates = new java.util.LinkedHashMap<>(); // Paper
+-    public Map<BlockPos, BlockEntity> capturedTileEntities = new java.util.LinkedHashMap<>(); // Paper - Retain block place order when capturing blockstates
+-    public List<net.minecraft.world.entity.item.ItemEntity> captureDrops;
++    // Folia - region threading - moved to regionised data
+     public final it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<SpawnCategory> ticksPerSpawnCategory = new it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap<>();
+-    // Paper start
+-    public int wakeupInactiveRemainingAnimals;
+-    public int wakeupInactiveRemainingFlying;
+-    public int wakeupInactiveRemainingMonsters;
+-    public int wakeupInactiveRemainingVillagers;
+-    // Paper end
+-    public boolean populating;
++    // Folia - region threading - moved to regionised data
++    // Folia - region threading
+     public final org.spigotmc.SpigotWorldConfig spigotConfig; // Spigot
+     // Paper start - add paper world config
+     private final io.papermc.paper.configuration.WorldConfiguration paperConfig;
+@@ -173,9 +_,9 @@
+     public static BlockPos lastPhysicsProblem; // Spigot
+     private org.spigotmc.TickLimiter entityLimiter;
+     private org.spigotmc.TickLimiter tileLimiter;
+-    private int tileTickPosition;
+-    public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(); // Paper - Optimize explosions
+-    public java.util.ArrayDeque<net.minecraft.world.level.block.RedstoneTorchBlock.Toggle> redstoneUpdateInfos; // Paper - Faster redstone torch rapid clock removal; Move from Map in BlockRedstoneTorch to here
++    //private int tileTickPosition; // Folia - region threading
++    //public final Map<ServerExplosion.CacheKey, Float> explosionDensityCache = new HashMap<>(); // Paper - Optimize explosions // Folia - region threading
++    //public java.util.ArrayDeque<net.minecraft.world.level.block.RedstoneTorchBlock.Toggle> redstoneUpdateInfos; // Paper - Faster redstone torch rapid clock removal; Move from Map in BlockRedstoneTorch to here // Folia - region threading
+ 
+     public CraftWorld getWorld() {
+         return this.world;
+@@ -825,6 +_,32 @@
+         return chunk != null ? chunk.getNoiseBiome(x, y, z) : this.getUncachedNoiseBiome(x, y, z);
+     }
+     // Paper end - optimise random ticking
++    // Folia start - region ticking
++    public final io.papermc.paper.threadedregions.RegionizedData<io.papermc.paper.threadedregions.RegionizedWorldData> worldRegionData
++        = new io.papermc.paper.threadedregions.RegionizedData<>(
++        (ServerLevel)this, () -> new io.papermc.paper.threadedregions.RegionizedWorldData((ServerLevel)Level.this),
++        io.papermc.paper.threadedregions.RegionizedWorldData.REGION_CALLBACK
++    );
++    public volatile io.papermc.paper.threadedregions.RegionizedServer.WorldLevelData tickData;
++    public final java.util.concurrent.ConcurrentHashMap.KeySetView<net.minecraft.server.level.ChunkHolder, Boolean> needsChangeBroadcasting = java.util.concurrent.ConcurrentHashMap.newKeySet();
++
++    public io.papermc.paper.threadedregions.RegionizedWorldData getCurrentWorldData() {
++        final io.papermc.paper.threadedregions.RegionizedWorldData ret = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData();
++        if (ret == null) {
++            return ret;
++        }
++        Level world = ret.world;
++        if (world != this) {
++            throw new IllegalStateException("World mismatch: expected " + this.getWorld().getName() + " but got " + world.getWorld().getName());
++        }
++        return ret;
++    }
++
++    @Override
++    public List<net.minecraft.server.level.ServerPlayer> getLocalPlayers() {
++        return this.getCurrentWorldData().getLocalPlayers();
++    }
++    // Folia end - region ticking
+ 
+     protected Level(
+         WritableLevelData levelData,
+@@ -888,7 +_,7 @@
+         this.thread = Thread.currentThread();
+         this.biomeManager = new BiomeManager(this, biomeZoomSeed);
+         this.isDebug = isDebug;
+-        this.neighborUpdater = new CollectingNeighborUpdater(this, maxChainedNeighborUpdates);
++        this.neighbourUpdateMax = maxChainedNeighborUpdates; // Folia - region threading
+         this.registryAccess = registryAccess;
+         this.damageSources = new DamageSources(registryAccess);
+ 
+@@ -1035,8 +_,8 @@
+     @Nullable
+     public final BlockState getBlockStateIfLoaded(BlockPos pos) {
+         // CraftBukkit start - tree generation
+-        if (this.captureTreeGeneration) {
+-            CraftBlockState previous = this.capturedBlockStates.get(pos);
++        if (this.getCurrentWorldData().captureTreeGeneration) { // Folia - region threading
++            CraftBlockState previous = this.getCurrentWorldData().capturedBlockStates.get(pos); // Folia - region threading
+             if (previous != null) {
+                 return previous.getHandle();
+             }
+@@ -1098,16 +_,18 @@
+ 
+     @Override
+     public boolean setBlock(BlockPos pos, BlockState state, int flags, int recursionLeft) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread((ServerLevel)this, pos, "Updating block asynchronously"); // Folia - region threading
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.getCurrentWorldData(); // Folia - region threading
+         // CraftBukkit start - tree generation
+-        if (this.captureTreeGeneration) {
++        if (worldData.captureTreeGeneration) { // Folia - region threading
+             // Paper start - Protect Bedrock and End Portal/Frames from being destroyed
+             BlockState type = getBlockState(pos);
+             if (!type.isDestroyable()) return false;
+             // Paper end - Protect Bedrock and End Portal/Frames from being destroyed
+-            CraftBlockState blockstate = this.capturedBlockStates.get(pos);
++            CraftBlockState blockstate = worldData.capturedBlockStates.get(pos); // Folia - region threading
+             if (blockstate == null) {
+                 blockstate = CapturedBlockState.getTreeBlockState(this, pos, flags);
+-                this.capturedBlockStates.put(pos.immutable(), blockstate);
++                worldData.capturedBlockStates.put(pos.immutable(), blockstate); // Folia - region threading
+             }
+             blockstate.setData(state);
+             blockstate.setFlag(flags);
+@@ -1123,10 +_,10 @@
+             Block block = state.getBlock();
+             // CraftBukkit start - capture blockstates
+             boolean captured = false;
+-            if (this.captureBlockStates && !this.capturedBlockStates.containsKey(pos)) {
++            if (worldData.captureBlockStates && !worldData.capturedBlockStates.containsKey(pos)) { // Folia - region threading
+                 CraftBlockState blockstate = (CraftBlockState) world.getBlockAt(pos.getX(), pos.getY(), pos.getZ()).getState(); // Paper - use CB getState to get a suitable snapshot
+                 blockstate.setFlag(flags); // Paper - set flag
+-                this.capturedBlockStates.put(pos.immutable(), blockstate);
++                worldData.capturedBlockStates.put(pos.immutable(), blockstate); // Folia - region threading
+                 captured = true;
+             }
+             // CraftBukkit end
+@@ -1136,8 +_,8 @@
+ 
+             if (blockState == null) {
+                 // CraftBukkit start - remove blockstate if failed (or the same)
+-                if (this.captureBlockStates && captured) {
+-                    this.capturedBlockStates.remove(pos);
++                if (worldData.captureBlockStates && captured) { // Folia - region threading
++                    worldData.capturedBlockStates.remove(pos); // Folia - region threading
+                 }
+                 // CraftBukkit end
+                 return false;
+@@ -1174,7 +_,7 @@
+                 */
+ 
+                 // CraftBukkit start
+-                if (!this.captureBlockStates) { // Don't notify clients or update physics while capturing blockstates
++                if (!worldData.captureBlockStates) { // Don't notify clients or update physics while capturing blockstates // Folia - region threading
+                     // Modularize client and physic updates
+                     // Spigot start
+                     try {
+@@ -1219,7 +_,7 @@
+                 iblockdata1.updateIndirectNeighbourShapes(this, blockposition, k, j - 1); // Don't call an event for the old block to limit event spam
+                 CraftWorld world = ((ServerLevel) this).getWorld();
+                 boolean cancelledUpdates = false; // Paper - Fix block place logic
+-                if (world != null && ((ServerLevel)this).hasPhysicsEvent) { // Paper - BlockPhysicsEvent
++                if (world != null && ((ServerLevel)this).getCurrentWorldData().hasPhysicsEvent) { // Paper - BlockPhysicsEvent // Folia - region threading
+                     BlockPhysicsEvent event = new BlockPhysicsEvent(world.getBlockAt(blockposition.getX(), blockposition.getY(), blockposition.getZ()), CraftBlockData.fromData(iblockdata));
+                     this.getCraftServer().getPluginManager().callEvent(event);
+ 
+@@ -1233,7 +_,7 @@
+             }
+ 
+             // CraftBukkit start - SPIGOT-5710
+-            if (!this.preventPoiUpdated) {
++            if (!this.getCurrentWorldData().preventPoiUpdated) { // Folia - region threading
+                 this.onBlockStateChange(blockposition, iblockdata1, iblockdata2);
+             }
+             // CraftBukkit end
+@@ -1322,7 +_,7 @@
+ 
+     @Override
+     public void neighborShapeChanged(Direction direction, BlockPos pos, BlockPos neighborPos, BlockState neighborState, int flags, int recursionLeft) {
+-        this.neighborUpdater.shapeUpdate(direction, neighborState, pos, neighborPos, flags, recursionLeft);
++        this.getCurrentWorldData().neighborUpdater.shapeUpdate(direction, neighborState, pos, neighborPos, flags, recursionLeft); // Folia - region threading
+     }
+ 
+     @Override
+@@ -1346,11 +_,34 @@
+         return this.getChunkSource().getLightEngine();
+     }
+ 
++    // Folia start - region threading
++    @Nullable
++    public BlockState getBlockStateFromEmptyChunkIfLoaded(BlockPos pos) {
++        net.minecraft.server.level.ServerChunkCache chunkProvider = (net.minecraft.server.level.ServerChunkCache)this.getChunkSource();
++        ChunkAccess chunk = chunkProvider.getChunkAtImmediately(pos.getX() >> 4, pos.getZ() >> 4);
++        if (chunk != null) {
++            return chunk.getBlockState(pos);
++        }
++        return null;
++    }
++
++    @Nullable
++    public BlockState getBlockStateFromEmptyChunk(BlockPos pos) {
++        net.minecraft.server.level.ServerChunkCache chunkProvider = (net.minecraft.server.level.ServerChunkCache)this.getChunkSource();
++        ChunkAccess chunk = chunkProvider.getChunkAtImmediately(pos.getX() >> 4, pos.getZ() >> 4);
++        if (chunk != null) {
++            return chunk.getBlockState(pos);
++        }
++        chunk = chunkProvider.getChunk(pos.getX() >> 4, pos.getZ() >> 4, ChunkStatus.EMPTY, true);
++        return chunk.getBlockState(pos);
++    }
++    // Folia end - region threading
++
+     @Override
+     public BlockState getBlockState(BlockPos pos) {
+         // CraftBukkit start - tree generation
+-        if (this.captureTreeGeneration) {
+-            CraftBlockState previous = this.capturedBlockStates.get(pos); // Paper
++        if (this.getCurrentWorldData().captureTreeGeneration) { // Folia - region threading
++            CraftBlockState previous = this.getCurrentWorldData().capturedBlockStates.get(pos); // Paper // Folia - region threading
+             if (previous != null) {
+                 return previous.getHandle();
+             }
+@@ -1454,17 +_,16 @@
+     }
+ 
+     public void addBlockEntityTicker(TickingBlockEntity ticker) {
+-        (this.tickingBlockEntities ? this.pendingBlockEntityTickers : this.blockEntityTickers).add(ticker);
++        ((ServerLevel)this).getCurrentWorldData().addBlockEntityTicker(ticker); // Folia - regionised ticking
+     }
+ 
+     protected void tickBlockEntities() {
+         ProfilerFiller profilerFiller = Profiler.get();
+         profilerFiller.push("blockEntities");
+-        this.tickingBlockEntities = true;
+-        if (!this.pendingBlockEntityTickers.isEmpty()) {
+-            this.blockEntityTickers.addAll(this.pendingBlockEntityTickers);
+-            this.pendingBlockEntityTickers.clear();
+-        }
++        final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.getCurrentWorldData(); // Folia - regionised ticking
++        regionizedWorldData.seTtickingBlockEntities(true); // Folia - regionised ticking
++        regionizedWorldData.pushPendingTickingBlockEntities(); // Folia - regionised ticking
++        List<TickingBlockEntity> blockEntityTickers = regionizedWorldData.getBlockEntityTickers(); // Folia - regionised ticking
+ 
+         // Spigot start
+         boolean runsNormally = this.tickRateManager().runsNormally();
+@@ -1472,9 +_,8 @@
+         int tickedEntities = 0; // Paper - rewrite chunk system
+         var toRemove = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<TickingBlockEntity>(); // Paper - Fix MC-117075; use removeAll
+         toRemove.add(null); // Paper - Fix MC-117075
+-        for (tileTickPosition = 0; tileTickPosition < this.blockEntityTickers.size(); tileTickPosition++) { // Paper - Disable tick limiters
+-            this.tileTickPosition = (this.tileTickPosition < this.blockEntityTickers.size()) ? this.tileTickPosition : 0;
+-            TickingBlockEntity tickingBlockEntity = this.blockEntityTickers.get(this.tileTickPosition);
++        for (int i = 0; i < blockEntityTickers.size(); i++) { // Paper - Disable tick limiters  // Folia - regionised ticking
++            TickingBlockEntity tickingBlockEntity = blockEntityTickers.get(i);  // Folia - regionised ticking
+             // Spigot end
+             if (tickingBlockEntity.isRemoved()) {
+                 toRemove.add(tickingBlockEntity); // Paper - Fix MC-117075; use removeAll
+@@ -1487,11 +_,11 @@
+                 // Paper end - rewrite chunk system
+             }
+         }
+-        this.blockEntityTickers.removeAll(toRemove); // Paper - Fix MC-117075
++        blockEntityTickers.removeAll(toRemove); // Paper - Fix MC-117075 // Folia - regionised ticking
+ 
+-        this.tickingBlockEntities = false;
++        regionizedWorldData.seTtickingBlockEntities(false); // Folia - regionised ticking
+         profilerFiller.pop();
+-        this.spigotConfig.currentPrimedTnt = 0; // Spigot
++        regionizedWorldData.currentPrimedTnt = 0; // Spigot // Folia - region threading
+     }
+ 
+     public <T extends Entity> void guardEntityTick(Consumer<T> consumerEntity, T entity) {
+@@ -1502,7 +_,8 @@
+             final String msg = String.format("Entity threw exception at %s:%s,%s,%s", entity.level().getWorld().getName(), entity.getX(), entity.getY(), entity.getZ());
+             MinecraftServer.LOGGER.error(msg, var6);
+             getCraftServer().getPluginManager().callEvent(new com.destroystokyo.paper.event.server.ServerExceptionEvent(new com.destroystokyo.paper.exception.ServerInternalException(msg, var6))); // Paper - ServerExceptionEvent
+-            entity.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DISCARD);
++            if (!(entity instanceof net.minecraft.server.level.ServerPlayer)) entity.discard(org.bukkit.event.entity.EntityRemoveEvent.Cause.DISCARD); // Folia - properly disconnect players
++            if (entity instanceof net.minecraft.server.level.ServerPlayer player) player.connection.disconnect(net.minecraft.network.chat.Component.translatable("multiplayer.disconnect.generic"), org.bukkit.event.player.PlayerKickEvent.Cause.UNKNOWN); // Folia - properly disconnect players
+             // Paper end - Prevent block entity and entity crashes
+         }
+         this.moonrise$midTickTasks(); // Paper - rewrite chunk system
+@@ -1648,9 +_,14 @@
+ 
+     @Nullable
+     public BlockEntity getBlockEntity(BlockPos pos, boolean validate) {
++        // Folia start - region threading
++        if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThread()) {
++            return null;
++        }
++        // Folia end - region threading
+         // Paper start - Perf: Optimize capturedTileEntities lookup
+         net.minecraft.world.level.block.entity.BlockEntity blockEntity;
+-        if (!this.capturedTileEntities.isEmpty() && (blockEntity = this.capturedTileEntities.get(pos)) != null) {
++        if (!this.getCurrentWorldData().capturedTileEntities.isEmpty() && (blockEntity = this.getCurrentWorldData().capturedTileEntities.get(pos)) != null) { // Folia - region threading
+             return blockEntity;
+         }
+         // Paper end - Perf: Optimize capturedTileEntities lookup
+@@ -1668,8 +_,8 @@
+         BlockPos blockPos = blockEntity.getBlockPos();
+         if (!this.isOutsideBuildHeight(blockPos)) {
+             // CraftBukkit start
+-            if (this.captureBlockStates) {
+-                this.capturedTileEntities.put(blockPos.immutable(), blockEntity);
++            if (this.getCurrentWorldData().captureBlockStates) { // Folia - region threading
++                this.getCurrentWorldData().capturedTileEntities.put(blockPos.immutable(), blockEntity); // Folia - region threading
+                 return;
+             }
+             // CraftBukkit end
+@@ -1749,6 +_,7 @@
+ 
+     @Override
+     public List<Entity> getEntities(@Nullable Entity entity, AABB boundingBox, Predicate<? super Entity> predicate) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread((ServerLevel)this, boundingBox, "Cannot getEntities asynchronously"); // Folia - region threading
+         Profiler.get().incrementCounter("getEntities");
+         List<Entity> list = Lists.newArrayList();
+ 
+@@ -1778,6 +_,7 @@
+     public <T extends Entity> void getEntities(final EntityTypeTest<Entity, T> entityTypeTest,
+                                                final AABB boundingBox, final Predicate<? super T> predicate,
+                                                final List<? super T> into, final int maxCount) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, boundingBox, "Cannot getEntities asynchronously"); // Folia - region threading
+         Profiler.get().incrementCounter("getEntities");
+ 
+         if (entityTypeTest instanceof net.minecraft.world.entity.EntityType<T> byType) {
+@@ -1877,13 +_,34 @@
+     public void disconnect() {
+     }
+ 
++    @Override // Folia - region threading
+     public long getGameTime() {
+-        return this.levelData.getGameTime();
++        // Folia start - region threading
++        // Dumb world gen thread calls this for some reason. So, check for null.
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.getCurrentWorldData();
++        return worldData == null ? this.getLevelData().getGameTime() : worldData.getTickData().nonRedstoneGameTime();
++        // Folia end - region threading
+     }
+ 
+     public long getDayTime() {
+-        return this.levelData.getDayTime();
+-    }
++        // Folia start - region threading
++        // Dumb world gen thread calls this for some reason. So, check for null.
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.getCurrentWorldData();
++        return worldData == null ? this.getLevelData().getDayTime() : worldData.getTickData().dayTime();
++        // Folia end - region threading
++    }
++
++    // Folia start - region threading
++    @Override
++    public long dayTime() {
++        return this.getDayTime();
++    }
++
++    @Override
++    public long getRedstoneGameTime() {
++        return this.getCurrentWorldData().getRedstoneGameTime();
++    }
++    // Folia end - region threading
+ 
+     public boolean mayInteract(Player player, BlockPos pos) {
+         return true;
+@@ -2061,8 +_,7 @@
+     public abstract RecipeAccess recipeAccess();
+ 
+     public BlockPos getBlockRandomPos(int x, int y, int z, int yMask) {
+-        this.randValue = this.randValue * 3 + 1013904223;
+-        int i = this.randValue >> 2;
++        int i = this.random.nextInt() >> 2; // Folia - region threading
+         return new BlockPos(x + (i & 15), y + (i >> 16 & yMask), z + (i >> 8 & 15));
+     }
+ 
+@@ -2083,7 +_,7 @@
+ 
+     @Override
+     public long nextSubTickCount() {
+-        return this.subTickCount++;
++        return this.subTickCount.getAndIncrement(); // Folia - region threading
+     }
+ 
+     @Override

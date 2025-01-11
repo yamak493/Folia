@@ -1,0 +1,61 @@
+--- a/net/minecraft/world/item/MapItem.java
++++ b/net/minecraft/world/item/MapItem.java
+@@ -70,6 +_,7 @@
+     }
+ 
+     public void update(Level level, Entity viewer, MapItemSavedData data) {
++        synchronized (data) { // Folia - make map data thread-safe
+         if (level.dimension() == data.dimension && viewer instanceof Player) {
+             int i = 1 << data.scale;
+             int i1 = data.centerX;
+@@ -99,8 +_,8 @@
+                             int i9 = (i1 / i + i6 - 64) * i;
+                             int i10 = (i2 / i + i7 - 64) * i;
+                             Multiset<MapColor> multiset = LinkedHashMultiset.create();
+-                            LevelChunk chunk = level.getChunkIfLoaded(SectionPos.blockToSectionCoord(i9), SectionPos.blockToSectionCoord(i10)); // Paper - Maps shouldn't load chunks
+-                            if (chunk != null && !chunk.isEmpty()) { // Paper - Maps shouldn't load chunks
++                            LevelChunk chunk = level.getChunkIfLoaded(SectionPos.blockToSectionCoord(i9), SectionPos.blockToSectionCoord(i10)); // Paper - Maps shouldn't load chunks // Folia - super important that it uses getChunkIfLoaded
++                            if (chunk != null && !chunk.isEmpty() && ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(level, chunk.getPos())) { // Paper - Maps shouldn't load chunks // Folia - make sure chunk is owned
+                                 int i11 = 0;
+                                 double d1 = 0.0;
+                                 if (level.dimensionType().hasCeiling()) {
+@@ -182,6 +_,7 @@
+                 }
+             }
+         }
++        } // Folia - make map data thread-safe
+     }
+ 
+     private BlockState getCorrectStateForFluidBlock(Level level, BlockState state, BlockPos pos) {
+@@ -196,6 +_,7 @@
+     public static void renderBiomePreviewMap(ServerLevel serverLevel, ItemStack stack) {
+         MapItemSavedData savedData = getSavedData(stack, serverLevel);
+         if (savedData != null) {
++            synchronized (savedData) { // Folia - make map data thread-safe
+             if (serverLevel.dimension() == savedData.dimension) {
+                 int i = 1 << savedData.scale;
+                 int i1 = savedData.centerX;
+@@ -265,6 +_,7 @@
+                     }
+                 }
+             }
++            } // Folia - make map data thread-safe
+         }
+     }
+ 
+@@ -273,6 +_,7 @@
+         if (!level.isClientSide) {
+             MapItemSavedData savedData = getSavedData(stack, level);
+             if (savedData != null) {
++                synchronized (savedData) { // Folia - region threading
+                 if (entity instanceof Player player) {
+                     savedData.tickCarriedBy(player, stack);
+                 }
+@@ -280,6 +_,7 @@
+                 if (!savedData.locked && (isSelected || entity instanceof Player && ((Player)entity).getOffhandItem() == stack)) {
+                     this.update(level, entity, savedData);
+                 }
++                } // Folia - region threading
+             }
+         }
+     }

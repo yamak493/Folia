@@ -1,0 +1,419 @@
+--- a/net/minecraft/server/players/PlayerList.java
++++ b/net/minecraft/server/players/PlayerList.java
+@@ -110,10 +_,10 @@
+     public static final Component DUPLICATE_LOGIN_DISCONNECT_MESSAGE = Component.translatable("multiplayer.disconnect.duplicate_login");
+     private static final Logger LOGGER = LogUtils.getLogger();
+     private static final int SEND_PLAYER_INFO_INTERVAL = 600;
+-    private static final SimpleDateFormat BAN_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
++    private static final ThreadLocal<SimpleDateFormat> BAN_DATE_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z")); // Folia - region threading - SDF is not thread-safe
+     private final MinecraftServer server;
+     public final List<ServerPlayer> players = new java.util.concurrent.CopyOnWriteArrayList(); // CraftBukkit - ArrayList -> CopyOnWriteArrayList: Iterator safety
+-    private final Map<UUID, ServerPlayer> playersByUUID = Maps.newHashMap();
++    private final Map<UUID, ServerPlayer> playersByUUID = new java.util.concurrent.ConcurrentHashMap<>(); // Folia - region threading - change to CHM - Note: we do NOT expect concurrency PER KEY!
+     private final UserBanList bans = new UserBanList(USERBANLIST_FILE);
+     private final IpBanList ipBans = new IpBanList(IPBANLIST_FILE);
+     private final ServerOpList ops = new ServerOpList(OPLIST_FILE);
+@@ -137,6 +_,60 @@
+     private final Map<String,ServerPlayer> playersByName = new java.util.HashMap<>();
+     public @Nullable String collideRuleTeamName; // Paper - Configurable player collision
+ 
++    // Folia start - region threading
++    private final Object connectionsStateLock = new Object();
++    private final Map<String, Connection> connectionByName = new java.util.HashMap<>();
++    private final Map<UUID, Connection> connectionById = new java.util.HashMap<>();
++    private final it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<Connection> usersCountedAgainstLimit = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>();
++
++    public boolean pushPendingJoin(String userName, UUID byId, Connection conn) {
++        userName = userName.toLowerCase(java.util.Locale.ROOT);
++        Connection conflictingName, conflictingId;
++        synchronized (this.connectionsStateLock) {
++            conflictingName = this.connectionByName.get(userName);
++            conflictingId = this.connectionById.get(byId);
++
++            if (conflictingName == null && conflictingId == null) {
++                this.connectionByName.put(userName, conn);
++                this.connectionById.put(byId, conn);
++            }
++        }
++
++        Component message = Component.translatable("multiplayer.disconnect.duplicate_login", new Object[0]);
++
++        if (conflictingId != null || conflictingName != null) {
++            if (conflictingName != null && conflictingName.isPlayerConnected()) {
++                conflictingName.disconnectSafely(message, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN);
++            }
++            if (conflictingName != conflictingId && conflictingId != null && conflictingId.isPlayerConnected()) {
++                conflictingId.disconnectSafely(message, org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN);
++            }
++        }
++
++        return conflictingName == null && conflictingId == null;
++    }
++
++    public void removeConnection(String userName, UUID byId, Connection conn) {
++        userName = userName.toLowerCase(java.util.Locale.ROOT);
++        synchronized (this.connectionsStateLock) {
++            this.connectionByName.remove(userName, conn);
++            this.connectionById.remove(byId, conn);
++            this.usersCountedAgainstLimit.remove(conn);
++        }
++    }
++
++    private boolean countConnection(Connection conn, int limit) {
++        synchronized (this.connectionsStateLock) {
++            int count = this.usersCountedAgainstLimit.size();
++            if (count >= limit) {
++                return false;
++            }
++            this.usersCountedAgainstLimit.add(conn);
++            return true;
++        }
++    }
++    // Folia end - region threading
++
+     public PlayerList(MinecraftServer server, LayeredRegistryAccess<RegistryLayer> registries, PlayerDataStorage playerIo, int maxPlayers) {
+         this.cserver = server.server = new org.bukkit.craftbukkit.CraftServer((net.minecraft.server.dedicated.DedicatedServer) server, this);
+         server.console = new com.destroystokyo.paper.console.TerminalConsoleCommandSender(); // Paper
+@@ -149,7 +_,7 @@
+ 
+     abstract public void loadAndSaveFiles(); // Paper - fix converting txt to json file; moved from DedicatedPlayerList constructor
+ 
+-    public void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie) {
++    public void loadSpawnForNewPlayer(final Connection connection, final ServerPlayer player, final CommonListenerCookie cookie, org.apache.commons.lang3.mutable.MutableObject<CompoundTag> data, org.apache.commons.lang3.mutable.MutableObject<String> lastKnownName, ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> toComplete) { // Folia - region threading - rewrite login process
+         player.isRealPlayer = true; // Paper
+         player.loginTime = System.currentTimeMillis(); // Paper - Replace OfflinePlayer#getLastPlayed
+         GameProfile gameProfile = player.getGameProfile();
+@@ -221,17 +_,41 @@
+             player.spawnReason = org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT; // set Player SpawnReason to DEFAULT on first login
+             // Paper start - reset to main world spawn if first spawn or invalid world
+         }
++        // Folia start - region threading - rewrite login process
++        // must write to these before toComplete is invoked
++        data.setValue(optional.orElse(null));
++        lastKnownName.setValue(string);
++        // Folia end - region threading - rewrite login process
+         if (optional.isEmpty() || invalidPlayerWorld[0]) {
+             // Paper end - reset to main world spawn if first spawn or invalid world
+-            player.moveTo(player.adjustSpawnLocation(serverLevel, serverLevel.getSharedSpawnPos()).getBottomCenter(), serverLevel.getSharedSpawnAngle(), 0.0F); // Paper - MC-200092 - fix first spawn pos yaw being ignored
++            ServerPlayer.fudgeSpawnLocation(serverLevel, player, toComplete); // Paper - MC-200092 - fix first spawn pos yaw being ignored // Folia - region threading
++        } else {
++            serverLevel.loadChunksForMoveAsync(
++                player.getBoundingBox(),
++                ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
++                (c) -> {
++                    toComplete.complete(io.papermc.paper.util.MCUtil.toLocation(serverLevel, player.position()));
++                }
++            );
+         }
++        // Folia end - region threading - rewrite login process
+         // Paper end - Entity#getEntitySpawnReason
++        // Folia start - region threading - rewrite login process
++        return;
++    }
++    // optional -> player data
++    // s -> last known name
++    public void placeNewPlayer(Connection connection, ServerPlayer player, CommonListenerCookie cookie, Optional<CompoundTag> optional, String string, org.bukkit.Location selectedSpawn) {
++        ServerLevel serverLevel = ((org.bukkit.craftbukkit.CraftWorld)selectedSpawn.getWorld()).getHandle();
++        player.setPosRaw(selectedSpawn.getX(), selectedSpawn.getY(), selectedSpawn.getZ());
++        player.lastSave = System.nanoTime(); // changed to nanoTime
++        // Folia end - region threading - rewrite login process
+         player.setServerLevel(serverLevel);
+         String loggableAddress = connection.getLoggableAddress(this.server.logIPs());
+         // Spigot start - spawn location event
+         org.bukkit.entity.Player spawnPlayer = player.getBukkitEntity();
+         org.spigotmc.event.player.PlayerSpawnLocationEvent ev = new org.spigotmc.event.player.PlayerSpawnLocationEvent(spawnPlayer, spawnPlayer.getLocation());
+-        this.cserver.getPluginManager().callEvent(ev);
++        //this.cserver.getPluginManager().callEvent(ev); // Folia - region threading - TODO WTF TO DO WITH THIS EVENT?
+ 
+         org.bukkit.Location loc = ev.getSpawnLocation();
+         serverLevel = ((org.bukkit.craftbukkit.CraftWorld) loc.getWorld()).getHandle();
+@@ -254,6 +_,11 @@
+         LevelData levelData = serverLevel.getLevelData();
+         player.loadGameTypes(optional.orElse(null));
+         ServerGamePacketListenerImpl serverGamePacketListenerImpl = new ServerGamePacketListenerImpl(this.server, connection, player, cookie);
++        // Folia start - rewrite login process
++        // only after setting the connection listener to game type, add the connection to this regions list
++        serverLevel.getCurrentWorldData().connections.add(connection);
++        // Folia end - rewrite login process
++
+         connection.setupInboundProtocol(
+             GameProtocols.SERVERBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess())), serverGamePacketListenerImpl
+         );
+@@ -287,7 +_,7 @@
+         this.sendPlayerPermissionLevel(player);
+         player.getStats().markAllDirty();
+         player.getRecipeBook().sendInitialRecipeBook(player);
+-        this.updateEntireScoreboard(serverLevel.getScoreboard(), player);
++        //this.updateEntireScoreboard(serverLevel.getScoreboard(), player); // Folia - region threading
+         this.server.invalidateStatus();
+         MutableComponent mutableComponent;
+         if (player.getGameProfile().getName().equalsIgnoreCase(string)) {
+@@ -327,7 +_,7 @@
+         this.cserver.getPluginManager().callEvent(playerJoinEvent);
+ 
+         if (!player.connection.isAcceptingMessages()) {
+-            return;
++            //return; // Folia - region threading - must still allow the player to connect, as we must add to chunk map before handling disconnect
+         }
+ 
+         final net.kyori.adventure.text.Component jm = playerJoinEvent.joinMessage();
+@@ -342,8 +_,7 @@
+         ClientboundPlayerInfoUpdatePacket packet = ClientboundPlayerInfoUpdatePacket.createPlayerInitializing(List.of(player)); // Paper - Add Listing API for Player
+ 
+         final List<ServerPlayer> onlinePlayers = Lists.newArrayListWithExpectedSize(this.players.size() - 1); // Paper - Use single player info update packet on join
+-        for (int i = 0; i < this.players.size(); ++i) {
+-            ServerPlayer entityplayer1 = (ServerPlayer) this.players.get(i);
++        for (ServerPlayer entityplayer1 : this.players) { // Folia - region threading
+ 
+             if (entityplayer1.getBukkitEntity().canSee(bukkitPlayer)) {
+                 // Paper start - Add Listing API for Player
+@@ -392,7 +_,7 @@
+         // Paper start - Configurable player collision; Add to collideRule team if needed
+         final net.minecraft.world.scores.Scoreboard scoreboard = this.getServer().getLevel(Level.OVERWORLD).getScoreboard();
+         final PlayerTeam collideRuleTeam = scoreboard.getPlayerTeam(this.collideRuleTeamName);
+-        if (this.collideRuleTeamName != null && collideRuleTeam != null && player.getTeam() == null) {
++        if (false && this.collideRuleTeamName != null && collideRuleTeam != null && player.getTeam() == null) { // Folia - region threading
+             scoreboard.addPlayerToTeam(player.getScoreboardName(), collideRuleTeam);
+         }
+         // Paper end - Configurable player collision
+@@ -482,7 +_,7 @@
+ 
+     protected void save(ServerPlayer player) {
+         if (!player.getBukkitEntity().isPersistent()) return; // CraftBukkit
+-        player.lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
++        player.lastSave = System.nanoTime(); // Folia - region threading - changed to nanoTime tracking
+         this.playerIo.save(player);
+         ServerStatsCounter serverStatsCounter = player.getStats(); // CraftBukkit
+         if (serverStatsCounter != null) {
+@@ -517,7 +_,7 @@
+         // CraftBukkit end
+ 
+         // Paper start - Configurable player collision; Remove from collideRule team if needed
+-        if (this.collideRuleTeamName != null) {
++        if (false && this.collideRuleTeamName != null) { // Folia - region threading
+             final net.minecraft.world.scores.Scoreboard scoreBoard = this.server.getLevel(Level.OVERWORLD).getScoreboard();
+             final PlayerTeam team = scoreBoard.getPlayersTeam(this.collideRuleTeamName);
+             if (player.getTeam() == team && team != null) {
+@@ -566,7 +_,7 @@
+         }
+ 
+         serverLevel.removePlayerImmediately(player, Entity.RemovalReason.UNLOADED_WITH_PLAYER);
+-        player.retireScheduler(); // Paper - Folia schedulers
++        //player.retireScheduler(); // Paper - Folia schedulers // Folia - region threading - move to onDisconnect of common packet listener
+         player.getAdvancements().stopListening();
+         this.players.remove(player);
+         this.playersByName.remove(player.getScoreboardName().toLowerCase(java.util.Locale.ROOT)); // Spigot
+@@ -584,8 +_,7 @@
+         // CraftBukkit start
+         // this.broadcastAll(new ClientboundPlayerInfoRemovePacket(List.of(player.getUUID())));
+         ClientboundPlayerInfoRemovePacket packet = new ClientboundPlayerInfoRemovePacket(List.of(player.getUUID()));
+-        for (int i = 0; i < this.players.size(); i++) {
+-            ServerPlayer otherPlayer = (ServerPlayer) this.players.get(i);
++        for (ServerPlayer otherPlayer : this.players) { // Folia - region threading
+ 
+             if (otherPlayer.getBukkitEntity().canSee(player.getBukkitEntity())) {
+                 otherPlayer.connection.send(packet);
+@@ -609,19 +_,12 @@
+ 
+         ServerPlayer entityplayer;
+ 
+-        for (int i = 0; i < this.players.size(); ++i) {
+-            entityplayer = (ServerPlayer) this.players.get(i);
+-            if (entityplayer.getUUID().equals(uuid) || (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() && entityplayer.getGameProfile().getName().equalsIgnoreCase(gameProfile.getName()))) { // Paper - validate usernames
+-                list.add(entityplayer);
+-            }
+-        }
++        // Folia - region threading - rewrite login process - moved to pushPendingJoin
+ 
+         java.util.Iterator iterator = list.iterator();
+ 
+         while (iterator.hasNext()) {
+-            entityplayer = (ServerPlayer) iterator.next();
+-            this.save(entityplayer); // CraftBukkit - Force the player's inventory to be saved
+-            entityplayer.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"), org.bukkit.event.player.PlayerKickEvent.Cause.DUPLICATE_LOGIN); // Paper - kick event cause
++            // Folia - moved to pushPendingJoin
+         }
+ 
+         // Instead of kicking then returning, we need to store the kick reason
+@@ -641,7 +_,7 @@
+             MutableComponent mutableComponent = Component.translatable("multiplayer.disconnect.banned.reason", userBanListEntry.getReason());
+             if (userBanListEntry.getExpires() != null) {
+                 mutableComponent.append(
+-                    Component.translatable("multiplayer.disconnect.banned.expiration", BAN_DATE_FORMAT.format(userBanListEntry.getExpires()))
++                    Component.translatable("multiplayer.disconnect.banned.expiration", BAN_DATE_FORMAT.get().format(userBanListEntry.getExpires())) // Folia - region threading - SDF is not thread-safe
+                 );
+             }
+ 
+@@ -655,7 +_,7 @@
+             MutableComponent mutableComponent = Component.translatable("multiplayer.disconnect.banned_ip.reason", ipBanListEntry.getReason());
+             if (ipBanListEntry.getExpires() != null) {
+                 mutableComponent.append(
+-                    Component.translatable("multiplayer.disconnect.banned_ip.expiration", BAN_DATE_FORMAT.format(ipBanListEntry.getExpires()))
++                    Component.translatable("multiplayer.disconnect.banned_ip.expiration", BAN_DATE_FORMAT.get().format(ipBanListEntry.getExpires())) // Folia - region threading - SDF is not thread-safe
+                 );
+             }
+ 
+@@ -665,7 +_,7 @@
+             // return this.players.size() >= this.maxPlayers && !this.canBypassPlayerLimit(gameProfile)
+             //     ? Component.translatable("multiplayer.disconnect.server_full")
+             //     : null;
+-            if (this.players.size() >= this.maxPlayers && !this.canBypassPlayerLimit(gameProfile)) {
++            if (!this.countConnection(loginlistener.connection, this.maxPlayers) && !this.canBypassPlayerLimit(gameProfile)) { // Folia - region threading - we control connection state here now async, not player list size
+                 event.disallow(org.bukkit.event.player.PlayerLoginEvent.Result.KICK_FULL, net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(org.spigotmc.SpigotConfig.serverFullMessage)); // Spigot // Paper - Adventure
+             }
+         }
+@@ -714,6 +_,11 @@
+         return this.respawn(player, keepInventory, reason, eventReason, null);
+     }
+     public ServerPlayer respawn(ServerPlayer player, boolean keepInventory, Entity.RemovalReason reason, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason eventReason, org.bukkit.Location location) {
++        // Folia start - region threading
++        if (true) {
++            throw new UnsupportedOperationException("Must use teleportAsync while in region threading");
++        }
++        // Folia end - region threading
+         player.stopRiding(); // CraftBukkit
+         this.players.remove(player);
+         this.playersByName.remove(player.getScoreboardName().toLowerCase(java.util.Locale.ROOT)); // Spigot
+@@ -884,10 +_,10 @@
+     public void tick() {
+         if (++this.sendAllPlayerInfoIn > 600) {
+             // CraftBukkit start
+-            for (int i = 0; i < this.players.size(); ++i) {
+-                final ServerPlayer target = this.players.get(i);
++            ServerPlayer[] players = this.players.toArray(new ServerPlayer[0]); // Folia - region threading
++            for (final ServerPlayer target : players) { // Folia - region threading
+ 
+-                target.connection.send(new ClientboundPlayerInfoUpdatePacket(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), com.google.common.collect.Collections2.filter(this.players, t -> target.getBukkitEntity().canSee(t.getBukkitEntity()))));
++                target.connection.send(new ClientboundPlayerInfoUpdatePacket(EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY), com.google.common.collect.Collections2.filter(java.util.Arrays.asList(players),t -> target.getBukkitEntity().canSee(t.getBukkitEntity())))); // Folia - region threading
+             }
+             // CraftBukkit end
+             this.sendAllPlayerInfoIn = 0;
+@@ -896,18 +_,17 @@
+ 
+     // CraftBukkit start - add a world/entity limited version
+     public void broadcastAll(Packet packet, net.minecraft.world.entity.player.Player entityhuman) {
+-        for (int i = 0; i < this.players.size(); ++i) {
+-            ServerPlayer entityplayer =  this.players.get(i);
++        for (ServerPlayer entityplayer : this.players) { // Folia - region threading
+             if (entityhuman != null && !entityplayer.getBukkitEntity().canSee(entityhuman.getBukkitEntity())) {
+                 continue;
+             }
+-            ((ServerPlayer) this.players.get(i)).connection.send(packet);
++            entityplayer.connection.send(packet); // Folia - region threading
+         }
+     }
+ 
+     public void broadcastAll(Packet packet, Level world) {
+-        for (int i = 0; i < world.players().size(); ++i) {
+-            ((ServerPlayer) world.players().get(i)).connection.send(packet);
++        for (net.minecraft.world.entity.player.Player player : world.players()) { // Folia - region threading
++            ((ServerPlayer) player).connection.send(packet); // Folia - region threading
+         }
+ 
+     }
+@@ -944,8 +_,7 @@
+         if (team == null) {
+             this.broadcastSystemMessage(message, false);
+         } else {
+-            for (int i = 0; i < this.players.size(); i++) {
+-                ServerPlayer serverPlayer = this.players.get(i);
++            for (ServerPlayer serverPlayer : this.players) { // Folia - region threading
+                 if (serverPlayer.getTeam() != team) {
+                     serverPlayer.sendSystemMessage(message);
+                 }
+@@ -954,10 +_,11 @@
+     }
+ 
+     public String[] getPlayerNamesArray() {
++        List<ServerPlayer> players = new java.util.ArrayList<>(this.players); // Folia - region threading
+         String[] strings = new String[this.players.size()];
+ 
+-        for (int i = 0; i < this.players.size(); i++) {
+-            strings[i] = this.players.get(i).getGameProfile().getName();
++        for (int i = 0; i < players.size(); i++) { // Folia - region threading
++            strings[i] = players.get(i).getGameProfile().getName(); // Folia - region threading
+         }
+ 
+         return strings;
+@@ -975,7 +_,9 @@
+         this.ops.add(new ServerOpListEntry(profile, this.server.getOperatorUserPermissionLevel(), this.ops.canBypassPlayerLimit(profile)));
+         ServerPlayer player = this.getPlayer(profile.getId());
+         if (player != null) {
+-            this.sendPlayerPermissionLevel(player);
++            player.getBukkitEntity().taskScheduler.schedule((ServerPlayer serverPlayer) -> { // Folia - region threading
++            this.sendPlayerPermissionLevel(serverPlayer); // Folia - region threading
++            }, null, 1L); // Folia - region threading
+         }
+     }
+ 
+@@ -983,7 +_,9 @@
+         this.ops.remove(profile);
+         ServerPlayer player = this.getPlayer(profile.getId());
+         if (player != null) {
+-            this.sendPlayerPermissionLevel(player);
++            player.getBukkitEntity().taskScheduler.schedule((ServerPlayer serverPlayer) -> { // Folia - region threading
++            this.sendPlayerPermissionLevel(serverPlayer); // Folia - region threading
++            }, null, 1L); // Folia - region threading
+         }
+     }
+ 
+@@ -1046,8 +_,7 @@
+     }
+ 
+     public void broadcast(@Nullable Player except, double x, double y, double z, double radius, ResourceKey<Level> dimension, Packet<?> packet) {
+-        for (int i = 0; i < this.players.size(); i++) {
+-            ServerPlayer serverPlayer = this.players.get(i);
++        for (ServerPlayer serverPlayer : this.players) { // Folia - region threading
+             // CraftBukkit start - Test if player receiving packet can see the source of the packet
+             if (except != null && !serverPlayer.getBukkitEntity().canSee(except.getBukkitEntity())) {
+                continue;
+@@ -1072,10 +_,15 @@
+     public void saveAll(final int interval) {
+         io.papermc.paper.util.MCUtil.ensureMain("Save Players" , () -> { // Paper - Ensure main
+         int numSaved = 0;
+-        final long now = MinecraftServer.currentTick;
+-        for (int i = 0; i < this.players.size(); i++) {
+-            final ServerPlayer player = this.players.get(i);
+-            if (interval == -1 || now - player.lastSave >= interval) {
++        final long now = System.nanoTime(); // Folia - region threading
++        long timeInterval = (long)interval * io.papermc.paper.threadedregions.TickRegionScheduler.TIME_BETWEEN_TICKS; // Folia - region threading
++        for (final ServerPlayer player : this.players) { // Folia - region threading
++            // Folia start - region threading
++            if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player)) {
++                continue;
++            }
++            // Folia end - region threading
++            if (interval == -1 || now - player.lastSave >= timeInterval) { // Folia - region threading
+                 this.save(player);
+                 if (interval != -1 && ++numSaved >= io.papermc.paper.configuration.GlobalConfiguration.get().playerAutoSave.maxPerTick()) {
+                     break;
+@@ -1194,6 +_,20 @@
+     }
+ 
+     public void removeAll(boolean isRestarting) {
++        // Folia start - region threading
++        // just send disconnect packet, don't modify state
++        for (ServerPlayer player : this.players) {
++            final Component shutdownMessage = io.papermc.paper.adventure.PaperAdventure.asVanilla(this.server.server.shutdownMessage()); // Paper - Adventure
++            // CraftBukkit end
++
++            player.connection.send(new net.minecraft.network.protocol.common.ClientboundDisconnectPacket(shutdownMessage), net.minecraft.network.PacketSendListener.thenRun(() -> {
++                player.connection.connection.disconnect(shutdownMessage);
++            }));
++        }
++        if (true) {
++            return;
++        }
++        // Folia end - region threading
+         // Paper end
+         // CraftBukkit start - disconnect safely
+         for (ServerPlayer player : this.players) {
+@@ -1203,7 +_,7 @@
+         // CraftBukkit end
+ 
+         // Paper start - Configurable player collision; Remove collideRule team if it exists
+-        if (this.collideRuleTeamName != null) {
++        if (false && this.collideRuleTeamName != null) { // Folia - region threading
+             final net.minecraft.world.scores.Scoreboard scoreboard = this.getServer().getLevel(Level.OVERWORLD).getScoreboard();
+             final PlayerTeam team = scoreboard.getPlayersTeam(this.collideRuleTeamName);
+             if (team != null) scoreboard.removePlayerTeam(team);

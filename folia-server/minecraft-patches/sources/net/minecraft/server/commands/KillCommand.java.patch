@@ -1,0 +1,13 @@
+--- a/net/minecraft/server/commands/KillCommand.java
++++ b/net/minecraft/server/commands/KillCommand.java
+@@ -24,7 +_,9 @@
+ 
+     private static int kill(CommandSourceStack source, Collection<? extends Entity> targets) {
+         for (Entity entity : targets) {
+-            entity.kill(source.getLevel());
++            entity.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> { // Folia - region threading
++                nmsEntity.kill((net.minecraft.server.level.ServerLevel)nmsEntity.level()); // Folia - region threading
++            }, null, 1L); // Folia - region threading
+         }
+ 
+         if (targets.size() == 1) {

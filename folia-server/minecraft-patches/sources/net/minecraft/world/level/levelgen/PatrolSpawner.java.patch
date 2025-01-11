@@ -1,0 +1,54 @@
+--- a/net/minecraft/world/level/levelgen/PatrolSpawner.java
++++ b/net/minecraft/world/level/levelgen/PatrolSpawner.java
+@@ -16,7 +_,7 @@
+ import net.minecraft.world.level.block.state.BlockState;
+ 
+ public class PatrolSpawner implements CustomSpawner {
+-    private int nextTick;
++    //private int nextTick; // Folia - region threading
+ 
+     @Override
+     public int tick(ServerLevel level, boolean spawnEnemies, boolean spawnFriendlies) {
+@@ -27,6 +_,7 @@
+             return 0;
+         } else {
+             RandomSource randomSource = level.random;
++            io.papermc.paper.threadedregions.RegionizedWorldData worldData = level.getCurrentWorldData(); // Folia - region threading
+             // this.nextTick--;
+             // if (this.nextTick > 0) {
+             //     return 0;
+@@ -38,12 +_,12 @@
+             //     } else if (randomSource.nextInt(5) != 0) {
+             // Paper start - Pillager patrol spawn settings and per player options
+             // Random player selection moved up for per player spawning and configuration
+-            int size = level.players().size();
++            int size = level.getLocalPlayers().size();
+             if (size < 1) {
+                 return 0;
+             }
+ 
+-            net.minecraft.server.level.ServerPlayer player = level.players().get(randomSource.nextInt(size));
++            net.minecraft.server.level.ServerPlayer player = level.getLocalPlayers().get(randomSource.nextInt(size)); // Folia - region threading
+             if (player.isSpectator()) {
+                 return 0;
+             }
+@@ -53,8 +_,8 @@
+                 --player.patrolSpawnDelay;
+                 patrolSpawnDelay = player.patrolSpawnDelay;
+             } else {
+-                this.nextTick--;
+-                patrolSpawnDelay = this.nextTick;
++                worldData.patrolSpawnerNextTick--; // Folia - region threading
++                patrolSpawnDelay = worldData.patrolSpawnerNextTick; // Folia - region threading
+             }
+             if (patrolSpawnDelay > 0) {
+                 return 0;
+@@ -68,7 +_,7 @@
+                 if (level.paperConfig().entities.behavior.pillagerPatrols.spawnDelay.perPlayer) {
+                     player.patrolSpawnDelay += level.paperConfig().entities.behavior.pillagerPatrols.spawnDelay.ticks + randomSource.nextInt(1200);
+                 } else {
+-                    this.nextTick += level.paperConfig().entities.behavior.pillagerPatrols.spawnDelay.ticks + randomSource.nextInt(1200);
++                    worldData.patrolSpawnerNextTick += level.paperConfig().entities.behavior.pillagerPatrols.spawnDelay.ticks + randomSource.nextInt(1200); // Folia - region threading
+                 }
+ 
+                 if (days < level.paperConfig().entities.behavior.pillagerPatrols.start.day || !level.isDay()) {

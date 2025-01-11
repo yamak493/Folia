@@ -1,0 +1,44 @@
+--- a/net/minecraft/server/commands/EffectCommands.java
++++ b/net/minecraft/server/commands/EffectCommands.java
+@@ -180,7 +_,12 @@
+         for (Entity entity : targets) {
+             if (entity instanceof LivingEntity) {
+                 MobEffectInstance mobEffectInstance = new MobEffectInstance(effect, i1, amplifier, false, showParticles);
+-                if (((LivingEntity)entity).addEffect(mobEffectInstance, source.getEntity(), org.bukkit.event.entity.EntityPotionEffectEvent.Cause.COMMAND)) { // CraftBukkit
++                // Folia start - region threading
++                entity.getBukkitEntity().taskScheduler.schedule((LivingEntity nmsEntity) -> {
++                    ((LivingEntity)nmsEntity).addEffect(mobEffectInstance, source.getEntity(), org.bukkit.event.entity.EntityPotionEffectEvent.Cause.COMMAND);
++                }, null, 1L);
++                // Folia end - region threading
++                if (true) { // CraftBukkit // Folia - region threading
+                     i++;
+                 }
+             }
+@@ -210,7 +_,12 @@
+         int i = 0;
+ 
+         for (Entity entity : targets) {
+-            if (entity instanceof LivingEntity && ((LivingEntity)entity).removeAllEffects(org.bukkit.event.entity.EntityPotionEffectEvent.Cause.COMMAND)) { // CraftBukkit
++            if (entity instanceof LivingEntity && true) { // CraftBukkit // Folia - region threading
++                // Folia start - region threading
++                entity.getBukkitEntity().taskScheduler.schedule((LivingEntity nmsEntity) -> {
++                    ((LivingEntity)nmsEntity).removeAllEffects(org.bukkit.event.entity.EntityPotionEffectEvent.Cause.COMMAND);
++                }, null, 1L);
++                // Folia end - region threading
+                 i++;
+             }
+         }
+@@ -235,7 +_,12 @@
+         int i = 0;
+ 
+         for (Entity entity : targets) {
+-            if (entity instanceof LivingEntity && ((LivingEntity)entity).removeEffect(effect, org.bukkit.event.entity.EntityPotionEffectEvent.Cause.COMMAND)) { // CraftBukkit
++            if (entity instanceof LivingEntity && true) { // CraftBukkit // Folia - region threading
++                // Folia start - region threading
++                entity.getBukkitEntity().taskScheduler.schedule((LivingEntity nmsEntity) -> {
++                    ((LivingEntity)nmsEntity).removeEffect(effect, org.bukkit.event.entity.EntityPotionEffectEvent.Cause.COMMAND);
++                }, null, 1L);
++                // Folia end - region threading
+                 i++;
+             }
+         }

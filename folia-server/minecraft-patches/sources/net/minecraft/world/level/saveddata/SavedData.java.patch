@@ -1,0 +1,23 @@
+--- a/net/minecraft/world/level/saveddata/SavedData.java
++++ b/net/minecraft/world/level/saveddata/SavedData.java
+@@ -8,7 +_,7 @@
+ import net.minecraft.util.datafix.DataFixTypes;
+ 
+ public abstract class SavedData {
+-    private boolean dirty;
++    private volatile boolean dirty; // Folia - make map data thread-safe
+ 
+     public abstract CompoundTag save(CompoundTag tag, HolderLookup.Provider registries);
+ 
+@@ -26,9 +_,10 @@
+ 
+     public CompoundTag save(HolderLookup.Provider registries) {
+         CompoundTag compoundTag = new CompoundTag();
++        this.setDirty(false); // Folia - make map data thread-safe - move before save, so that any changes after are not lost
+         compoundTag.put("data", this.save(new CompoundTag(), registries));
+         NbtUtils.addCurrentDataVersion(compoundTag);
+-        this.setDirty(false);
++        // Folia - make map data thread-safe - move before save, so that any changes after are not lost
+         return compoundTag;
+     }
+ 

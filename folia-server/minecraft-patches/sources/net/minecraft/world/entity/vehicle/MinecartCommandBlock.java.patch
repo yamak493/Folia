@@ -1,0 +1,14 @@
+--- a/net/minecraft/world/entity/vehicle/MinecartCommandBlock.java
++++ b/net/minecraft/world/entity/vehicle/MinecartCommandBlock.java
+@@ -145,5 +_,11 @@
+             return net.minecraft.world.entity.vehicle.MinecartCommandBlock.this.getBukkitEntity();
+         }
+         // CraftBukkit end
++        // Folia start
++        @Override
++        public void threadCheck() {
++            ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(MinecartCommandBlock.this, "Asynchronous sendSystemMessage to a command block");
++        }
++        // Folia end
+     }
+ }

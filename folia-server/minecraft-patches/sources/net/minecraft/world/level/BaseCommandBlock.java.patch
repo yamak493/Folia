@@ -1,0 +1,35 @@
+--- a/net/minecraft/world/level/BaseCommandBlock.java
++++ b/net/minecraft/world/level/BaseCommandBlock.java
+@@ -21,7 +_,7 @@
+ import net.minecraft.world.phys.Vec3;
+ 
+ public abstract class BaseCommandBlock implements CommandSource {
+-    private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
++    private static final ThreadLocal<SimpleDateFormat> TIME_FORMAT = ThreadLocal.withInitial(() -> new SimpleDateFormat("HH:mm:ss")); // Folia - region threading - SDF is not thread-safe
+     private static final Component DEFAULT_NAME = Component.literal("@");
+     private long lastExecution = -1L;
+     private boolean updateLastExecution = true;
+@@ -114,6 +_,7 @@
+     }
+ 
+     public boolean performCommand(Level level) {
++        if (true) return false; // Folia - region threading
+         if (level.isClientSide || level.getGameTime() == this.lastExecution) {
+             return false;
+         } else if ("Searge".equalsIgnoreCase(this.command)) {
+@@ -164,11 +_,14 @@
+         this.customName = customName;
+     }
+ 
++    public void threadCheck() {} // Folia
++
+     @Override
+     public void sendSystemMessage(Component component) {
+         if (this.trackOutput) {
+             org.spigotmc.AsyncCatcher.catchOp("sendSystemMessage to a command block"); // Paper - Don't broadcast messages to command blocks
+-            this.lastOutput = Component.literal("[" + TIME_FORMAT.format(new Date()) + "] ").append(component);
++            this.threadCheck(); // Folia
++            this.lastOutput = Component.literal("[" + TIME_FORMAT.get().format(new Date()) + "] ").append(component); // Folia - region threading - SDF is not thread-safe
+             this.onUpdated();
+         }
+     }

@@ -1,0 +1,1047 @@
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -145,7 +_,7 @@
+     }
+ 
+     // Paper start - Share random for entities to make them more random
+-    public static RandomSource SHARED_RANDOM = new RandomRandomSource();
++    public static RandomSource SHARED_RANDOM = io.papermc.paper.threadedregions.util.ThreadLocalRandomSource.INSTANCE; // Folia - region threading
+     // Paper start - replace random
+     private static final class RandomRandomSource extends ca.spottedleaf.moonrise.common.util.ThreadUnsafeRandom {
+         public RandomRandomSource() {
+@@ -175,7 +_,7 @@
+     public org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason; // Paper - Entity#getEntitySpawnReason
+ 
+     public boolean collisionLoadChunks = false; // Paper
+-    private org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity;
++    private volatile org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity; // Folia - region threading
+ 
+     public org.bukkit.craftbukkit.entity.CraftEntity getBukkitEntity() {
+         if (this.bukkitEntity == null) {
+@@ -294,7 +_,7 @@
+     private boolean hasGlowingTag;
+     private final Set<String> tags = new io.papermc.paper.util.SizeLimitedSet<>(new it.unimi.dsi.fastutil.objects.ObjectOpenHashSet<>(), MAX_ENTITY_TAG_COUNT); // Paper - fully limit tag size - replace set impl
+     private final double[] pistonDeltas = new double[]{0.0, 0.0, 0.0};
+-    private long pistonDeltasGameTime;
++    private long pistonDeltasGameTime = Long.MIN_VALUE; // Folia - region threading
+     private EntityDimensions dimensions;
+     private float eyeHeight;
+     public boolean isInPowderSnow;
+@@ -525,6 +_,19 @@
+         }
+     }
+     // Paper end - optimise entity tracker
++    // Folia start - region ticking
++    public void updateTicks(long fromTickOffset, long fromRedstoneTimeOffset) {
++        if (this.activatedTick != Integer.MIN_VALUE) {
++            this.activatedTick += fromTickOffset;
++        }
++        if (this.activatedImmunityTick != Integer.MIN_VALUE) {
++            this.activatedImmunityTick += fromTickOffset;
++        }
++        if (this.pistonDeltasGameTime != Long.MIN_VALUE) {
++            this.pistonDeltasGameTime += fromRedstoneTimeOffset;
++        }
++    }
++    // Folia end - region ticking
+ 
+     public Entity(EntityType<?> entityType, Level level) {
+         this.type = entityType;
+@@ -655,8 +_,7 @@
+     // due to interactions on the client.
+     public void resendPossiblyDesyncedEntityData(net.minecraft.server.level.ServerPlayer player) {
+         if (player.getBukkitEntity().canSee(this.getBukkitEntity())) {
+-            ServerLevel world = (net.minecraft.server.level.ServerLevel)this.level();
+-            net.minecraft.server.level.ChunkMap.TrackedEntity tracker = world == null ? null : world.getChunkSource().chunkMap.entityMap.get(this.getId());
++            net.minecraft.server.level.ChunkMap.TrackedEntity tracker = this.moonrise$getTrackedEntity(); // Folia - region threading
+             if (tracker == null) {
+                 return;
+             }
+@@ -823,7 +_,7 @@
+     public void postTick() {
+         // No clean way to break out of ticking once the entity has been copied to a new world, so instead we move the portalling later in the tick cycle
+         if (!(this instanceof ServerPlayer) && this.isAlive()) { // Paper - don't attempt to teleport dead entities
+-            this.handlePortal();
++            //this.handlePortal(); // Folia - region threading
+         }
+     }
+     // CraftBukkit end
+@@ -841,7 +_,7 @@
+             this.boardingCooldown--;
+         }
+ 
+-        if (this instanceof ServerPlayer) this.handlePortal(); // CraftBukkit - // Moved up to postTick
++        //if (this instanceof ServerPlayer) this.handlePortal(); // CraftBukkit - // Moved up to postTick // Folia - region threading - ONLY allow in postTick()
+         if (this.canSpawnSprintParticle()) {
+             this.spawnSprintParticle();
+         }
+@@ -1104,8 +_,8 @@
+         } else {
+             this.wasOnFire = this.isOnFire();
+             if (type == MoverType.PISTON) {
+-                this.activatedTick = Math.max(this.activatedTick, MinecraftServer.currentTick + 20); // Paper - EAR 2
+-                this.activatedImmunityTick = Math.max(this.activatedImmunityTick, MinecraftServer.currentTick + 20);   // Paper - EAR 2
++                this.activatedTick = Math.max(this.activatedTick, io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick() + 20); // Paper - EAR 2 // Folia - region threading
++                this.activatedImmunityTick = Math.max(this.activatedImmunityTick, io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick() + 20);   // Paper - EAR 2 // Folia - region threading
+                 movement = this.limitPistonMovement(movement);
+                 if (movement.equals(Vec3.ZERO)) {
+                     return;
+@@ -1404,7 +_,7 @@
+         if (pos.lengthSqr() <= 1.0E-7) {
+             return pos;
+         } else {
+-            long gameTime = this.level().getGameTime();
++            long gameTime = this.level().getRedstoneGameTime(); // Folia - region threading
+             if (gameTime != this.pistonDeltasGameTime) {
+                 Arrays.fill(this.pistonDeltas, 0.0);
+                 this.pistonDeltasGameTime = gameTime;
+@@ -3038,6 +_,7 @@
+             }
+ 
+             if (force || this.canRide(vehicle) && vehicle.canAddPassenger(this)) {
++                if (this.valid) { // Folia - region threading - suppress entire event logic during worldgen
+                 // CraftBukkit start
+                 if (vehicle.getBukkitEntity() instanceof org.bukkit.entity.Vehicle && this.getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
+                     org.bukkit.event.vehicle.VehicleEnterEvent event = new org.bukkit.event.vehicle.VehicleEnterEvent((org.bukkit.entity.Vehicle) vehicle.getBukkitEntity(), this.getBukkitEntity());
+@@ -3059,6 +_,7 @@
+                     return false;
+                 }
+                 // CraftBukkit end
++                } // Folia - region threading - suppress entire event logic during worldgen
+                 if (this.isPassenger()) {
+                     this.stopRiding();
+                 }
+@@ -3126,7 +_,7 @@
+                 this.passengers = ImmutableList.copyOf(list);
+             }
+ 
+-            this.gameEvent(GameEvent.ENTITY_MOUNT, passenger);
++            if (!passenger.hasNullCallback()) this.gameEvent(GameEvent.ENTITY_MOUNT, passenger); // Folia - region threading - do not fire game events for entities not added
+         }
+     }
+ 
+@@ -3140,6 +_,7 @@
+             throw new IllegalStateException("Use x.stopRiding(y), not y.removePassenger(x)");
+         } else {
+             // CraftBukkit start
++            if (this.valid) { // Folia - region threading - suppress entire event logic during worldgen
+             org.bukkit.craftbukkit.entity.CraftEntity craft = (org.bukkit.craftbukkit.entity.CraftEntity) passenger.getBukkitEntity().getVehicle();
+             Entity orig = craft == null ? null : craft.getHandle();
+             if (this.getBukkitEntity() instanceof org.bukkit.entity.Vehicle && passenger.getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
+@@ -3167,6 +_,7 @@
+                 return false;
+             }
+             // CraftBukkit end
++            } // Folia - region threading - suppress entire event logic during worldgen
+             if (this.passengers.size() == 1 && this.passengers.get(0) == passenger) {
+                 this.passengers = ImmutableList.of();
+             } else {
+@@ -3174,7 +_,7 @@
+             }
+ 
+             passenger.boardingCooldown = 60;
+-            this.gameEvent(GameEvent.ENTITY_DISMOUNT, passenger);
++            if (!passenger.hasNullCallback()) this.gameEvent(GameEvent.ENTITY_DISMOUNT, passenger); // Folia - region threading - do not fire game events for entities not added
+         }
+         return true; // CraftBukkit
+     }
+@@ -3258,7 +_,7 @@
+         }
+     }
+ 
+-    protected void handlePortal() {
++    public boolean handlePortal() { // Folia - region threading - public, ret type -> boolean
+         if (this.level() instanceof ServerLevel serverLevel) {
+             this.processPortalCooldown();
+             if (this.portalProcess != null) {
+@@ -3266,21 +_,20 @@
+                     ProfilerFiller profilerFiller = Profiler.get();
+                     profilerFiller.push("portal");
+                     this.setPortalCooldown();
+-                    TeleportTransition portalDestination = this.portalProcess.getPortalDestination(serverLevel, this);
+-                    if (portalDestination != null) {
+-                        ServerLevel level = portalDestination.newLevel();
+-                        if (this instanceof ServerPlayer // CraftBukkit - always call event for players
+-                            || (level != null && (level.dimension() == serverLevel.dimension() || this.canTeleport(serverLevel, level)))) { // CraftBukkit
+-                            this.teleport(portalDestination);
+-                        }
++                    // Folia start - region threading
++                    try {
++                        return this.portalProcess.portalAsync(serverLevel, this);
++                    } finally {
++                        profilerFiller.pop();
+                     }
+-
+-                    profilerFiller.pop();
++                    // Folia end - region threading
+                 } else if (this.portalProcess.hasExpired()) {
+                     this.portalProcess = null;
+                 }
+             }
+         }
++
++        return false; // Folia - region threading
+     }
+ 
+     public int getDimensionChangingDelay() {
+@@ -3420,6 +_,11 @@
+ 
+     @Nullable
+     public PlayerTeam getTeam() {
++        // Folia start - region threading
++        if (true) {
++            return null;
++        }
++        // Folia end - region threading
+         if (!this.level().paperConfig().scoreboards.allowNonPlayerEntitiesOnScoreboards && !(this instanceof Player)) { return null; } // Paper - Perf: Disable Scoreboards for non players by default
+         return this.level().getScoreboard().getPlayersTeam(this.getScoreboardName());
+     }
+@@ -3726,8 +_,782 @@
+         this.portalProcess = entity.portalProcess;
+     }
+ 
++    // Folia start - region threading
++    public static class EntityTreeNode {
++        @Nullable
++        public EntityTreeNode parent;
++        public Entity root;
++        @Nullable
++        public EntityTreeNode[] passengers;
++
++        public EntityTreeNode(EntityTreeNode parent, Entity root) {
++            this.parent = parent;
++            this.root = root;
++        }
++
++        public EntityTreeNode(EntityTreeNode parent, Entity root, EntityTreeNode[] passengers) {
++            this.parent = parent;
++            this.root = root;
++            this.passengers = passengers;
++        }
++
++        public List<EntityTreeNode> getFullTree() {
++            List<EntityTreeNode> ret = new java.util.ArrayList<>();
++            ret.add(this);
++
++            // this is just a BFS except we don't remove from head, we just advance down the list
++            for (int i = 0; i < ret.size(); ++i) {
++                EntityTreeNode node = ret.get(i);
++
++                EntityTreeNode[] passengers = node.passengers;
++                if (passengers == null) {
++                    continue;
++                }
++                for (EntityTreeNode passenger : passengers) {
++                    ret.add(passenger);
++                }
++            }
++
++            return ret;
++        }
++
++        public void restore() {
++            java.util.ArrayDeque<EntityTreeNode> queue = new java.util.ArrayDeque<>();
++            queue.add(this);
++
++            EntityTreeNode curr;
++            while ((curr = queue.pollFirst()) != null) {
++                EntityTreeNode[] passengers = curr.passengers;
++                if (passengers == null) {
++                    continue;
++                }
++
++                List<Entity> newPassengers = new java.util.ArrayList<>();
++                for (EntityTreeNode passenger : passengers) {
++                    newPassengers.add(passenger.root);
++                    passenger.root.vehicle = curr.root;
++                }
++
++                curr.root.passengers = ImmutableList.copyOf(newPassengers);
++            }
++        }
++
++        public void addTracker() {
++            for (final EntityTreeNode node : this.getFullTree()) {
++                if (node.root.moonrise$getTrackedEntity() != null) {
++                    for (final ServerPlayer player : node.root.level.getLocalPlayers()) {
++                        node.root.moonrise$getTrackedEntity().updatePlayer(player);
++                    }
++                }
++            }
++        }
++
++        public void clearTracker() {
++            for (final EntityTreeNode node : this.getFullTree()) {
++                if (node.root.moonrise$getTrackedEntity() != null) {
++                    node.root.moonrise$getTrackedEntity().moonrise$removeNonTickThreadPlayers();
++                    for (final ServerPlayer player : node.root.level.getLocalPlayers()) {
++                        node.root.moonrise$getTrackedEntity().removePlayer(player);
++                    }
++                }
++            }
++        }
++
++        public void adjustRiders(boolean teleport) {
++            java.util.ArrayDeque<EntityTreeNode> queue = new java.util.ArrayDeque<>();
++            queue.add(this);
++
++            EntityTreeNode curr;
++            while ((curr = queue.pollFirst()) != null) {
++                EntityTreeNode[] passengers = curr.passengers;
++                if (passengers == null) {
++                    continue;
++                }
++
++                for (EntityTreeNode passenger : passengers) {
++                    curr.root.positionRider(passenger.root, teleport ? Entity::moveTo : Entity::setPos);
++                }
++            }
++        }
++    }
++
++    public void repositionAllPassengers(boolean teleport) {
++        this.makePassengerTree().adjustRiders(teleport);
++    }
++
++    protected EntityTreeNode makePassengerTree() {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot read passengers off of the main thread");
++
++        EntityTreeNode root = new EntityTreeNode(null, this);
++        java.util.ArrayDeque<EntityTreeNode> queue = new java.util.ArrayDeque<>();
++        queue.add(root);
++        EntityTreeNode curr;
++        while ((curr = queue.pollFirst()) != null) {
++            Entity vehicle = curr.root;
++            List<Entity> passengers = vehicle.passengers;
++            if (passengers.isEmpty()) {
++                continue;
++            }
++
++            EntityTreeNode[] treePassengers = new EntityTreeNode[passengers.size()];
++            curr.passengers = treePassengers;
++
++            for (int i = 0; i < passengers.size(); ++i) {
++                Entity passenger = passengers.get(i);
++                queue.addLast(treePassengers[i] = new EntityTreeNode(curr, passenger));
++            }
++        }
++
++        return root;
++    }
++
++    protected EntityTreeNode detachPassengers() {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot adjust passengers/vehicle off of the main thread");
++
++        EntityTreeNode root = new EntityTreeNode(null, this);
++        java.util.ArrayDeque<EntityTreeNode> queue = new java.util.ArrayDeque<>();
++        queue.add(root);
++        EntityTreeNode curr;
++        while ((curr = queue.pollFirst()) != null) {
++            Entity vehicle = curr.root;
++            List<Entity> passengers = vehicle.passengers;
++            if (passengers.isEmpty()) {
++                continue;
++            }
++
++            vehicle.passengers = ImmutableList.of();
++
++            EntityTreeNode[] treePassengers = new EntityTreeNode[passengers.size()];
++            curr.passengers = treePassengers;
++
++            for (int i = 0; i < passengers.size(); ++i) {
++                Entity passenger = passengers.get(i);
++                passenger.vehicle = null;
++                queue.addLast(treePassengers[i] = new EntityTreeNode(curr, passenger));
++            }
++        }
++
++        return root;
++    }
++
++    /**
++     * This flag will perform an async load on the chunks determined by
++     * the entity's bounding box before teleporting the entity.
++     */
++    public static final long TELEPORT_FLAG_LOAD_CHUNK = 1L << 0;
++    /**
++     * This flag requires the entity being teleported to be a root vehicle.
++     * Thus, if you want to teleport a non-root vehicle, you must dismount
++     * the target entity before calling teleport, otherwise the
++     * teleport will be refused.
++     */
++    public static final long TELEPORT_FLAG_TELEPORT_PASSENGERS = 1L << 1;
++    /**
++     * The flag will dismount any passengers and dismout from the current vehicle
++     * to teleport if and only if dismounting would result in the teleport being allowed.
++     */
++    public static final long TELEPORT_FLAG_UNMOUNT = 1L << 2;
++
++    protected void placeSingleSync(ServerLevel originWorld, ServerLevel destination, EntityTreeNode treeNode, long teleportFlags) {
++        destination.addDuringTeleport(this);
++    }
++
++    protected final void placeInAsync(ServerLevel originWorld, ServerLevel destination, long teleportFlags,
++                                      EntityTreeNode passengerTree, java.util.function.Consumer<Entity> teleportComplete) {
++        Vec3 pos = this.position();
++        ChunkPos posChunk = new ChunkPos(
++            ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(pos),
++            ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(pos)
++        );
++
++        // ensure the region is always ticking in case of a shutdown
++        // otherwise, the shutdown will not be able to complete the shutdown as it requires a ticking region
++        Long teleportHoldId = Long.valueOf(TELEPORT_HOLD_TICKET_GEN.getAndIncrement());
++        originWorld.chunkSource.addTicketAtLevel(
++            TicketType.TELEPORT_HOLD_TICKET, posChunk,
++            ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
++            teleportHoldId
++        );
++        final ServerLevel.PendingTeleport pendingTeleport = new ServerLevel.PendingTeleport(passengerTree, pos);
++        destination.pushPendingTeleport(pendingTeleport);
++
++        Runnable scheduleEntityJoin = () -> {
++            io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue(
++                destination,
++                ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(pos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(pos),
++                () -> {
++                    if (!destination.removePendingTeleport(pendingTeleport)) {
++                        // shutdown logic placed the entity already, and we are shutting down - do nothing to ensure
++                        // we do not produce any errors here
++                        return;
++                    }
++                    originWorld.chunkSource.removeTicketAtLevel(
++                        TicketType.TELEPORT_HOLD_TICKET, posChunk,
++                        ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
++                        teleportHoldId
++                    );
++                    List<EntityTreeNode> fullTree = passengerTree.getFullTree();
++                    for (EntityTreeNode node : fullTree) {
++                        node.root.placeSingleSync(originWorld, destination, node, teleportFlags);
++                    }
++
++                    // restore passenger tree
++                    passengerTree.restore();
++                    passengerTree.adjustRiders(true);
++
++                    // invoke post dimension change now
++                    for (EntityTreeNode node : fullTree) {
++                        node.root.postChangeDimension();
++                    }
++
++                    if (teleportComplete != null) {
++                        teleportComplete.accept(Entity.this);
++                    }
++                }
++            );
++        };
++
++        if ((teleportFlags & TELEPORT_FLAG_LOAD_CHUNK) != 0L) {
++            destination.loadChunksForMoveAsync(
++                this.getBoundingBox(), ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
++                (chunkList) -> {
++                    for (net.minecraft.world.level.chunk.ChunkAccess chunk : chunkList) {
++                        destination.chunkSource.addTicketAtLevel(
++                            TicketType.POST_TELEPORT, chunk.getPos(),
++                            ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.FULL_LOADED_TICKET_LEVEL,
++                            Integer.valueOf(Entity.this.getId())
++                        );
++                    }
++                    scheduleEntityJoin.run();
++                }
++            );
++        } else {
++            scheduleEntityJoin.run();
++        }
++    }
++
++    protected boolean canTeleportAsync() {
++        return !this.hasNullCallback() && !this.isRemoved() && this.isAlive() && (!(this instanceof net.minecraft.world.entity.LivingEntity livingEntity) || !livingEntity.isSleeping());
++    }
++
++    // Mojang for whatever reason has started storing positions to cache certain physics properties that entities collide with
++    // As usual though, they don't properly do anything to prevent serious desync with respect to the current entity position
++    // We add additional logic to reset these before teleporting to prevent issues with them possibly tripping thread checks.
++    protected void resetStoredPositions() {
++        this.mainSupportingBlockPos = Optional.empty();
++    }
++
++    protected void teleportSyncSameRegion(Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
++        if (yaw != null) {
++            this.setYRot(yaw.floatValue());
++            this.setYHeadRot(yaw.floatValue());
++        }
++        if (pitch != null) {
++            this.setXRot(pitch.floatValue());
++        }
++        if (velocity != null) {
++            this.setDeltaMovement(velocity);
++        }
++        this.moveTo(pos.x, pos.y, pos.z);
++        this.setOldPosAndRot();
++        this.resetStoredPositions();
++    }
++
++    protected final void transform(TeleportTransition telpeort) {
++        PositionMoveRotation move = PositionMoveRotation.calculateAbsolute(
++            PositionMoveRotation.of(this), PositionMoveRotation.of(telpeort), telpeort.relatives()
++        );
++        this.transform(
++            move.position(), Float.valueOf(move.yRot()), Float.valueOf(move.xRot()), move.deltaMovement()
++        );
++    }
++
++    protected void transform(Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
++        if (yaw != null) {
++            this.setYRot(yaw.floatValue());
++            this.setYHeadRot(yaw.floatValue());
++        }
++        if (pitch != null) {
++            this.setXRot(pitch.floatValue());
++        }
++        if (velocity != null) {
++            this.setDeltaMovement(velocity);
++        }
++        if (pos != null) {
++            this.setPosRaw(pos.x, pos.y, pos.z);
++        }
++        this.setOldPosAndRot();
++    }
++
++    protected final Entity transformForAsyncTeleport(TeleportTransition telpeort) {
++        PositionMoveRotation move = PositionMoveRotation.calculateAbsolute(
++            PositionMoveRotation.of(this), PositionMoveRotation.of(telpeort), telpeort.relatives()
++        );
++        return this.transformForAsyncTeleport(
++            telpeort.newLevel(), telpeort.position(), Float.valueOf(move.yRot()), Float.valueOf(move.xRot()), move.deltaMovement()
++        );
++    }
++
++    protected Entity transformForAsyncTeleport(ServerLevel destination, Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
++        this.removeAfterChangingDimensions(); // remove before so that any CBEntity#getHandle call affects this entity before copying
++
++        Entity copy = this.getType().create(destination, EntitySpawnReason.DIMENSION_TRAVEL);
++        copy.restoreFrom(this);
++        copy.transform(pos, yaw, pitch, velocity);
++        // vanilla code used to call remove _after_ copying, and some stuff is required to be after copy - so add hook here
++        // for example, clearing of inventory after switching dimensions
++        this.postRemoveAfterChangingDimensions();
++
++        return copy;
++    }
++
++    public final boolean teleportAsync(TeleportTransition teleportTarget, long teleportFlags,
++                                       java.util.function.Consumer<Entity> teleportComplete) {
++        PositionMoveRotation move = PositionMoveRotation.calculateAbsolute(PositionMoveRotation.of(this), PositionMoveRotation.of(teleportTarget), teleportTarget.relatives());
++
++        return this.teleportAsync(
++            teleportTarget.newLevel(), move.position(), Float.valueOf(move.yRot()), Float.valueOf(move.xRot()), move.deltaMovement(),
++            teleportTarget.cause(), teleportFlags, teleportComplete
++        );
++    }
++
++    public final boolean teleportAsync(ServerLevel destination, Vec3 pos, Float yaw, Float pitch, Vec3 velocity,
++                                       org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, long teleportFlags,
++                                       java.util.function.Consumer<Entity> teleportComplete) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot teleport entity async");
++
++        if (!ServerLevel.isInSpawnableBounds(new BlockPos(ca.spottedleaf.moonrise.common.util.CoordinateUtils.getBlockX(pos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getBlockY(pos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getBlockZ(pos)))) {
++            return false;
++        }
++
++        if (!this.canTeleportAsync()) {
++            return false;
++        }
++        this.getBukkitEntity(); // force bukkit entity to be created before TPing
++        if ((teleportFlags & TELEPORT_FLAG_UNMOUNT) == 0L) {
++            for (Entity entity : this.getIndirectPassengers()) {
++                if (!entity.canTeleportAsync()) {
++                    return false;
++                }
++                entity.getBukkitEntity(); // force bukkit entity to be created before TPing
++            }
++        } else {
++            this.unRide();
++        }
++
++        if ((teleportFlags & TELEPORT_FLAG_TELEPORT_PASSENGERS) != 0L) {
++            if (this.isPassenger()) {
++                return false;
++            }
++        } else {
++            if (this.isVehicle() || this.isPassenger()) {
++                return false;
++            }
++        }
++
++        // TODO any events that can modify go HERE
++
++        // check for same region
++        if (destination == this.level()) {
++            Vec3 currPos = this.position();
++            if (
++                destination.regioniser.getRegionAtUnsynchronised(
++                    ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(currPos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(currPos)
++                ) == destination.regioniser.getRegionAtUnsynchronised(
++                    ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(pos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(pos)
++                )
++            ) {
++                EntityTreeNode passengerTree = this.detachPassengers();
++                // Note: The client does not accept position updates for controlled entities. So, we must
++                // perform a lot of tracker updates here to make it all work out.
++
++                // first, clear the tracker
++                passengerTree.clearTracker();
++                for (EntityTreeNode entity : passengerTree.getFullTree()) {
++                    entity.root.teleportSyncSameRegion(pos, yaw, pitch, velocity);
++                }
++
++                passengerTree.restore();
++                // re-add to the tracker once the tree is restored
++                passengerTree.addTracker();
++
++                // adjust entities to final position
++                passengerTree.adjustRiders(true);
++
++                // the tracker clear/add logic is only used in the same region, as the other logic
++                // performs add/remove from world logic which will also perform add/remove tracker logic
++
++                if (teleportComplete != null) {
++                    teleportComplete.accept(this);
++                }
++                return true;
++            }
++        }
++
++        EntityTreeNode passengerTree = this.detachPassengers();
++        List<EntityTreeNode> fullPassengerTree = passengerTree.getFullTree();
++        ServerLevel originWorld = (ServerLevel)this.level;
++
++        for (EntityTreeNode node : fullPassengerTree) {
++            node.root.preChangeDimension();
++        }
++
++        for (EntityTreeNode node : fullPassengerTree) {
++            node.root = node.root.transformForAsyncTeleport(destination, pos, yaw, pitch, velocity);
++        }
++
++        passengerTree.root.placeInAsync(originWorld, destination, teleportFlags, passengerTree, teleportComplete);
++
++        return true;
++    }
++
++    public void preChangeDimension() {
++        if (this instanceof Leashable leashable) {
++            leashable.dropLeash();
++        }
++    }
++
++    public void postChangeDimension() {
++        this.resetStoredPositions();
++    }
++
++    protected static enum PortalType {
++        NETHER, END;
++    }
++
++    public boolean endPortalLogicAsync(BlockPos portalPos) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot portal entity async");
++
++        ServerLevel destination = this.getServer().getLevel(this.level().getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END ? Level.OVERWORLD : Level.END);
++        if (destination == null) {
++            // wat
++            return false;
++        }
++
++        return this.portalToAsync(destination, portalPos, true, PortalType.END, null);
++    }
++
++    public boolean netherPortalLogicAsync(BlockPos portalPos) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot portal entity async");
++
++        ServerLevel destination = this.getServer().getLevel(this.level().getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER ? Level.OVERWORLD : Level.NETHER);
++        if (destination == null) {
++            // wat
++            return false;
++        }
++
++        return this.portalToAsync(destination, portalPos, true, PortalType.NETHER, null);
++    }
++
++    private static final java.util.concurrent.atomic.AtomicLong CREATE_PORTAL_DOUBLE_CHECK = new java.util.concurrent.atomic.AtomicLong();
++    private static final java.util.concurrent.atomic.AtomicLong TELEPORT_HOLD_TICKET_GEN = new java.util.concurrent.atomic.AtomicLong();
++
++    // To simplify portal logic, in region threading both players
++    // and non-player entities will create portals. By guaranteeing
++    // that the teleportation can take place, we can simply
++    // remove the entity, find/create the portal, and place async.
++    // If we have to worry about whether the entity may not teleport,
++    // we need to first search, then report back, ...
++    protected void findOrCreatePortalAsync(ServerLevel origin, BlockPos originPortal, ServerLevel destination, PortalType type,
++                                           ca.spottedleaf.concurrentutil.completable.CallbackCompletable<TeleportTransition> portalInfoCompletable) {
++        switch (type) {
++            // end portal logic is quite simple, the spawn in the end is fixed and when returning to the overworld
++            // we just select the spawn position
++            case END: {
++                if (destination.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END) {
++                    BlockPos targetPos = ServerLevel.END_SPAWN_POINT;
++                    // need to load chunks so we can create the platform
++                    destination.moonrise$loadChunksAsync(
++                        targetPos, 16, // load 16 blocks to be safe from block physics
++                        ca.spottedleaf.concurrentutil.util.Priority.HIGH,
++                        (chunks) -> {
++                            net.minecraft.world.level.levelgen.feature.EndPlatformFeature.createEndPlatform(destination, targetPos.below(), true, null);
++
++                            // the portal obsidian is placed at targetPos.y - 2, so if we want to place the entity
++                            // on the obsidian, we need to spawn at targetPos.y - 1
++                            portalInfoCompletable.complete(
++                                new net.minecraft.world.level.portal.TeleportTransition(
++                                    destination, Vec3.atBottomCenterOf(targetPos.below()), Vec3.ZERO, 90.0f, 0.0f,
++                                    TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET),
++                                    org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_PORTAL
++                                )
++                            );
++                        }
++                    );
++                } else {
++                    BlockPos spawnPos = destination.getSharedSpawnPos();
++                    // need to load chunk for heightmap
++                    destination.moonrise$loadChunksAsync(
++                        spawnPos, 0,
++                        ca.spottedleaf.concurrentutil.util.Priority.HIGH,
++                        (chunks) -> {
++                            BlockPos adjustedSpawn = destination.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, spawnPos);
++
++                            // done
++                            portalInfoCompletable.complete(
++                                new net.minecraft.world.level.portal.TeleportTransition(
++                                    destination, Vec3.atBottomCenterOf(adjustedSpawn), Vec3.ZERO, 90.0f, 0.0f,
++                                    TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET),
++                                    org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_PORTAL
++                                )
++                            );
++                        }
++                    );
++                }
++
++                break;
++            }
++            // for the nether logic, we need to first load the chunks in radius to empty (so that POI is created)
++            // then we can search for an existing portal using the POI routines
++            // if we don't find a portal, then we bring the chunks in the create radius to full and
++            // create it
++            case NETHER: {
++                // hoisted from the create fallback, so that we can avoid the sync load later if we need it
++                BlockState originalPortalBlock = origin.getBlockStateIfLoaded(originPortal);
++                Direction.Axis originalPortalDirection = originalPortalBlock == null ? Direction.Axis.X :
++                    originalPortalBlock.getOptionalValue(net.minecraft.world.level.block.NetherPortalBlock.AXIS).orElse(Direction.Axis.X);
++                BlockUtil.FoundRectangle originalPortalRectangle =
++                    originalPortalBlock == null || !originalPortalBlock.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_AXIS)
++                        ? null
++                        : BlockUtil.getLargestRectangleAround(
++                            originPortal, originalPortalDirection, 21, Direction.Axis.Y, 21,
++                            (blockpos) -> {
++                                return origin.getBlockStateFromEmptyChunkIfLoaded(blockpos) == originalPortalBlock;
++                            }
++                        );
++
++                boolean destinationIsNether = destination.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER;
++
++                int portalSearchRadius = origin.paperConfig().environment.portalSearchVanillaDimensionScaling && destinationIsNether ?
++                    (int)(destination.paperConfig().environment.portalSearchRadius / destination.dimensionType().coordinateScale()) :
++                    destination.paperConfig().environment.portalSearchRadius;
++                int portalCreateRadius = destination.paperConfig().environment.portalCreateRadius;
++
++                WorldBorder destinationBorder = destination.getWorldBorder();
++                double dimensionScale = net.minecraft.world.level.dimension.DimensionType.getTeleportationScale(origin.dimensionType(), destination.dimensionType());
++                BlockPos targetPos = destination.getWorldBorder().clampToBounds(this.getX() * dimensionScale, this.getY(), this.getZ() * dimensionScale);
++
++                ca.spottedleaf.concurrentutil.completable.CallbackCompletable<BlockUtil.FoundRectangle> portalFound
++                    = new ca.spottedleaf.concurrentutil.completable.CallbackCompletable<>();
++
++                // post portal find/create logic
++                portalFound.addWaiter(
++                    (BlockUtil.FoundRectangle portal, Throwable thr) -> {
++                        // no portal could be created
++                        if (portal == null) {
++                            portalInfoCompletable.complete(
++                                new TeleportTransition(destination, Vec3.atCenterOf(targetPos), Vec3.ZERO,
++                                    90.0f, 0.0f,
++                                    TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET))
++                            );
++                            return;
++                        }
++
++                        Vec3 relativePos = originalPortalRectangle == null ?
++                            new Vec3(0.5, 0.0, 0.0) :
++                            Entity.this.getRelativePortalPosition(originalPortalDirection, originalPortalRectangle);
++
++                        portalInfoCompletable.complete(
++                            net.minecraft.world.level.block.NetherPortalBlock.createDimensionTransition(
++                                destination, portal, originalPortalDirection, relativePos,
++                                Entity.this, TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET)
++                            )
++                        );
++                    }
++                );
++
++                // kick off search for existing portal or creation
++                destination.moonrise$loadChunksAsync(
++                    // add 32 so that the final search for a portal frame doesn't load any chunks
++                    targetPos, portalSearchRadius + 32,
++                    net.minecraft.world.level.chunk.status.ChunkStatus.EMPTY,
++                    ca.spottedleaf.concurrentutil.util.Priority.HIGH,
++                    (chunks) -> {
++                        BlockUtil.FoundRectangle portal =
++                            net.minecraft.world.level.block.NetherPortalBlock.findPortalAround(destination, targetPos, destinationBorder, portalSearchRadius);
++                        if (portal != null) {
++                            portalFound.complete(portal);
++                            return;
++                        }
++
++                        // add tickets so that we can re-search for a portal once the chunks are loaded
++                        Long ticketId = Long.valueOf(CREATE_PORTAL_DOUBLE_CHECK.getAndIncrement());
++                        for (net.minecraft.world.level.chunk.ChunkAccess chunk : chunks) {
++                            destination.chunkSource.addTicketAtLevel(
++                                TicketType.NETHER_PORTAL_DOUBLE_CHECK, chunk.getPos(),
++                                ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
++                                ticketId
++                            );
++                        }
++
++                        // no portal found - create one
++                        destination.moonrise$loadChunksAsync(
++                            targetPos, portalCreateRadius + 32,
++                            ca.spottedleaf.concurrentutil.util.Priority.HIGH,
++                            (chunks2) -> {
++                                // don't need the tickets anymore
++                                // note: we expect removeTicketsAtLevel to add an unknown ticket for us automatically
++                                // if the ticket level were to decrease
++                                for (net.minecraft.world.level.chunk.ChunkAccess chunk : chunks) {
++                                    destination.chunkSource.removeTicketAtLevel(
++                                        TicketType.NETHER_PORTAL_DOUBLE_CHECK, chunk.getPos(),
++                                        ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
++                                        ticketId
++                                    );
++                                }
++
++                                // when two entities portal at the same time, it is possible that both entities reach this
++                                // part of the code - and create a double portal
++                                // to fix this, we just issue another search to try and see if another entity created
++                                // a portal nearby
++                                BlockUtil.FoundRectangle existingTryAgain =
++                                    net.minecraft.world.level.block.NetherPortalBlock.findPortalAround(destination, targetPos, destinationBorder, portalSearchRadius);
++                                if (existingTryAgain != null) {
++                                    portalFound.complete(existingTryAgain);
++                                    return;
++                                }
++
++                                // we do not have the correct entity reference here
++                                BlockUtil.FoundRectangle createdPortal =
++                                    destination.getPortalForcer().createPortal(targetPos, originalPortalDirection, null, portalCreateRadius).orElse(null);
++                                // if it wasn't created, passing null is expected here
++                                portalFound.complete(createdPortal);
++                            }
++                        );
++                    }
++                );
++                break;
++            }
++            default: {
++                throw new IllegalStateException("Unknown portal type " + type);
++            }
++        }
++    }
++
++    public boolean canPortalAsync(ServerLevel to, boolean considerPassengers) {
++        return this.canPortalAsync(to, considerPassengers, false);
++    }
++
++    protected boolean canPortalAsync(ServerLevel to, boolean considerPassengers, boolean skipPassengerCheck) {
++        if (considerPassengers) {
++            if (!skipPassengerCheck && this.isPassenger()) {
++                return false;
++            }
++        } else {
++            if (this.isVehicle() || (!skipPassengerCheck && this.isPassenger())) {
++                return false;
++            }
++        }
++        this.getBukkitEntity(); // force bukkit entity to be created before TPing
++        if (!this.canTeleportAsync()) {
++            return false;
++        }
++        if (considerPassengers) {
++            for (Entity entity : this.passengers) {
++                if (!entity.canPortalAsync(to, true, true)) {
++                    return false;
++                }
++            }
++        }
++
++        return true;
++    }
++
++    protected void prePortalLogic(ServerLevel origin, ServerLevel destination, PortalType type) {
++
++    }
++
++    protected boolean portalToAsync(ServerLevel destination, BlockPos portalPos, boolean takePassengers,
++                                    PortalType type, java.util.function.Consumer<Entity> teleportComplete) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot portal entity async");
++        if (!this.canPortalAsync(destination, takePassengers)) {
++            return false;
++        }
++
++        Vec3 initialPosition = this.position();
++        ChunkPos initialPositionChunk = new ChunkPos(
++            ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(initialPosition),
++            ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(initialPosition)
++        );
++
++        // first, remove entity/passengers from world
++        EntityTreeNode passengerTree = this.detachPassengers();
++        List<EntityTreeNode> fullPassengerTree = passengerTree.getFullTree();
++        ServerLevel originWorld = (ServerLevel)this.level;
++
++        for (EntityTreeNode node : fullPassengerTree) {
++            node.root.preChangeDimension();
++            node.root.prePortalLogic(originWorld, destination, type);
++        }
++
++        for (EntityTreeNode node : fullPassengerTree) {
++            // we will update pos/rot/speed later
++            node.root = node.root.transformForAsyncTeleport(destination, null, null, null, null);
++            // set portal cooldown
++            node.root.setPortalCooldown();
++        }
++
++        // ensure the region is always ticking in case of a shutdown
++        // otherwise, the shutdown will not be able to complete the shutdown as it requires a ticking region
++        Long teleportHoldId = Long.valueOf(TELEPORT_HOLD_TICKET_GEN.getAndIncrement());
++        originWorld.chunkSource.addTicketAtLevel(
++            TicketType.TELEPORT_HOLD_TICKET, initialPositionChunk,
++            ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
++            teleportHoldId
++        );
++
++        ServerLevel.PendingTeleport beforeFindDestination = new ServerLevel.PendingTeleport(passengerTree, initialPosition);
++        originWorld.pushPendingTeleport(beforeFindDestination);
++
++        ca.spottedleaf.concurrentutil.completable.CallbackCompletable<TeleportTransition> portalInfoCompletable
++            = new ca.spottedleaf.concurrentutil.completable.CallbackCompletable<>();
++
++        portalInfoCompletable.addWaiter((TeleportTransition info, Throwable throwable) -> {
++            if (!originWorld.removePendingTeleport(beforeFindDestination)) {
++                // the shutdown thread has placed us back into the origin world at the original position
++                // we just have to abandon this teleport to prevent duplication
++                return;
++            }
++            originWorld.chunkSource.removeTicketAtLevel(
++                TicketType.TELEPORT_HOLD_TICKET, initialPositionChunk,
++                ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
++                teleportHoldId
++            );
++            // adjust passenger tree to final pos/rot/speed
++            for (EntityTreeNode node : fullPassengerTree) {
++                node.root.transform(info);
++            }
++
++            // place
++            passengerTree.root.placeInAsync(
++                originWorld, destination, Entity.TELEPORT_FLAG_LOAD_CHUNK | (takePassengers ? Entity.TELEPORT_FLAG_TELEPORT_PASSENGERS : 0L),
++                passengerTree,
++                (Entity teleported) -> {
++                    if (info.postTeleportTransition() != null) {
++                        info.postTeleportTransition().onTransition(teleported);
++                    }
++
++                    if (teleportComplete != null) {
++                        teleportComplete.accept(teleported);
++                    }
++                }
++            );
++        });
++
++
++        passengerTree.root.findOrCreatePortalAsync(originWorld, portalPos, destination, type, portalInfoCompletable);
++
++        return true;
++    }
++    // Folia end - region threading
++
+     @Nullable
+     public Entity teleport(TeleportTransition teleportTransition) {
++        // Folia start - region threading
++        if (true) {
++            throw new UnsupportedOperationException("Must use teleportAsync while in region threading");
++        }
++        // Folia end - region threading
+         // Paper start - Fix item duplication and teleport issues
+         if ((!this.isAlive() || !this.valid) && (teleportTransition.newLevel() != this.level)) {
+             LOGGER.warn("Illegal Entity Teleport " + this + " to " + teleportTransition.newLevel() + ":" + teleportTransition.position(), new Throwable());
+@@ -3911,6 +_,12 @@
+         }
+     }
+ 
++    // Folia start - region threading - move inventory clearing until after the dimension change
++    protected void postRemoveAfterChangingDimensions() {
++
++    }
++    // Folia end - region threading - move inventory clearing until after the dimension change
++
+     protected void removeAfterChangingDimensions() {
+         this.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION, null); // CraftBukkit - add Bukkit remove cause
+         if (this instanceof Leashable leashable && leashable.isLeashed()) { // Paper - only call if it is leashed
+@@ -4790,7 +_,8 @@
+             }
+         }
+         // Paper end - Fix MC-4
+-        if (this.position.x != x || this.position.y != y || this.position.z != z) {
++        boolean posChanged = this.position.x != x || this.position.y != y || this.position.z != z;
++        if (posChanged) { // Folia - region threading
+             synchronized (this.posLock) { // Paper - detailed watchdog information
+             this.position = new Vec3(x, y, z);
+             } // Paper - detailed watchdog information
+@@ -4809,7 +_,7 @@
+         }
+         // Paper start - Block invalid positions and bounding box; don't allow desync of pos and AABB
+         // hanging has its own special logic
+-        if (!(this instanceof net.minecraft.world.entity.decoration.HangingEntity) && (forceBoundingBoxUpdate || this.position.x != x || this.position.y != y || this.position.z != z)) {
++        if (!(this instanceof net.minecraft.world.entity.decoration.HangingEntity) && (forceBoundingBoxUpdate || posChanged)) {
+             this.setBoundingBox(this.makeBoundingBox());
+         }
+         // Paper end - Block invalid positions and bounding box
+@@ -4893,6 +_,12 @@
+         return this.removalReason != null;
+     }
+ 
++    // Folia start - region threading
++    public final boolean hasNullCallback() {
++        return this.levelCallback == EntityInLevelCallback.NULL;
++    }
++    // Folia end - region threading
++
+     @Nullable
+     public Entity.RemovalReason getRemovalReason() {
+         return this.removalReason;
+@@ -4915,6 +_,9 @@
+         org.bukkit.craftbukkit.event.CraftEventFactory.callEntityRemoveEvent(this, cause);
+         // CraftBukkit end
+         final boolean alreadyRemoved = this.removalReason != null; // Paper - Folia schedulers
++        // Folia start - region threading
++        this.preRemove(removalReason);
++        // Folia end - region threading
+         if (this.removalReason == null) {
+             this.removalReason = removalReason;
+         }
+@@ -4937,6 +_,10 @@
+     public void unsetRemoved() {
+         this.removalReason = null;
+     }
++
++    // Folia start - region threading
++    protected void preRemove(Entity.RemovalReason reason) {}
++    // Folia end - region threading
+ 
+     // Paper start - Folia schedulers
+     /**

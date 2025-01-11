@@ -1,0 +1,50 @@
+--- a/net/minecraft/world/entity/projectile/FishingHook.java
++++ b/net/minecraft/world/entity/projectile/FishingHook.java
+@@ -94,7 +_,7 @@
+ 
+     public FishingHook(Player player, Level level, int luck, int lureSpeed) {
+         this(EntityType.FISHING_BOBBER, level, luck, lureSpeed);
+-        this.setOwner(player);
++        //this.setOwner(player); // Folia - region threading - move this down after position so that thread-checks do not fail
+         float xRot = player.getXRot();
+         float yRot = player.getYRot();
+         float cos = Mth.cos(-yRot * (float) (Math.PI / 180.0) - (float) Math.PI);
+@@ -105,6 +_,7 @@
+         double eyeY = player.getEyeY();
+         double d1 = player.getZ() - cos * 0.3;
+         this.moveTo(d, eyeY, d1, yRot, xRot);
++        this.setOwner(player); // Folia - region threading - move this down after position so that thread-checks do not fail
+         Vec3 vec3 = new Vec3(-sin, Mth.clamp(-(sin1 / f), -5.0F, 5.0F), -cos);
+         double len = vec3.length();
+         vec3 = vec3.multiply(
+@@ -260,6 +_,11 @@
+     }
+ 
+     private boolean shouldStopFishing(Player player) {
++        // Folia start - region threading
++        if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player)) {
++            return true;
++        }
++        // Folia end - region threading
+         ItemStack mainHandItem = player.getMainHandItem();
+         ItemStack offhandItem = player.getOffhandItem();
+         boolean isFishingRod = mainHandItem.is(Items.FISHING_ROD);
+@@ -623,9 +_,17 @@
+     @Override
+     public void remove(Entity.RemovalReason reason, org.bukkit.event.entity.EntityRemoveEvent.Cause cause) {
+         // CraftBukkit end
+-        this.updateOwnerInfo(null);
++        //this.updateOwnerInfo(null); // Folia - region threading - move into preRemove
+         super.remove(reason, cause); // CraftBukkit - add Bukkit remove cause
+     }
++
++    // Folia start - region threading
++    @Override
++    protected void preRemove(RemovalReason reason) {
++        super.preRemove(reason);
++        this.updateOwnerInfo(null);
++    }
++    // Folia end - region threading
+ 
+     @Override
+     public void onClientRemoval() {

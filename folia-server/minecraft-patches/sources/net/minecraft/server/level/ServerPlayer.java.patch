@@ -1,0 +1,550 @@
+--- a/net/minecraft/server/level/ServerPlayer.java
++++ b/net/minecraft/server/level/ServerPlayer.java
+@@ -180,7 +_,7 @@
+ 
+ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patches.chunk_system.player.ChunkSystemServerPlayer { // Paper - rewrite chunk system
+     private static final Logger LOGGER = LogUtils.getLogger();
+-    public long lastSave = MinecraftServer.currentTick; // Paper - Incremental chunk and player saving
++    public static final long LAST_SAVE_ABSENT = Long.MIN_VALUE; public long lastSave = LAST_SAVE_ABSENT; // Paper // Folia - threaded regions - changed to nanoTime
+     private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_XZ = 32;
+     private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_Y = 10;
+     private static final int FLY_STAT_RECORDING_SPEED = 25;
+@@ -443,8 +_,149 @@
+         this.maxHealthCache = this.getMaxHealth();
+     }
+ 
++    // Folia start - region threading
++    private static final int SPAWN_RADIUS_SELECTION_SEARCH = 5;
++
++    private static BlockPos getRandomSpawn(ServerLevel world, RandomSource random) {
++        BlockPos spawn = world.getSharedSpawnPos();
++        double radius = (double)Math.max(0, world.getGameRules().getInt(GameRules.RULE_SPAWN_RADIUS));
++
++        double spawnX = (double)spawn.getX() + 0.5;
++        double spawnZ = (double)spawn.getZ() + 0.5;
++
++        net.minecraft.world.level.border.WorldBorder worldBorder = world.getWorldBorder();
++
++        double selectMinX = Math.max(worldBorder.getMinX() + 1.0, spawnX - radius);
++        double selectMinZ = Math.max(worldBorder.getMinZ() + 1.0, spawnZ - radius);
++        double selectMaxX = Math.min(worldBorder.getMaxX() - 1.0, spawnX + radius);
++        double selectMaxZ = Math.min(worldBorder.getMaxZ() - 1.0, spawnZ + radius);
++
++        double amountX = selectMaxX - selectMinX;
++        double amountZ = selectMaxZ - selectMinZ;
++
++        int selectX = amountX < 1.0 ? Mth.floor(worldBorder.getCenterX()) : (int)Mth.floor((amountX + 1.0) * random.nextDouble() + selectMinX);
++        int selectZ = amountZ < 1.0 ? Mth.floor(worldBorder.getCenterZ()) : (int)Mth.floor((amountZ + 1.0) * random.nextDouble() + selectMinZ);
++
++        return new BlockPos(selectX, 0, selectZ);
++    }
++
++    private static void completeSpawn(ServerLevel world, BlockPos selected,
++                                      ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> toComplete) {
++        toComplete.complete(io.papermc.paper.util.MCUtil.toLocation(world, Vec3.atBottomCenterOf(selected), world.levelData.getSpawnAngle(), 0.0f));
++    }
++
++    private static BlockPos findSpawnAround(ServerLevel world, ServerPlayer player, BlockPos selected) {
++        // try hard to find, so that we don't attempt another chunk load
++        for (int dz = -SPAWN_RADIUS_SELECTION_SEARCH; dz <= SPAWN_RADIUS_SELECTION_SEARCH; ++dz) {
++            for (int dx = -SPAWN_RADIUS_SELECTION_SEARCH; dx <= SPAWN_RADIUS_SELECTION_SEARCH; ++dx) {
++                BlockPos inChunk = PlayerRespawnLogic.getOverworldRespawnPos(world, selected.getX() + dx, selected.getZ() + dz);
++                if (inChunk == null) {
++                    continue;
++                }
++
++                AABB checkVolume = player.getBoundingBoxAt((double)inChunk.getX() + 0.5, (double)inChunk.getY(), (double)inChunk.getZ() + 0.5);
++
++                if (!player.noCollisionNoLiquid(world, checkVolume)) {
++                    continue;
++                }
++
++                return inChunk;
++            }
++        }
++
++        return null;
++    }
++
++    // rets false when another attempt is required
++    private static boolean trySpawnOrSchedule(ServerLevel world, ServerPlayer player, RandomSource random, int[] attemptCount, int maxAttempts,
++                                              ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> toComplete) {
++        ++attemptCount[0];
++
++        BlockPos rough = getRandomSpawn(world, random);
++
++        // add 2 to ensure that the chunks are loaded for collision checks
++        int minX = (rough.getX() - (SPAWN_RADIUS_SELECTION_SEARCH + 2)) >> 4;
++        int minZ = (rough.getZ() - (SPAWN_RADIUS_SELECTION_SEARCH + 2)) >> 4;
++        int maxX = (rough.getX() + (SPAWN_RADIUS_SELECTION_SEARCH + 2)) >> 4;
++        int maxZ = (rough.getZ() + (SPAWN_RADIUS_SELECTION_SEARCH + 2)) >> 4;
++
++        // we could short circuit this check, but it would possibly recurse. Then, it could end up causing a stack overflow
++        if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(world, minX, minZ, maxX, maxZ) || !world.moonrise$areChunksLoaded(minX, minZ, maxX, maxZ)) {
++            world.moonrise$loadChunksAsync(minX, maxX, minZ, maxZ, ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
++                    (unused) -> {
++                        BlockPos selected = findSpawnAround(world, player, rough);
++                        if (selected == null) {
++                            // run more spawn attempts
++                            selectSpawn(world, player, random, attemptCount, maxAttempts, toComplete);
++                            return;
++                        }
++
++                        completeSpawn(world, selected, toComplete);
++                        return;
++                    }
++            );
++            return true;
++        }
++
++        BlockPos selected = findSpawnAround(world, player, rough);
++        if (selected == null) {
++            return false;
++        }
++
++        completeSpawn(world, selected, toComplete);
++        return true;
++    }
++
++    private static void selectSpawn(ServerLevel world, ServerPlayer player, RandomSource random, int[] attemptCount, int maxAttempts,
++                                    ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> toComplete) {
++        do {
++            if (attemptCount[0] >= maxAttempts) {
++                BlockPos sharedSpawn = world.getSharedSpawnPos();
++
++                LOGGER.warn("Found no spawn in radius for player '" + player.getName() + "', ignoring radius");
++
++                selectSpawnWithoutRadius(world, player, sharedSpawn, toComplete);
++                return;
++            }
++        } while (!trySpawnOrSchedule(world, player, random, attemptCount, maxAttempts, toComplete));
++    }
++
++
++    private static void selectSpawnWithoutRadius(ServerLevel world, ServerPlayer player, BlockPos spawn, ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> toComplete) {
++        world.loadChunksForMoveAsync(player.getBoundingBoxAt(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5),
++                ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
++                (c) -> {
++                    BlockPos ret = spawn;
++                    while (!player.noCollisionNoLiquid(world, player.getBoundingBoxAt(ret.getX() + 0.5, ret.getY(), ret.getZ() + 0.5)) && ret.getY() < (double)world.getMaxY()) {
++                        ret = ret.above();
++                    }
++                    while (player.noCollisionNoLiquid(world, player.getBoundingBoxAt(ret.getX() + 0.5, ret.getY() - 1, ret.getZ() + 0.5)) && ret.getY() > (double)(world.getMinY() + 1)) {
++                        ret = ret.below();
++                    }
++                    toComplete.complete(io.papermc.paper.util.MCUtil.toLocation(world, Vec3.atBottomCenterOf(ret), world.levelData.getSpawnAngle(), 0.0f));
++                }
++        );
++    }
++
++    public static void fudgeSpawnLocation(ServerLevel world, ServerPlayer player, ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> toComplete) { // Folia - region threading
++        BlockPos blockposition = world.getSharedSpawnPos();
++
++        if (world.dimensionType().hasSkyLight() && world.serverLevelData.getGameType() != GameType.ADVENTURE) { // CraftBukkit
++            selectSpawn(world, player, player.random, new int[1], 500, toComplete);
++        } else {
++            selectSpawnWithoutRadius(world, player, blockposition, toComplete);
++        }
++
++    }
++    // Folia end - region threading
++
+     @Override
+     public BlockPos adjustSpawnLocation(ServerLevel level, BlockPos pos) {
++        // Folia start - region threading
++        if (true) {
++            throw new UnsupportedOperationException();
++        }
++        // Folia end - region threading
+         AABB aabb = this.getDimensions(Pose.STANDING).makeBoundingBox(Vec3.ZERO);
+         BlockPos blockPos = pos;
+         if (level.dimensionType().hasSkyLight() && level.serverLevelData.getGameType() != GameType.ADVENTURE) { // CraftBukkit
+@@ -533,7 +_,7 @@
+         this.getBukkitEntity().readExtraData(compound); // CraftBukkit
+ 
+         if (this.isSleeping()) {
+-            this.stopSleeping();
++            this.stopSleepingRaw(); // Folia - do not modify or read worldstate during data deserialization
+         }
+ 
+         // CraftBukkit start
+@@ -709,10 +_,17 @@
+                         ServerLevel level = this.level().getServer().getLevel(optional.get());
+                         if (level != null) {
+                             Entity entity = EntityType.loadEntityRecursive(
+-                                compoundTag, level, EntitySpawnReason.LOAD, entity1 -> !level.addWithUUID(entity1) ? null : entity1
++                                compoundTag, level, EntitySpawnReason.LOAD, entity1 -> entity1 // Folia - region threading - delay world add
+                             );
+                             if (entity != null) {
+-                                placeEnderPearlTicket(level, entity.chunkPosition());
++                                // Folia start - region threading
++                                io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue(
++                                        level, entity.chunkPosition().x, entity.chunkPosition().z, () -> {
++                                            level.addFreshEntityWithPassengers(entity);
++                                            ServerPlayer.placeEnderPearlTicket(level, entity.chunkPosition());
++                                        }
++                                );
++                                // Folia end - region threading
+                             } else {
+                                 LOGGER.warn("Failed to spawn player ender pearl in level ({}), skipping", optional.get());
+                             }
+@@ -1357,6 +_,324 @@
+         }
+     }
+ 
++    // Folia start - region threading
++    /**
++     * Teleport flag indicating that the player is to be respawned, expected to only be used
++     * internally for {@link #respawn(java.util.function.Consumer, PlayerRespawnEvent.RespawnReason)}
++     */
++    public static final long TELEPORT_FLAGS_PLAYER_RESPAWN    = Long.MIN_VALUE >>> 0;
++
++    public void exitEndCredits() {
++        if (!this.wonGame) {
++            // not in the end credits anymore
++            return;
++        }
++        this.wonGame = false;
++
++        this.respawn((player) -> {
++            CriteriaTriggers.CHANGED_DIMENSION.trigger(player, Level.END, Level.OVERWORLD);
++        }, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.END_PORTAL, true);
++    }
++
++    public void respawn(java.util.function.Consumer<ServerPlayer> respawnComplete, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason reason) {
++        this.respawn(respawnComplete, reason, false);
++    }
++
++    private void respawn(java.util.function.Consumer<ServerPlayer> respawnComplete, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason reason, boolean alive) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot respawn entity async");
++
++        this.getBukkitEntity(); // force bukkit entity to be created before TPing
++
++        if (alive != this.isAlive()) {
++            throw new IllegalStateException("isAlive expected = " + alive);
++        }
++
++        if (!this.hasNullCallback()) {
++            this.unRide();
++        }
++
++        if (this.isVehicle() || this.isPassenger()) {
++            throw new IllegalStateException("Dead player should not be a vehicle or passenger");
++        }
++
++        ServerLevel origin = this.serverLevel();
++        ServerLevel respawnWorld = this.server.getLevel(this.getRespawnDimension());
++
++        // modified based off PlayerList#respawn
++
++        EntityTreeNode passengerTree = this.makePassengerTree();
++
++        this.isChangingDimension = true;
++        origin.removePlayerImmediately(this, RemovalReason.CHANGED_DIMENSION);
++        // reset player if needed, only after removal from world
++        if (!alive) {
++            ServerPlayer.this.reset();
++        }
++        // must be manually removed from connections, delay until after reset() so that we do not trip any thread checks
++        this.serverLevel().getCurrentWorldData().connections.remove(this.connection.connection);
++
++        BlockPos respawnPos = this.getRespawnPosition();
++        float respawnAngle = this.getRespawnAngle();
++        boolean isRespawnForced = this.isRespawnForced();
++
++        ca.spottedleaf.concurrentutil.completable.CallbackCompletable<org.bukkit.Location> spawnPosComplete =
++            new ca.spottedleaf.concurrentutil.completable.CallbackCompletable<>();
++        boolean[] usedRespawnAnchor = new boolean[1];
++
++        // set up post spawn location logic
++        spawnPosComplete.addWaiter((spawnLoc, throwable) -> {
++            // update pos and velocity
++            ServerPlayer.this.setPosRaw(spawnLoc.getX(), spawnLoc.getY(), spawnLoc.getZ());
++            ServerPlayer.this.setYRot(spawnLoc.getYaw());
++            ServerPlayer.this.setYHeadRot(spawnLoc.getYaw());
++            ServerPlayer.this.setXRot(spawnLoc.getPitch());
++            ServerPlayer.this.setDeltaMovement(Vec3.ZERO);
++            // placeInAsync will update the world
++
++            this.placeInAsync(
++                origin,
++                // use the load chunk flag just in case the spawn loc isn't loaded, and to ensure the chunks
++                // stay loaded for a bit with the teleport ticket
++                ((org.bukkit.craftbukkit.CraftWorld)spawnLoc.getWorld()).getHandle(),
++                TELEPORT_FLAG_LOAD_CHUNK | TELEPORT_FLAGS_PLAYER_RESPAWN,
++                passengerTree, // note: we expect this to just be the player, no passengers
++                (entity) -> {
++                    // now the player is in the world, and can receive sound
++                    if (usedRespawnAnchor[0]) {
++                        ServerPlayer.this.connection.send(
++                            new ClientboundSoundPacket(
++                                net.minecraft.sounds.SoundEvents.RESPAWN_ANCHOR_DEPLETE, SoundSource.BLOCKS,
++                                ServerPlayer.this.getX(), ServerPlayer.this.getY(), ServerPlayer.this.getZ(),
++                                1.0F, 1.0F, ServerPlayer.this.serverLevel().getRandom().nextLong()
++                            )
++                        );
++                    }
++                    // now the respawn logic is complete
++
++                    // last, call the function callback
++                    if (respawnComplete != null) {
++                        respawnComplete.accept(ServerPlayer.this);
++                    }
++                }
++            );
++        });
++
++        // find and modify respawn block state
++        if (respawnWorld == null || respawnPos == null) {
++            // default to regular spawn
++            fudgeSpawnLocation(this.server.getLevel(Level.OVERWORLD), this, spawnPosComplete);
++        } else {
++            // load chunk for block
++            // give at least 1 radius of loaded chunks so that we do not sync load anything
++            int radiusBlocks = 16;
++            respawnWorld.moonrise$loadChunksAsync(respawnPos, radiusBlocks,
++                ca.spottedleaf.concurrentutil.util.Priority.HIGHER,
++                (chunks) -> {
++                    ServerPlayer.RespawnPosAngle spawnPos = ServerPlayer.findRespawnAndUseSpawnBlock(
++                        respawnWorld, respawnPos, respawnAngle, isRespawnForced, !alive
++                    ).orElse(null);
++                    if (spawnPos == null) {
++                        // no spawn
++                        ServerPlayer.this.connection.send(
++                            new ClientboundGameEventPacket(ClientboundGameEventPacket.NO_RESPAWN_BLOCK_AVAILABLE, 0.0F)
++                        );
++                        ServerPlayer.this.setRespawnPosition(
++                            null, null, 0f, false, false,
++                            com.destroystokyo.paper.event.player.PlayerSetSpawnEvent.Cause.PLAYER_RESPAWN
++                        );
++                        // default to regular spawn
++                        fudgeSpawnLocation(this.server.getLevel(Level.OVERWORLD), this, spawnPosComplete);
++                        return;
++                    }
++
++                    boolean isRespawnAnchor = respawnWorld.getBlockState(respawnPos).is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR);
++                    boolean isBed = respawnWorld.getBlockState(respawnPos).is(net.minecraft.tags.BlockTags.BEDS);
++                    usedRespawnAnchor[0] = !alive && isRespawnAnchor;
++
++                    ServerPlayer.this.setRespawnPosition(
++                        respawnWorld.dimension(), respawnPos, respawnAngle, isRespawnForced, false,
++                        com.destroystokyo.paper.event.player.PlayerSetSpawnEvent.Cause.PLAYER_RESPAWN
++                    );
++
++                    // finished now, pass the location on
++                    spawnPosComplete.complete(
++                        io.papermc.paper.util.MCUtil.toLocation(respawnWorld, spawnPos.position(), spawnPos.yaw(), 0.0f)
++                    );
++                    return;
++                }
++            );
++        }
++    }
++
++    @Override
++    protected void teleportSyncSameRegion(Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
++        if (yaw != null) {
++            this.setYRot(yaw.floatValue());
++            this.setYHeadRot(yaw.floatValue());
++        }
++        if (pitch != null) {
++            this.setXRot(pitch.floatValue());
++        }
++        if (velocity != null) {
++            this.setDeltaMovement(velocity);
++        }
++        this.connection.internalTeleport(
++            new net.minecraft.world.entity.PositionMoveRotation(
++                pos, this.getDeltaMovement(), this.getYRot(), this.getXRot()
++            ),
++            java.util.Collections.emptySet()
++        );
++        this.connection.resetPosition();
++        this.setOldPosAndRot();
++        this.resetStoredPositions();
++    }
++
++    @Override
++    protected ServerPlayer transformForAsyncTeleport(ServerLevel destination, Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
++        // must be manually removed from connections
++        this.serverLevel().getCurrentWorldData().connections.remove(this.connection.connection);
++        this.serverLevel().removePlayerImmediately(this, Entity.RemovalReason.CHANGED_DIMENSION);
++
++        this.spawnIn(destination);
++        this.transform(pos, yaw, pitch, velocity);
++
++        return this;
++    }
++
++    @Override
++    public void preChangeDimension() {
++        super.preChangeDimension();
++        this.stopUsingItem();
++    }
++
++    @Override
++    protected void placeSingleSync(ServerLevel originWorld, ServerLevel destination, EntityTreeNode treeNode, long teleportFlags) {
++        if (destination == originWorld && (teleportFlags & TELEPORT_FLAGS_PLAYER_RESPAWN) == 0L) {
++            this.unsetRemoved();
++            destination.addDuringTeleport(this);
++
++            // must be manually added to connections
++            this.serverLevel().getCurrentWorldData().connections.add(this.connection.connection);
++
++            // required to set up the pending teleport stuff to the client, and to actually update
++            // the player's position clientside
++            this.connection.internalTeleport(
++                new net.minecraft.world.entity.PositionMoveRotation(
++                    this.position(), this.getDeltaMovement(), this.getYRot(), this.getXRot()
++                ),
++                java.util.Collections.emptySet()
++            );
++            this.connection.resetPosition();
++
++            this.postChangeDimension();
++        } else {
++            // Modelled after PlayerList#respawn
++
++            // We avoid checking for disconnection here, which means we do not have to add/remove from
++            // the player list here. We can let this be properly handled by the connection handler
++
++            // pre-add logic
++            PlayerList playerlist = this.server.getPlayerList();
++            net.minecraft.world.level.storage.LevelData worlddata = destination.getLevelData();
++            this.connection.send(
++                new ClientboundRespawnPacket(
++                    this.createCommonSpawnInfo(destination),
++                    (teleportFlags & TELEPORT_FLAGS_PLAYER_RESPAWN) == 0L ? (byte)1 : (byte)0
++                )
++            );
++            // don't bother with the chunk cache radius and simulation distance packets, they are handled
++            // by the chunk loader
++            this.spawnIn(destination); // important that destination != null
++            // we can delay teleport until later, the player position is already set up at the target
++            this.setShiftKeyDown(false);
++
++            this.connection.send(new net.minecraft.network.protocol.game.ClientboundSetDefaultSpawnPositionPacket(
++                destination.getSharedSpawnPos(), destination.getSharedSpawnAngle()
++            ));
++            this.connection.send(new ClientboundChangeDifficultyPacket(
++                worlddata.getDifficulty(), worlddata.isDifficultyLocked()
++            ));
++            this.connection.send(new ClientboundSetExperiencePacket(
++                this.experienceProgress, this.totalExperience, this.experienceLevel
++            ));
++
++            playerlist.sendActivePlayerEffects(this);
++            playerlist.sendLevelInfo(this, destination);
++            playerlist.sendPlayerPermissionLevel(this);
++
++            // regular world add logic
++            this.unsetRemoved();
++            destination.addDuringTeleport(this);
++
++            // must be manually added to connections
++            this.serverLevel().getCurrentWorldData().connections.add(this.connection.connection);
++
++            // required to set up the pending teleport stuff to the client, and to actually update
++            // the player's position clientside
++            this.connection.internalTeleport(
++                new net.minecraft.world.entity.PositionMoveRotation(
++                    this.position(), this.getDeltaMovement(), this.getYRot(), this.getXRot()
++                ),
++                java.util.Collections.emptySet()
++            );
++            this.connection.resetPosition();
++
++            // delay callback until after post add logic
++
++            // post add logic
++
++            // "Added from changeDimension"
++            this.setHealth(this.getHealth());
++            playerlist.sendAllPlayerInfo(this);
++            this.onUpdateAbilities();
++            /*for (MobEffectInstance mobEffect : this.getActiveEffects()) {
++                this.connection.send(new ClientboundUpdateMobEffectPacket(this.getId(), mobEffect, false));
++            }*/ // handled by sendActivePlayerEffects
++
++            // Paper start - Reset shield blocking on dimension change
++            if (this.isBlocking()) {
++                this.stopUsingItem();
++            }
++            // Paper end - Reset shield blocking on dimension change
++
++            this.triggerDimensionChangeTriggers(originWorld);
++
++            // finished
++
++            this.postChangeDimension();
++        }
++    }
++
++    @Override
++    public boolean endPortalLogicAsync(BlockPos portalPos) {
++        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot portal entity async");
++
++        if (this.level().getTypeKey() == net.minecraft.world.level.dimension.LevelStem.END) {
++            if (!this.canPortalAsync(null, false)) {
++                return false;
++            }
++            this.wonGame = true;
++            // TODO is there a better solution to this that DOESN'T skip the credits?
++            this.seenCredits = true;
++            if (!this.seenCredits) {
++                this.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.WIN_GAME, 0.0F));
++            }
++            this.exitEndCredits();
++            return true;
++        } else {
++            return super.endPortalLogicAsync(portalPos);
++        }
++    }
++
++    @Override
++    protected void prePortalLogic(ServerLevel origin, ServerLevel destination, PortalType type) {
++        super.prePortalLogic(origin, destination, type);
++        if (origin.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.OVERWORLD && destination.getTypeKey() == net.minecraft.world.level.dimension.LevelStem.NETHER) {
++            this.enteredNetherPosition = this.position();
++        }
++    }
++    // Folia end - region threading
++
+     @Nullable
+     @Override
+     public ServerPlayer teleport(TeleportTransition teleportTransition) {
+@@ -2398,6 +_,11 @@
+     }
+ 
+     public void setCamera(@Nullable Entity entityToSpectate) {
++        // Folia start - region threading
++        if (entityToSpectate != null && !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(entityToSpectate)) {
++            return;
++        }
++        // Folia end - region threading
+         Entity camera = this.getCamera();
+         this.camera = (Entity)(entityToSpectate == null ? this : entityToSpectate);
+         if (camera != this.camera) {
+@@ -2896,11 +_,11 @@
+     }
+ 
+     public void registerEnderPearl(ThrownEnderpearl enderPearl) {
+-        this.enderPearls.add(enderPearl);
++        //this.enderPearls.add(enderPearl); // Folia - region threading - do not track ender pearls
+     }
+ 
+     public void deregisterEnderPearl(ThrownEnderpearl enderPearl) {
+-        this.enderPearls.remove(enderPearl);
++        //this.enderPearls.remove(enderPearl); // Folia - region threading - do not track ender pearls
+     }
+ 
+     public Set<ThrownEnderpearl> getEnderPearls() {
+@@ -3054,7 +_,7 @@
+         this.experienceLevel = this.newLevel;
+         this.totalExperience = this.newTotalExp;
+         this.experienceProgress = 0;
+-        this.deathTime = 0;
++        this.deathTime = 0; this.broadcastedDeath = false; // Folia - region threading
+         this.setArrowCount(0, true); // CraftBukkit - ArrowBodyCountChangeEvent
+         this.removeAllEffects(org.bukkit.event.entity.EntityPotionEffectEvent.Cause.DEATH);
+         this.effectsDirty = true;

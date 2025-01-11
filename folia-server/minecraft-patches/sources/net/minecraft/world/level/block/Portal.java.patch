@@ -1,0 +1,13 @@
+--- a/net/minecraft/world/level/block/Portal.java
++++ b/net/minecraft/world/level/block/Portal.java
+@@ -14,6 +_,10 @@
+     @Nullable
+     TeleportTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos);
+ 
++    // Folia start - region threading
++    public boolean portalAsync(ServerLevel sourceWorld, Entity portalTarget, BlockPos portalPos);
++    // Folia end - region threading
++
+     default Portal.Transition getLocalTransition() {
+         return Portal.Transition.NONE;
+     }

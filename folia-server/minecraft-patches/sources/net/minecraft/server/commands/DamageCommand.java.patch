@@ -1,0 +1,35 @@
+--- a/net/minecraft/server/commands/DamageCommand.java
++++ b/net/minecraft/server/commands/DamageCommand.java
+@@ -102,12 +_,29 @@
+         );
+     }
+ 
++    // Folia start - region threading
++    private static void sendMessage(CommandSourceStack src, CommandSyntaxException ex) {
++        src.sendFailure((Component)ex.getRawMessage());
++    }
++    // Folia end - region threading
++
+     private static int damage(CommandSourceStack source, Entity target, float amount, DamageSource damageType) throws CommandSyntaxException {
+-        if (target.hurtServer(source.getLevel(), damageType, amount)) {
+-            source.sendSuccess(() -> Component.translatable("commands.damage.success", amount, target.getDisplayName()), true);
+-            return 1;
++        // Folia start - region threading
++        target.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++            try {
++                // Folia end - region threading
++        if (nmsEntity.hurtServer(source.getLevel(), damageType, amount)) { // Folia - region threading
++            source.sendSuccess(() -> Component.translatable("commands.damage.success", amount, nmsEntity.getDisplayName()), true); // Folia - region threading
++            return; // Folia - region threading
+         } else {
+             throw ERROR_INVULNERABLE.create();
+         }
++        // Folia start - region threading
++        } catch (CommandSyntaxException ex) {
++            sendMessage(source, ex);
++        }
++        }, null, 1L);
++        return 0;
++        // Folia end - region threading
+     }
+ }

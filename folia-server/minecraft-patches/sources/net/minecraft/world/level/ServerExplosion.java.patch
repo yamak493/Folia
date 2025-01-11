@@ -1,0 +1,24 @@
+--- a/net/minecraft/world/level/ServerExplosion.java
++++ b/net/minecraft/world/level/ServerExplosion.java
+@@ -773,17 +_,18 @@
+         if (!this.level.paperConfig().environment.optimizeExplosions) {
+             return this.getSeenFraction(vec3d, entity, this.directMappedBlockCache, this.mutablePos); // Paper - collision optimisations
+         }
++        io.papermc.paper.threadedregions.RegionizedWorldData worldData = this.level.getCurrentWorldData(); // Folia - region threading
+         CacheKey key = new CacheKey(this, entity.getBoundingBox());
+-        Float blockDensity = this.level.explosionDensityCache.get(key);
++        Float blockDensity = worldData.explosionDensityCache.get(key); // Folia - region threading
+         if (blockDensity == null) {
+             blockDensity = this.getSeenFraction(vec3d, entity, this.directMappedBlockCache, this.mutablePos); // Paper - collision optimisations
+-            this.level.explosionDensityCache.put(key, blockDensity);
++            worldData.explosionDensityCache.put(key, blockDensity); // Folia - region threading
+         }
+ 
+         return blockDensity;
+     }
+ 
+-    static class CacheKey {
++    public static class CacheKey { // Folia - region threading - public
+         private final Level world;
+         private final double posX, posY, posZ;
+         private final double minX, minY, minZ;

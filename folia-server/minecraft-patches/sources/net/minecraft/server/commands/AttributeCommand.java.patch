@@ -1,0 +1,188 @@
+--- a/net/minecraft/server/commands/AttributeCommand.java
++++ b/net/minecraft/server/commands/AttributeCommand.java
+@@ -266,30 +_,62 @@
+         }
+     }
+ 
++    // Folia start - region threading
++    private static void sendMessage(CommandSourceStack src, CommandSyntaxException ex) {
++        src.sendFailure((Component)ex.getRawMessage());
++    }
++    // Folia end - region threading
++
+     private static int getAttributeValue(CommandSourceStack source, Entity entity, Holder<Attribute> attribute, double scale) throws CommandSyntaxException {
+-        LivingEntity entityWithAttribute = getEntityWithAttribute(entity, attribute);
++        // Folia start - region threading
++        entity.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++            try {
++                // Folia end - region threading
++        LivingEntity entityWithAttribute = getEntityWithAttribute(nmsEntity, attribute); // Folia - region threading
+         double attributeValue = entityWithAttribute.getAttributeValue(attribute);
+         source.sendSuccess(
+-            () -> Component.translatable("commands.attribute.value.get.success", getAttributeDescription(attribute), entity.getName(), attributeValue), false
++            () -> Component.translatable("commands.attribute.value.get.success", getAttributeDescription(attribute), nmsEntity.getName(), attributeValue), false // Folia - region threading
+         );
+-        return (int)(attributeValue * scale);
++        return; // Folia - region threading
++        // Folia start - region threading
++            } catch (CommandSyntaxException ex) {
++                sendMessage(source, ex);
++            }
++        }, null, 1L);
++        return 0;
++        // Folia end - region threading
+     }
+ 
+     private static int getAttributeBase(CommandSourceStack source, Entity entity, Holder<Attribute> attribute, double scale) throws CommandSyntaxException {
+-        LivingEntity entityWithAttribute = getEntityWithAttribute(entity, attribute);
++        // Folia start - region threading
++        entity.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++            try {
++                // Folia end - region threading
++        LivingEntity entityWithAttribute = getEntityWithAttribute(nmsEntity, attribute); // Folia - region threading
+         double attributeBaseValue = entityWithAttribute.getAttributeBaseValue(attribute);
+         source.sendSuccess(
+-            () -> Component.translatable("commands.attribute.base_value.get.success", getAttributeDescription(attribute), entity.getName(), attributeBaseValue),
++            () -> Component.translatable("commands.attribute.base_value.get.success", getAttributeDescription(attribute), nmsEntity.getName(), attributeBaseValue), // Folia - region threading
+             false
+         );
+-        return (int)(attributeBaseValue * scale);
++        return; // Folia - region threading
++        // Folia start - region threading
++            } catch (CommandSyntaxException ex) {
++                sendMessage(source, ex);
++            }
++        }, null, 1L);
++        return 0;
++        // Folia end - region threading
+     }
+ 
+     private static int getAttributeModifier(CommandSourceStack source, Entity entity, Holder<Attribute> attribute, ResourceLocation id, double scale) throws CommandSyntaxException {
+-        LivingEntity entityWithAttribute = getEntityWithAttribute(entity, attribute);
++        // Folia start - region threading
++        entity.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++            try {
++                // Folia end - region threading
++        LivingEntity entityWithAttribute = getEntityWithAttribute(nmsEntity, attribute); // Folia - region threading
+         AttributeMap attributes = entityWithAttribute.getAttributes();
+         if (!attributes.hasModifier(attribute, id)) {
+-            throw ERROR_NO_SUCH_MODIFIER.create(entity.getName(), getAttributeDescription(attribute), id);
++            throw ERROR_NO_SUCH_MODIFIER.create(nmsEntity.getName(), getAttributeDescription(attribute), id); // Folia - region threading
+         } else {
+             double modifierValue = attributes.getModifierValue(attribute, id);
+             source.sendSuccess(
+@@ -297,13 +_,20 @@
+                     "commands.attribute.modifier.value.get.success",
+                     Component.translationArg(id),
+                     getAttributeDescription(attribute),
+-                    entity.getName(),
++                    nmsEntity.getName(), // Folia - region threading
+                     modifierValue
+                 ),
+                 false
+             );
+-            return (int)(modifierValue * scale);
++            return; // Folia - region threading
+         }
++        // Folia start - region threading
++            } catch (CommandSyntaxException ex) {
++                sendMessage(source, ex);
++            }
++        }, null, 1L);
++        return 0;
++        // Folia end - region threading
+     }
+ 
+     private static Stream<ResourceLocation> getAttributeModifiers(Entity entity, Holder<Attribute> attribute) throws CommandSyntaxException {
+@@ -312,11 +_,22 @@
+     }
+ 
+     private static int setAttributeBase(CommandSourceStack source, Entity entity, Holder<Attribute> attribute, double value) throws CommandSyntaxException {
+-        getAttributeInstance(entity, attribute).setBaseValue(value);
++        // Folia start - region threading
++        entity.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++            try {
++                // Folia end - region threading
++        getAttributeInstance(nmsEntity, attribute).setBaseValue(value); // Folia - region threading
+         source.sendSuccess(
+-            () -> Component.translatable("commands.attribute.base_value.set.success", getAttributeDescription(attribute), entity.getName(), value), false
++            () -> Component.translatable("commands.attribute.base_value.set.success", getAttributeDescription(attribute), nmsEntity.getName(), value), false // Folia - region threading
+         );
+-        return 1;
++        return; // Folia - region threading
++        // Folia start - region threading
++            } catch (CommandSyntaxException ex) {
++                sendMessage(source, ex);
++            }
++        }, null, 1L);
++        return 0;
++        // Folia end - region threading
+     }
+ 
+     private static int resetAttributeBase(CommandSourceStack source, Entity entity, Holder<Attribute> attribute) throws CommandSyntaxException {
+@@ -338,35 +_,57 @@
+     private static int addModifier(
+         CommandSourceStack source, Entity entity, Holder<Attribute> attribute, ResourceLocation id, double amount, AttributeModifier.Operation operation
+     ) throws CommandSyntaxException {
+-        AttributeInstance attributeInstance = getAttributeInstance(entity, attribute);
++        // Folia start - region threading
++        entity.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++            try {
++                // Folia end - region threading
++        AttributeInstance attributeInstance = getAttributeInstance(nmsEntity, attribute); // Folia - region threading
+         AttributeModifier attributeModifier = new AttributeModifier(id, amount, operation);
+         if (attributeInstance.hasModifier(id)) {
+-            throw ERROR_MODIFIER_ALREADY_PRESENT.create(entity.getName(), getAttributeDescription(attribute), id);
++            throw ERROR_MODIFIER_ALREADY_PRESENT.create(nmsEntity.getName(), getAttributeDescription(attribute), id); // Folia - region threading
+         } else {
+             attributeInstance.addPermanentModifier(attributeModifier);
+             source.sendSuccess(
+                 () -> Component.translatable(
+-                    "commands.attribute.modifier.add.success", Component.translationArg(id), getAttributeDescription(attribute), entity.getName()
++                    "commands.attribute.modifier.add.success", Component.translationArg(id), getAttributeDescription(attribute), nmsEntity.getName() // Folia - region threading
+                 ),
+                 false
+             );
+-            return 1;
++            return; // Folia - region threading
+         }
++        // Folia start - region threading
++            } catch (CommandSyntaxException ex) {
++                sendMessage(source, ex);
++            }
++        }, null, 1L);
++        return 0;
++        // Folia end - region threading
+     }
+ 
+     private static int removeModifier(CommandSourceStack source, Entity entity, Holder<Attribute> attribute, ResourceLocation id) throws CommandSyntaxException {
+-        AttributeInstance attributeInstance = getAttributeInstance(entity, attribute);
++        // Folia start - region threading
++        entity.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++            try {
++                // Folia end - region threading
++        AttributeInstance attributeInstance = getAttributeInstance(nmsEntity, attribute); // Folia - region threading
+         if (attributeInstance.removeModifier(id)) {
+             source.sendSuccess(
+                 () -> Component.translatable(
+-                    "commands.attribute.modifier.remove.success", Component.translationArg(id), getAttributeDescription(attribute), entity.getName()
++                    "commands.attribute.modifier.remove.success", Component.translationArg(id), getAttributeDescription(attribute), nmsEntity.getName() // Folia - region threading
+                 ),
+                 false
+             );
+-            return 1;
++            return; // Folia - region threading
+         } else {
+-            throw ERROR_NO_SUCH_MODIFIER.create(entity.getName(), getAttributeDescription(attribute), id);
++            throw ERROR_NO_SUCH_MODIFIER.create(nmsEntity.getName(), getAttributeDescription(attribute), id); // Folia - region threading
+         }
++        // Folia start - region threading
++            } catch (CommandSyntaxException ex) {
++                sendMessage(source, ex);
++            }
++        }, null, 1L);
++        return 0;
++        // Folia end - region threading
+     }
+ 
+     private static Component getAttributeDescription(Holder<Attribute> attribute) {

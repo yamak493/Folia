@@ -1,0 +1,61 @@
+--- a/net/minecraft/world/entity/raid/Raid.java
++++ b/net/minecraft/world/entity/raid/Raid.java
+@@ -110,6 +_,13 @@
+     public final org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer persistentDataContainer = new org.bukkit.craftbukkit.persistence.CraftPersistentDataContainer(PDC_TYPE_REGISTRY);
+     // Paper end
+ 
++    // Folia start - make raids thread-safe
++    public boolean ownsRaid() {
++        BlockPos center = this.getCenter();
++        return center != null && ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.level, center.getX() >> 4, center.getZ() >> 4, 8);
++    }
++    // Folia end - make raids thread-safe
++
+     public Raid(int id, ServerLevel level, BlockPos center) {
+         this.id = id;
+         this.level = level;
+@@ -207,7 +_,7 @@
+     private Predicate<ServerPlayer> validPlayer() {
+         return player -> {
+             BlockPos blockPos = player.blockPosition();
+-            return player.isAlive() && this.level.getRaidAt(blockPos) == this;
++            return ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(player) && player.isAlive() && this.level.getRaidAt(blockPos) == this; // Folia - make raids thread-safe
+         };
+     }
+ 
+@@ -384,14 +_,21 @@
+                             if (entity instanceof LivingEntity) {
+                                 LivingEntity livingEntity = (LivingEntity)entity;
+                                 if (!entity.isSpectator()) {
+-                                    livingEntity.addEffect(
+-                                        new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 48000, this.raidOmenLevel - 1, false, false, true)
+-                                    );
++                                    //livingEntity.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 48000, this.raidOmenLevel - 1, false, false, true)); // Folia start - Fix off region raid heroes - moved down
+                                     if (livingEntity instanceof ServerPlayer serverPlayer) {
+-                                        serverPlayer.awardStat(Stats.RAID_WIN);
+-                                        CriteriaTriggers.RAID_WIN.trigger(serverPlayer);
++                                        //serverPlayer.awardStat(Stats.RAID_WIN); // Folia start - Fix off region raid heroes - moved down
++                                        //CriteriaTriggers.RAID_WIN.trigger(serverPlayer); // Folia start - Fix off region raid heroes - moved down
+                                         winners.add(serverPlayer.getBukkitEntity()); // CraftBukkit
+                                     }
++                                    // Folia start - Fix off region raid heroes
++                                    livingEntity.getBukkitEntity().taskScheduler.schedule((LivingEntity lv) -> {
++                                        lv.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 48000, this.raidOmenLevel - 1, false, false, true));
++                                        if (lv instanceof ServerPlayer serverPlayer) {
++                                            serverPlayer.awardStat(Stats.RAID_WIN);
++                                            CriteriaTriggers.RAID_WIN.trigger(serverPlayer);
++                                        }
++                                    }, null, 1L);
++                                    // Folia end - Fix off region raid heroes
+                                 }
+                             }
+                         }
+@@ -496,7 +_,7 @@
+         Collection<ServerPlayer> players = this.raidEvent.getPlayers();
+         long randomLong = this.random.nextLong();
+ 
+-        for (ServerPlayer serverPlayer : this.level.players()) {
++        for (ServerPlayer serverPlayer : this.level.getLocalPlayers()) { // Folia - region threading
+             Vec3 vec3 = serverPlayer.position();
+             Vec3 vec31 = Vec3.atCenterOf(pos);
+             double squareRoot = Math.sqrt((vec31.x - vec3.x) * (vec31.x - vec3.x) + (vec31.z - vec3.z) * (vec31.z - vec3.z));

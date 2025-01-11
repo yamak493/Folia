@@ -1,0 +1,22 @@
+--- a/net/minecraft/world/entity/npc/AbstractVillager.java
++++ b/net/minecraft/world/entity/npc/AbstractVillager.java
+@@ -218,10 +_,18 @@
+         this.readInventoryFromTag(compound, this.registryAccess());
+     }
+ 
++    // Folia start - region threading
++    @Override
++    public void preChangeDimension() {
++        super.preChangeDimension();
++        this.stopTrading();
++    }
++    // Folia end - region threading
++
+     @Nullable
+     @Override
+     public Entity teleport(TeleportTransition teleportTransition) {
+-        this.stopTrading();
++        this.preChangeDimension(); // Folia - region threading - move into preChangeDimension
+         return super.teleport(teleportTransition);
+     }
+ 

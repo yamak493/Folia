@@ -1,0 +1,28 @@
+--- a/net/minecraft/world/entity/npc/Villager.java
++++ b/net/minecraft/world/entity/npc/Villager.java
+@@ -246,7 +_,7 @@
+         villagerBrain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+         villagerBrain.setDefaultActivity(Activity.IDLE);
+         villagerBrain.setActiveActivityIfPossible(Activity.IDLE);
+-        villagerBrain.updateActivityFromSchedule(this.level().getDayTime(), this.level().getGameTime());
++        villagerBrain.updateActivityFromSchedule(this.level().getLevelData().getDayTime(), this.level().getLevelData().getGameTime()); // Folia - region threading - not in the world yet
+     }
+ 
+     @Override
+@@ -693,6 +_,8 @@
+             this.brain.getMemory(moduleType).ifPresent(globalPos -> {
+                 ServerLevel level = server.getLevel(globalPos.dimension());
+                 if (level != null) {
++                    io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue( // Folia - region threading
++                            level, globalPos.pos().getX() >> 4, globalPos.pos().getZ() >> 4, () -> { // Folia - region threading
+                     PoiManager poiManager = level.getPoiManager();
+                     Optional<Holder<PoiType>> type = poiManager.getType(globalPos.pos());
+                     BiPredicate<Villager, Holder<PoiType>> biPredicate = POI_MEMORIES.get(moduleType);
+@@ -700,6 +_,7 @@
+                         poiManager.release(globalPos.pos());
+                         DebugPackets.sendPoiTicketCountPacket(level, globalPos.pos());
+                     }
++                    }); // Folia - region threading
+                 }
+             });
+         }

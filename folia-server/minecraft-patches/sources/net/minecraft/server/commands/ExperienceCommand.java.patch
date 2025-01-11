@@ -1,0 +1,39 @@
+--- a/net/minecraft/server/commands/ExperienceCommand.java
++++ b/net/minecraft/server/commands/ExperienceCommand.java
+@@ -131,14 +_,18 @@
+     }
+ 
+     private static int queryExperience(CommandSourceStack source, ServerPlayer player, ExperienceCommand.Type type) {
+-        int i = type.query.applyAsInt(player);
+-        source.sendSuccess(() -> Component.translatable("commands.experience.query." + type.name, player.getDisplayName(), i), false);
+-        return i;
++        player.getBukkitEntity().taskScheduler.schedule((ServerPlayer serverPlayer) -> { // Folia - region threading
++        int i = type.query.applyAsInt(serverPlayer); // Folia - region threading
++        source.sendSuccess(() -> Component.translatable("commands.experience.query." + type.name, serverPlayer.getDisplayName(), i), false); // Folia - region threading
++        }, null, 1L); // Folia - region threading
++        return 0; // Folia - region threading
+     }
+ 
+     private static int addExperience(CommandSourceStack source, Collection<? extends ServerPlayer> targets, int amount, ExperienceCommand.Type type) {
+         for (ServerPlayer serverPlayer : targets) {
+-            type.add.accept(serverPlayer, amount);
++            serverPlayer.getBukkitEntity().taskScheduler.schedule((ServerPlayer player) -> { // Folia - region threading
++                type.add.accept(player, amount);
++            }, null, 1L); // Folia - region threading
+         }
+ 
+         if (targets.size() == 1) {
+@@ -157,9 +_,11 @@
+         int i = 0;
+ 
+         for (ServerPlayer serverPlayer : targets) {
+-            if (type.set.test(serverPlayer, amount)) {
+-                i++;
++            i++; serverPlayer.getBukkitEntity().taskScheduler.schedule((ServerPlayer player) -> { // Folia - region threading
++            if (type.set.test(player, amount)) { // Folia - region threading
++                //i++; // Folia - region threading
+             }
++            }, null, 1L); // Folia - region threading
+         }
+ 
+         if (i == 0) {

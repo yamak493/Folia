@@ -1,0 +1,26 @@
+--- a/net/minecraft/world/entity/npc/CatSpawner.java
++++ b/net/minecraft/world/entity/npc/CatSpawner.java
+@@ -18,17 +_,18 @@
+ 
+ public class CatSpawner implements CustomSpawner {
+     private static final int TICK_DELAY = 1200;
+-    private int nextTick;
++    //private int nextTick; // Folia - region threading
+ 
+     @Override
+     public int tick(ServerLevel level, boolean spawnHostiles, boolean spawnPassives) {
+         if (spawnPassives && level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
+-            this.nextTick--;
+-            if (this.nextTick > 0) {
++            io.papermc.paper.threadedregions.RegionizedWorldData worldData = level.getCurrentWorldData(); // Folia - region threading
++            worldData.catSpawnerNextTick--; // Folia - region threading
++            if (worldData.catSpawnerNextTick > 0) { // Folia - region threading
+                 return 0;
+             } else {
+-                this.nextTick = 1200;
+-                Player randomPlayer = level.getRandomPlayer();
++                worldData.catSpawnerNextTick = 1200; // Folia - region threading
++                Player randomPlayer = level.getRandomLocalPlayer(); // Folia - region threading
+                 if (randomPlayer == null) {
+                     return 0;
+                 } else {

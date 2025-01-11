@@ -1,0 +1,42 @@
+--- a/net/minecraft/world/level/storage/DimensionDataStorage.java
++++ b/net/minecraft/world/level/storage/DimensionDataStorage.java
+@@ -51,6 +_,7 @@
+     }
+ 
+     public <T extends SavedData> T computeIfAbsent(SavedData.Factory<T> factory, String name) {
++        synchronized (this.cache) { // Folia - make map data thread-safe
+         T savedData = this.get(factory, name);
+         if (savedData != null) {
+             return savedData;
+@@ -59,10 +_,12 @@
+             this.set(name, savedData1);
+             return savedData1;
+         }
++        } // Folia - make map data thread-safe
+     }
+ 
+     @Nullable
+     public <T extends SavedData> T get(SavedData.Factory<T> factory, String name) {
++        synchronized (this.cache) { // Folia - make map data thread-safe
+         Optional<SavedData> optional = this.cache.get(name);
+         if (optional == null) {
+             optional = Optional.ofNullable(this.readSavedData(factory.deserializer(), factory.type(), name));
+@@ -70,6 +_,7 @@
+         }
+ 
+         return (T)optional.orElse(null);
++        } // Folia - make map data thread-safe
+     }
+ 
+     @Nullable
+@@ -88,8 +_,10 @@
+     }
+ 
+     public void set(String name, SavedData savedData) {
++        synchronized (this.cache) { // Folia - make map data thread-safe
+         this.cache.put(name, Optional.of(savedData));
+         savedData.setDirty();
++        } // Folia - make map data thread-safe
+     }
+ 
+     public CompoundTag readTagFromDisk(String filename, DataFixTypes dataFixType, int version) throws IOException {

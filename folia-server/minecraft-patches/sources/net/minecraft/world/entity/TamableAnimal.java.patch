@@ -1,0 +1,38 @@
+--- a/net/minecraft/world/entity/TamableAnimal.java
++++ b/net/minecraft/world/entity/TamableAnimal.java
+@@ -263,6 +_,11 @@
+     public void tryToTeleportToOwner() {
+         LivingEntity owner = this.getOwner();
+         if (owner != null) {
++            // Folia start - region threading
++            if (owner.isRemoved() || owner.level() != this.level()) {
++                return;
++            }
++            // Folia end - region threading
+             this.teleportToAroundBlockPos(owner.blockPosition());
+         }
+     }
+@@ -295,7 +_,22 @@
+                 return false;
+             }
+             org.bukkit.Location to = event.getTo();
+-            this.moveTo(to.getX(), to.getY(), to.getZ(), to.getYaw(), to.getPitch());
++            // Folia start - region threading - can't teleport here, we may be removed by teleport logic - delay until next tick
++            // also, use teleportAsync so that crossing region boundaries will not blow up
++            org.bukkit.Location finalTo = to;
++            Level sourceWorld = this.level();
++            this.getBukkitEntity().taskScheduler.schedule((TamableAnimal nmsEntity) -> {
++                if (nmsEntity.level() == sourceWorld) {
++                    nmsEntity.teleportAsync(
++                        (net.minecraft.server.level.ServerLevel)nmsEntity.level(),
++                        new net.minecraft.world.phys.Vec3(finalTo.getX(), finalTo.getY(), finalTo.getZ()),
++                        Float.valueOf(finalTo.getYaw()), Float.valueOf(finalTo.getPitch()),
++                        net.minecraft.world.phys.Vec3.ZERO, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.UNKNOWN, Entity.TELEPORT_FLAG_LOAD_CHUNK,
++                        null
++                    );
++                }
++            }, null, 1L);
++            // Folia end - region threading - can't teleport here, we may be removed by teleport logic - delay until next tick
+             // CraftBukkit end
+             this.navigation.stop();
+             return true;

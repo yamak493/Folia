@@ -1,0 +1,15 @@
+--- a/net/minecraft/world/level/ServerLevelAccessor.java
++++ b/net/minecraft/world/level/ServerLevelAccessor.java
+@@ -6,6 +_,12 @@
+ public interface ServerLevelAccessor extends LevelAccessor {
+     ServerLevel getLevel();
+ 
++    // Folia start - region threading
++    default public StructureManager structureManager() {
++        throw new UnsupportedOperationException();
++    }
++    // Folia end - region threading
++
+     default void addFreshEntityWithPassengers(Entity entity) {
+         // CraftBukkit start
+         this.addFreshEntityWithPassengers(entity, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.DEFAULT);

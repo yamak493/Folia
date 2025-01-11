@@ -1,0 +1,15 @@
+--- a/net/minecraft/server/commands/SetSpawnCommand.java
++++ b/net/minecraft/server/commands/SetSpawnCommand.java
+@@ -69,7 +_,11 @@
+         final Collection<ServerPlayer> actualTargets = new java.util.ArrayList<>(); // Paper - Add PlayerSetSpawnEvent
+         for (ServerPlayer serverPlayer : targets) {
+             // Paper start - Add PlayerSetSpawnEvent
+-            if (serverPlayer.setRespawnPosition(resourceKey, pos, angle, true, false, com.destroystokyo.paper.event.player.PlayerSetSpawnEvent.Cause.COMMAND)) {
++            // Folia start - region threading
++            serverPlayer.getBukkitEntity().taskScheduler.schedule((ServerPlayer player) -> {
++                player.setRespawnPosition(resourceKey, pos, angle, true, false, com.destroystokyo.paper.event.player.PlayerSetSpawnEvent.Cause.COMMAND);
++            }, null, 1L);
++            if (true) { // Folia end - region threading
+                 actualTargets.add(serverPlayer);
+             }
+             // Paper end - Add PlayerSetSpawnEvent

@@ -1,0 +1,47 @@
+--- a/net/minecraft/server/commands/TeleportCommand.java
++++ b/net/minecraft/server/commands/TeleportCommand.java
+@@ -154,18 +_,7 @@
+ 
+     private static int teleportToEntity(CommandSourceStack source, Collection<? extends Entity> targets, Entity destination) throws CommandSyntaxException {
+         for (Entity entity : targets) {
+-            performTeleport(
+-                source,
+-                entity,
+-                (ServerLevel)destination.level(),
+-                destination.getX(),
+-                destination.getY(),
+-                destination.getZ(),
+-                EnumSet.noneOf(Relative.class),
+-                destination.getYRot(),
+-                destination.getXRot(),
+-                null
+-            );
++            io.papermc.paper.threadedregions.TeleportUtils.teleport(entity, false, destination, Float.valueOf(destination.getYRot()), Float.valueOf(destination.getXRot()), Entity.TELEPORT_FLAG_LOAD_CHUNK, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND, null); // Folia - region threading
+         }
+ 
+         if (targets.size() == 1) {
+@@ -290,6 +_,24 @@
+             float f1 = relatives.contains(Relative.X_ROT) ? xRot - target.getXRot() : xRot;
+             float f2 = Mth.wrapDegrees(f);
+             float f3 = Mth.wrapDegrees(f1);
++            // Folia start - region threading
++            if (true) {
++                ServerLevel worldFinal = level;
++                Vec3 posFinal = new Vec3(x, y, z);
++                Float yawFinal = Float.valueOf(f);
++                Float pitchFinal = Float.valueOf(f1);
++                target.getBukkitEntity().taskScheduler.schedule((Entity nmsEntity) -> {
++                    nmsEntity.unRide();
++                    nmsEntity.teleportAsync(
++                            worldFinal, posFinal, yawFinal, pitchFinal, Vec3.ZERO,
++                            org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND,
++                            Entity.TELEPORT_FLAG_LOAD_CHUNK,
++                            null
++                    );
++                }, null, 1L);
++                return;
++            }
++            // Folia end - region threading
+             // CraftBukkit start - Teleport event
+             boolean result;
+             if (target instanceof final net.minecraft.server.level.ServerPlayer player) {

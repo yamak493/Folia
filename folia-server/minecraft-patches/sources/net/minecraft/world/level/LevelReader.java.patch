@@ -1,0 +1,28 @@
+--- a/net/minecraft/world/level/LevelReader.java
++++ b/net/minecraft/world/level/LevelReader.java
+@@ -204,6 +_,25 @@
+         return toY >= this.getMinY() && fromY <= this.getMaxY() && this.hasChunksAt(fromX, fromZ, toX, toZ);
+     }
+ 
++    // Folia start - region threading
++    default boolean hasAndOwnsChunksAt(int minX, int minZ, int maxX, int maxZ) {
++        int i = SectionPos.blockToSectionCoord(minX);
++        int j = SectionPos.blockToSectionCoord(maxX);
++        int k = SectionPos.blockToSectionCoord(minZ);
++        int l = SectionPos.blockToSectionCoord(maxZ);
++
++        for(int m = i; m <= j; ++m) {
++            for(int n = k; n <= l; ++n) {
++                if (!this.hasChunk(m, n) || (this instanceof net.minecraft.server.level.ServerLevel world && !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(world, m, n))) {
++                    return false;
++                }
++            }
++        }
++
++        return true;
++    }
++    // Folia end - region threading
++
+     @Deprecated
+     default boolean hasChunksAt(int fromX, int fromZ, int toX, int toZ) {
+         int sectionPosCoord = SectionPos.blockToSectionCoord(fromX);

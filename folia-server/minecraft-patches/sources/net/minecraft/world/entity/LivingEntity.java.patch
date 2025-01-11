@@ -1,0 +1,148 @@
+--- a/net/minecraft/world/entity/LivingEntity.java
++++ b/net/minecraft/world/entity/LivingEntity.java
+@@ -278,7 +_,7 @@
+     private Optional<BlockPos> lastClimbablePos = Optional.empty();
+     @Nullable
+     private DamageSource lastDamageSource;
+-    private long lastDamageStamp;
++    private long lastDamageStamp = Long.MIN_VALUE; // Folia - region threading
+     protected int autoSpinAttackTicks;
+     protected float autoSpinAttackDmg;
+     @Nullable
+@@ -307,6 +_,21 @@
+         return this.getYHeadRot();
+     }
+     // CraftBukkit end
++    // Folia start - region threading
++    @Override
++    public void updateTicks(long fromTickOffset, long fromRedstoneTimeOffset) {
++        super.updateTicks(fromTickOffset, fromRedstoneTimeOffset);
++        if (this.lastDamageStamp != Long.MIN_VALUE) {
++            this.lastDamageStamp += fromRedstoneTimeOffset;
++        }
++    }
++
++    @Override
++    protected void resetStoredPositions() {
++        super.resetStoredPositions();
++        this.lastClimbablePos = Optional.empty();
++    }
++    // Folia end - region threading
+ 
+     protected LivingEntity(EntityType<? extends LivingEntity> entityType, Level level) {
+         super(entityType, level);
+@@ -528,7 +_,7 @@
+ 
+         if (this.isDeadOrDying() && this.level().shouldTickDeath(this)) {
+             this.tickDeath();
+-        }
++        } else { this.broadcastedDeath = false; } // Folia - region threading
+ 
+         if (this.lastHurtByPlayerTime > 0) {
+             this.lastHurtByPlayerTime--;
+@@ -611,11 +_,14 @@
+         return true;
+     }
+ 
++    public boolean broadcastedDeath = false; // Folia - region threading
+     protected void tickDeath() {
+         this.deathTime++;
+         if (this.deathTime >= 20 && !this.level().isClientSide() && !this.isRemoved()) {
+             this.level().broadcastEntityEvent(this, (byte)60);
+-            this.remove(Entity.RemovalReason.KILLED, EntityRemoveEvent.Cause.DEATH); // CraftBukkit - add Bukkit remove cause
++            this.broadcastedDeath = true; // Folia - region threading - death has been broadcasted
++            if (!(this instanceof ServerPlayer)) this.remove(Entity.RemovalReason.KILLED, EntityRemoveEvent.Cause.DEATH); // CraftBukkit - add Bukkit remove cause // Folia - region threading - don't remove, we want the tick scheduler to be running
++            if ((this instanceof ServerPlayer)) this.unRide(); // Folia - region threading - unmount player when dead
+         }
+     }
+ 
+@@ -851,9 +_,9 @@
+         }
+ 
+         this.hurtTime = compound.getShort("HurtTime");
+-        this.deathTime = compound.getShort("DeathTime");
++        this.deathTime = compound.getShort("DeathTime"); this.broadcastedDeath = false; // Folia - region threading
+         this.lastHurtByMobTimestamp = compound.getInt("HurtByTimestamp");
+-        if (compound.contains("Team", 8)) {
++        if (false && compound.contains("Team", 8)) { // Folia start - region threading
+             String string = compound.getString("Team");
+             Scoreboard scoreboard = this.level().getScoreboard();
+             PlayerTeam playerTeam = scoreboard.getPlayerTeam(string);
+@@ -1115,6 +_,7 @@
+     public boolean addEffect(MobEffectInstance effectInstance, @Nullable Entity entity, EntityPotionEffectEvent.Cause cause, boolean fireEvent) {
+         // Paper end - Don't fire sync event during generation
+         // org.spigotmc.AsyncCatcher.catchOp("effect add"); // Spigot // Paper - move to API
++        if (!this.hasNullCallback()) ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot add effects to entities asynchronously"); // Folia - region threading
+         if (this.isTickingEffects) {
+             this.effectsToProcess.add(new ProcessableEffect(effectInstance, cause));
+             return true;
+@@ -1502,7 +_,7 @@
+             boolean flag2 = !flag; // CraftBukkit - Ensure to return false if damage is blocked
+             if (flag2) {
+                 this.lastDamageSource = damageSource;
+-                this.lastDamageStamp = this.level().getGameTime();
++                this.lastDamageStamp = this.level().getRedstoneGameTime(); // Folia - region threading
+ 
+                 for (MobEffectInstance mobEffectInstance : this.getActiveEffects()) {
+                     mobEffectInstance.onMobHurt(level, this, damageSource, amount);
+@@ -1629,7 +_,7 @@
+ 
+     @Nullable
+     public DamageSource getLastDamageSource() {
+-        if (this.level().getGameTime() - this.lastDamageStamp > 40L) {
++        if (this.level().getRedstoneGameTime() - this.lastDamageStamp > 40L || this.lastDamageStamp == Long.MIN_VALUE) { // Folia - region threading
+             this.lastDamageSource = null;
+         }
+ 
+@@ -2420,10 +_,10 @@
+ 
+     @Nullable
+     public LivingEntity getKillCredit() {
+-        if (this.lastHurtByPlayer != null) {
++        if (this.lastHurtByPlayer != null && ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.lastHurtByPlayer)) { // Folia - region threading
+             return this.lastHurtByPlayer;
+         } else {
+-            return this.lastHurtByMob != null ? this.lastHurtByMob : null;
++            return this.lastHurtByMob != null && ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.lastHurtByMob) ? this.lastHurtByMob : null; // Folia - region threading
+         }
+     }
+ 
+@@ -2502,7 +_,7 @@
+         }
+ 
+         this.lastDamageSource = damageSource;
+-        this.lastDamageStamp = this.level().getGameTime();
++        this.lastDamageStamp = this.level().getRedstoneGameTime(); // Folia - region threading
+     }
+ 
+     @Override
+@@ -3479,7 +_,7 @@
+         this.pushEntities();
+         profilerFiller.pop();
+         // Paper start - Add EntityMoveEvent
+-        if (((ServerLevel) this.level()).hasEntityMoveEvent && !(this instanceof Player)) {
++        if (((ServerLevel) this.level()).getCurrentWorldData().hasEntityMoveEvent && !(this instanceof Player)) { // Folia - region threading
+             if (this.xo != this.getX() || this.yo != this.getY() || this.zo != this.getZ() || this.yRotO != this.getYRot() || this.xRotO != this.getXRot()) {
+                 Location from = new Location(this.level().getWorld(), this.xo, this.yo, this.zo, this.yRotO, this.xRotO);
+                 Location to = new Location(this.level().getWorld(), this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
+@@ -4152,7 +_,7 @@
+         boolean flag = false;
+         BlockPos blockPos = BlockPos.containing(x, y, z);
+         Level level = this.level();
+-        if (level.hasChunkAt(blockPos)) {
++        if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor((ServerLevel)level, blockPos) && level.hasChunkAt(blockPos)) { // Folia - region threading
+             boolean flag1 = false;
+ 
+             while (!flag1 && blockPos.getY() > level.getMinY()) {
+@@ -4314,6 +_,11 @@
+                 this.setXRot(0.0F);
+             }
+         });
++        // Folia start - separate out
++        this.stopSleepingRaw();
++    }
++    public void stopSleepingRaw() {
++        // Folia end - separate out
+         Vec3 vec3 = this.position();
+         this.setPose(Pose.STANDING);
+         this.setPos(vec3.x, vec3.y, vec3.z);
