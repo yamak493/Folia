@@ -1,0 +1,41 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: WillQi <williamqipizza@gmail.com>
+Date: Mon, 15 May 2023 23:45:09 -0600
+Subject: [PATCH] Fix off region raid heroes
+
+This patch aims to solve a potential incorrect thread call when completing a raid.
+If a player is a hero of the village but proceeds to leave the region of the
+raid before it's completion, it would throw an exception due to not being on the
+same region thread anymore.
+
+diff --git a/net/minecraft/world/entity/raid/Raid.java b/net/minecraft/world/entity/raid/Raid.java
+index b7045b2d4665c72d0c4849c711be4e44f7d17ad3..58ea6738dd9a04831197b850850720d5a775a131 100644
+--- a/net/minecraft/world/entity/raid/Raid.java
++++ b/net/minecraft/world/entity/raid/Raid.java
+@@ -391,14 +391,21 @@ public class Raid {
+                             if (entity instanceof LivingEntity) {
+                                 LivingEntity livingEntity = (LivingEntity)entity;
+                                 if (!entity.isSpectator()) {
+-                                    livingEntity.addEffect(
+-                                        new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 48000, this.raidOmenLevel - 1, false, false, true)
+-                                    );
++                                    //livingEntity.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 48000, this.raidOmenLevel - 1, false, false, true)); // Folia start - Fix off region raid heroes - moved down
+                                     if (livingEntity instanceof ServerPlayer serverPlayer) {
+-                                        serverPlayer.awardStat(Stats.RAID_WIN);
+-                                        CriteriaTriggers.RAID_WIN.trigger(serverPlayer);
++                                        //serverPlayer.awardStat(Stats.RAID_WIN); // Folia start - Fix off region raid heroes - moved down
++                                        //CriteriaTriggers.RAID_WIN.trigger(serverPlayer); // Folia start - Fix off region raid heroes - moved down
+                                         winners.add(serverPlayer.getBukkitEntity()); // CraftBukkit
+                                     }
++                                    // Folia start - Fix off region raid heroes
++                                    livingEntity.getBukkitEntity().taskScheduler.schedule((LivingEntity lv) -> {
++                                        lv.addEffect(new MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 48000, this.raidOmenLevel - 1, false, false, true));
++                                        if (lv instanceof ServerPlayer serverPlayer) {
++                                            serverPlayer.awardStat(Stats.RAID_WIN);
++                                            CriteriaTriggers.RAID_WIN.trigger(serverPlayer);
++                                        }
++                                    }, null, 1L);
++                                    // Folia end - Fix off region raid heroes
+                                 }
+                             }
+                         }

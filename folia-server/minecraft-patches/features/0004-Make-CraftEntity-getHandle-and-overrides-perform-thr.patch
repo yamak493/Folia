@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Spottedleaf <Spottedleaf@users.noreply.github.com>
+Date: Sun, 19 Mar 2023 14:35:46 -0700
+Subject: [PATCH] Make CraftEntity#getHandle and overrides perform thread
+ checks
+
+While these checks are painful, it should assist in debugging
+threading issues for plugins.
+
+diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
+index dbe049c164657ae352f4dadfa673a07dbef2054d..7d5368330870aca9d14ff43296d64c8db6a3e89b 100644
+--- a/net/minecraft/world/entity/Entity.java
++++ b/net/minecraft/world/entity/Entity.java
+@@ -3050,6 +3050,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+             }
+ 
+             if (force || this.canRide(vehicle) && vehicle.canAddPassenger(this)) {
++                if (this.valid) { // Folia - region threading - suppress entire event logic during worldgen
+                 // CraftBukkit start
+                 if (vehicle.getBukkitEntity() instanceof org.bukkit.entity.Vehicle && this.getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
+                     org.bukkit.event.vehicle.VehicleEnterEvent event = new org.bukkit.event.vehicle.VehicleEnterEvent((org.bukkit.entity.Vehicle) vehicle.getBukkitEntity(), this.getBukkitEntity());
+@@ -3071,6 +3072,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+                     return false;
+                 }
+                 // CraftBukkit end
++                } // Folia - region threading - suppress entire event logic during worldgen
+                 if (this.isPassenger()) {
+                     this.stopRiding();
+                 }
+@@ -3152,6 +3154,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+             throw new IllegalStateException("Use x.stopRiding(y), not y.removePassenger(x)");
+         } else {
+             // CraftBukkit start
++            if (this.valid) { // Folia - region threading - suppress entire event logic during worldgen
+             org.bukkit.craftbukkit.entity.CraftEntity craft = (org.bukkit.craftbukkit.entity.CraftEntity) passenger.getBukkitEntity().getVehicle();
+             Entity orig = craft == null ? null : craft.getHandle();
+             if (this.getBukkitEntity() instanceof org.bukkit.entity.Vehicle && passenger.getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
+@@ -3179,6 +3182,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+                 return false;
+             }
+             // CraftBukkit end
++            } // Folia - region threading - suppress entire event logic during worldgen
+             if (this.passengers.size() == 1 && this.passengers.get(0) == passenger) {
+                 this.passengers = ImmutableList.of();
+             } else {
