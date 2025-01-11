@@ -12,3 +12,8 @@
          // Copied from SimplePluginManager#loadPlugins
          // Spigot doesn't validate the name when the config is created, and instead when the plugin is loaded.
          // Paper plugin configuration will do these checks in config serializer instead of when this is created.
+@@ -81,4 +_,3 @@
+         return descriptionFile;
+     }
+ }
+-

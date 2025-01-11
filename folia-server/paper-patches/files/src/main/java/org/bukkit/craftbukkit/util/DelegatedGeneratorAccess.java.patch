@@ -14,3 +14,8 @@
      public WorldGenLevel getHandle() {
          return this.handle;
      }
+@@ -812,4 +_,3 @@
+     }
+     // Paper end
+ }
+-
