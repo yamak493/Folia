@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
-@@ -34,8 +_,16 @@
+@@ -32,8 +_,16 @@
          super(server, entity);
      }
  

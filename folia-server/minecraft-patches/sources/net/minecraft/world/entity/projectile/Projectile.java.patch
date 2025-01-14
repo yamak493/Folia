@@ -76,7 +76,7 @@
          }
      }
  
-@@ -451,7 +_,7 @@
+@@ -454,7 +_,7 @@
      @Override
      public boolean mayInteract(ServerLevel level, BlockPos pos) {
          Entity owner = this.getOwner();
