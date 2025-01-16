@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -82,6 +_,11 @@
+@@ -83,6 +_,11 @@
          return this.apiScheduler;
      };
      // Paper end - Folia schedulers
@@ -12,7 +12,7 @@
  
      public CraftEntity(final CraftServer server, final Entity entity) {
          this.server = server;
-@@ -239,6 +_,11 @@
+@@ -240,6 +_,11 @@
  
      @Override
      public boolean teleport(Location location, TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
@@ -24,7 +24,7 @@
          // Paper end
          Preconditions.checkArgument(location != null, "location cannot be null");
          location.checkFinite();
-@@ -528,6 +_,7 @@
+@@ -529,6 +_,7 @@
      }
  
      public Entity getHandle() {
@@ -32,7 +32,7 @@
          return this.entity;
      }
  
-@@ -722,7 +_,7 @@
+@@ -723,7 +_,7 @@
          ImmutableSet.Builder<Player> players = ImmutableSet.builder();
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -41,7 +41,7 @@
  
          if (entityTracker != null) {
              for (ServerPlayerConnection connection : entityTracker.seenBy) {
-@@ -1026,7 +_,7 @@
+@@ -1027,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -50,7 +50,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1045,7 +_,7 @@
+@@ -1046,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -59,7 +59,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1079,29 +_,43 @@
+@@ -1080,29 +_,43 @@
          location.checkFinite();
          Location locationClone = location.clone(); // clone so we don't need to worry about mutations after this call.
  
@@ -122,7 +122,7 @@
      }
      // Paper end - more teleport API / async chunk API
  
-@@ -1214,8 +_,7 @@
+@@ -1215,8 +_,7 @@
      // Paper start - tracked players API
      @Override
      public Set<org.bukkit.entity.Player> getTrackedPlayers() {
