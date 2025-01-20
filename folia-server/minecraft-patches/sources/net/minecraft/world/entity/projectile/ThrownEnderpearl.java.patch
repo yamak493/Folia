@@ -1,5 +1,23 @@
 --- a/net/minecraft/world/entity/projectile/ThrownEnderpearl.java
 +++ b/net/minecraft/world/entity/projectile/ThrownEnderpearl.java
+@@ -58,15 +_,11 @@
+     }
+ 
+     private void deregisterFromCurrentOwner() {
+-        if (this.getOwner() instanceof ServerPlayer serverPlayer) {
+-            serverPlayer.deregisterEnderPearl(this);
+-        }
++        // Folia - region threading - we remove the registration logic, we do not need to fetch the owner
+     }
+ 
+     private void registerToCurrentOwner() {
+-        if (this.getOwner() instanceof ServerPlayer serverPlayer) {
+-            serverPlayer.registerEnderPearl(this);
+-        }
++        // Folia - region threading - we remove the registration logic, we do not need to fetch the owner
+     }
+ 
+     @Nullable
 @@ -99,6 +_,81 @@
          result.getEntity().hurt(this.damageSources().thrown(this, this.getOwner()), 0.0F);
      }
