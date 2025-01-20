@@ -1,0 +1,17 @@
+--- a/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
++++ b/net/minecraft/world/entity/ai/behavior/YieldJobSite.java
+@@ -33,7 +_,13 @@
+                         } else if (villager.getVillagerData().getProfession() != VillagerProfession.NONE) {
+                             return false;
+                         } else {
+-                            BlockPos blockPos = instance.<GlobalPos>get(potentialJobSite).pos();
++                            // Folia start - region threading
++                            GlobalPos globalPos = instance.get(potentialJobSite);
++                            BlockPos blockPos = globalPos.pos();
++                            if (globalPos.dimension() != level.dimension() || !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(level, blockPos)) {
++                                return true;
++                            }
++                            // Folia end - region threading
+                             Optional<Holder<PoiType>> type = level.getPoiManager().getType(blockPos);
+                             if (type.isEmpty()) {
+                                 return true;
