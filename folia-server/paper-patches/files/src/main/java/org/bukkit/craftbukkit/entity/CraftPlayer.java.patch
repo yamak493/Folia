@@ -18,7 +18,7 @@
          final ServerGamePacketListenerImpl connection = this.getHandle().connection;
          if (connection != null) {
              connection.disconnect(message == null ? net.kyori.adventure.text.Component.empty() : message, cause);
-@@ -1404,6 +_,11 @@
+@@ -1405,6 +_,11 @@
  
      @Override
      public boolean teleport(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
@@ -30,7 +30,7 @@
          Set<io.papermc.paper.entity.TeleportFlag.Relative> relativeArguments;
          Set<io.papermc.paper.entity.TeleportFlag> allFlags;
          if (flags.length == 0) {
-@@ -2068,7 +_,7 @@
+@@ -2069,7 +_,7 @@
      private void unregisterEntity(Entity other) {
          // Paper end
          ChunkMap tracker = ((ServerLevel) this.getHandle().level()).getChunkSource().chunkMap;
@@ -39,7 +39,7 @@
          if (entry != null) {
              entry.removePlayer(this.getHandle());
          }
-@@ -2165,7 +_,7 @@
+@@ -2166,7 +_,7 @@
              if (original != null) otherPlayer.setUUID(original); // Paper - uuid override
          }
  
@@ -48,7 +48,7 @@
          if (entry != null && !entry.seenBy.contains(this.getHandle().connection)) {
              entry.updatePlayer(this.getHandle());
          }
-@@ -2314,9 +_,16 @@
+@@ -2315,9 +_,16 @@
          return this;
      }
  
@@ -66,7 +66,7 @@
      }
  
      public void setHandle(final ServerPlayer entity) {
-@@ -3348,7 +_,7 @@
+@@ -3349,7 +_,7 @@
          {
              if ( CraftPlayer.this.getHealth() <= 0 && CraftPlayer.this.isOnline() )
              {
