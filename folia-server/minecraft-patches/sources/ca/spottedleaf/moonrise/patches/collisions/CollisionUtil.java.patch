@@ -1,11 +1,20 @@
 --- a/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
 +++ b/ca/spottedleaf/moonrise/patches/collisions/CollisionUtil.java
-@@ -1940,7 +_,7 @@
+@@ -1940,6 +_,17 @@
  
          for (int currChunkZ = minChunkZ; currChunkZ <= maxChunkZ; ++currChunkZ) {
              for (int currChunkX = minChunkX; currChunkX <= maxChunkX; ++currChunkX) {
--                final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, loadChunks);
-+                final ChunkAccess chunk = !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor((net.minecraft.server.level.ServerLevel)world, currChunkX, currChunkZ) ? null : chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, loadChunks); // Folia - region threading
++                // Folia start - region threading
++                if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(world, currChunkX, currChunkZ, 4)) {
++                    if (checkOnly) {
++                        return true;
++                    } else {
++                        intoAABB.add(getBoxForChunk(currChunkX, currChunkZ));
++                        ret = true;
++                        continue;
++                    }
++                }
++                // Folia end - region threading
+                 final ChunkAccess chunk = chunkSource.getChunk(currChunkX, currChunkZ, ChunkStatus.FULL, loadChunks);
  
                  if (chunk == null) {
-                     if ((collisionFlags & COLLISION_FLAG_COLLIDE_WITH_UNLOADED_CHUNKS) != 0) {
