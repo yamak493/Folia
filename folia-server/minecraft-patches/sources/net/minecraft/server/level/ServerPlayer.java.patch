@@ -188,6 +188,31 @@
                              } else {
                                  LOGGER.warn("Failed to spawn player ender pearl in level ({}), skipping", optional.get());
                              }
+@@ -817,12 +_,23 @@
+ 
+         Entity camera = this.getCamera();
+         if (camera != this) {
+-            if (camera.isAlive()) {
++            if (camera.canBeSpectated()) { // Folia - region threading - replace removed check
++                if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(camera) && !camera.isRemoved()) { // Folia - region threading
+                 this.absMoveTo(camera.getX(), camera.getY(), camera.getZ(), camera.getYRot(), camera.getXRot());
+                 this.serverLevel().getChunkSource().move(this);
+                 if (this.wantsToStopRiding()) {
+                     this.setCamera(this);
+                 }
++                } else { // Folia start - region threading
++                    Entity realCamera = camera.getBukkitEntity().getHandleRaw();
++                    if (realCamera != camera) {
++                        this.setCamera(this);
++                        this.setCamera(realCamera);
++                    } else {
++                        this.teleportToCameraOffRegion();
++                    }
++                }
++                // Folia end - region threading
+             } else {
+                 this.setCamera(this);
+             }
 @@ -1357,9 +_,332 @@
          }
      }
@@ -521,18 +546,66 @@
          if (this.isSleeping()) return null; // CraftBukkit - SPIGOT-3154
          if (this.isRemoved()) {
              return null;
-@@ -2398,6 +_,11 @@
+@@ -2397,7 +_,30 @@
+         return (Entity)(this.camera == null ? this : this.camera);
      }
  
++    // Folia start - region threading
++    private void teleportToCameraOffRegion() {
++        Entity cameraFinal = this.camera;
++        // use the task scheduler, as we don't know where the caller is invoking from
++        if (this != cameraFinal) {
++            this.getBukkitEntity().taskScheduler.schedule((final ServerPlayer newPlayer) -> {
++                io.papermc.paper.threadedregions.TeleportUtils.teleport(
++                        newPlayer, false, cameraFinal, null, null, 0L,
++                        org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.SPECTATE, null,
++                        (final ServerPlayer newerPlayer) -> {
++                            return newerPlayer.camera == cameraFinal;
++                        }
++                );
++            }, null, 1L);
++        } // else: do not bother teleporting to self
++    }
++    // Folia end - region threading
++
      public void setCamera(@Nullable Entity entityToSpectate) {
 +        // Folia start - region threading
-+        if (entityToSpectate != null && !ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(entityToSpectate)) {
++        if (entityToSpectate != null && (entityToSpectate != this && !entityToSpectate.canBeSpectated())) {
 +            return;
 +        }
 +        // Folia end - region threading
          Entity camera = this.getCamera();
          this.camera = (Entity)(entityToSpectate == null ? this : entityToSpectate);
          if (camera != this.camera) {
+@@ -2416,16 +_,19 @@
+                 }
+             }
+             // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
+-            if (this.camera.level() instanceof ServerLevel serverLevel) {
+-                this.teleportTo(serverLevel, this.camera.getX(), this.camera.getY(), this.camera.getZ(), Set.of(), this.getYRot(), this.getXRot(), false, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.SPECTATE); // CraftBukkit
+-            }
+-
+-            if (entityToSpectate != null) {
+-                this.serverLevel().getChunkSource().move(this);
+-            }
+-
++            // Folia - region threading - move down
++
++            // Folia - region threading - not needed
++
++            // Folia start - region threading - handle camera setting better
++            if (this.camera == this
++                || (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this.camera) && this.camera.moonrise$getTrackedEntity() != null
++                    && this.camera.moonrise$getTrackedEntity().seenBy.contains(this.connection))) {
++                // Folia end - region threading - handle camera setting better
+             this.connection.send(new ClientboundSetCameraPacket(this.camera));
+-            this.connection.resetPosition();
++            } // Folia - region threading - handle camera setting better
++            //this.connection.resetPosition(); // Folia - region threading - not needed
++            this.teleportToCameraOffRegion(); // Folia - region threading - moved down
+         }
+     }
+ 
 @@ -2896,11 +_,11 @@
      }
  

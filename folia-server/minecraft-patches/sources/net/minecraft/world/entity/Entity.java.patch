@@ -27,7 +27,7 @@
      private EntityDimensions dimensions;
      private float eyeHeight;
      public boolean isInPowderSnow;
-@@ -525,6 +_,19 @@
+@@ -525,6 +_,23 @@
          }
      }
      // Paper end - optimise entity tracker
@@ -42,6 +42,10 @@
 +        if (this.pistonDeltasGameTime != Long.MIN_VALUE) {
 +            this.pistonDeltasGameTime += fromRedstoneTimeOffset;
 +        }
++    }
++
++    public boolean canBeSpectated() {
++        return !this.getBukkitEntity().taskScheduler.isRetired();
 +    }
 +    // Folia end - region ticking
  
@@ -992,6 +996,32 @@
      protected void removeAfterChangingDimensions() {
          this.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION, null); // CraftBukkit - add Bukkit remove cause
          if (this instanceof Leashable leashable && leashable.isLeashed()) { // Paper - only call if it is leashed
+@@ -4246,6 +_,12 @@
+     }
+ 
+     public void startSeenByPlayer(ServerPlayer serverPlayer) {
++        // Folia start - region threading
++        if (serverPlayer.getCamera() == this) {
++            // set camera again
++            serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetCameraPacket(this));
++        }
++        // Folia end - region threading
+     }
+ 
+     public void stopSeenByPlayer(ServerPlayer serverPlayer) {
+@@ -4255,6 +_,12 @@
+             new io.papermc.paper.event.player.PlayerUntrackEntityEvent(serverPlayer.getBukkitEntity(), this.getBukkitEntity()).callEvent();
+         }
+         // Paper end - entity tracking events
++        // Folia start - region threading
++        if (serverPlayer.getCamera() == this) {
++            // unset camera, the player tick method should TP us close enough again to invoke startSeenByPlayer
++            serverPlayer.connection.send(new net.minecraft.network.protocol.game.ClientboundSetCameraPacket(serverPlayer));
++        }
++        // Folia end - region threading
+     }
+ 
+     public float rotate(Rotation transformRotation) {
 @@ -4790,7 +_,8 @@
              }
          }

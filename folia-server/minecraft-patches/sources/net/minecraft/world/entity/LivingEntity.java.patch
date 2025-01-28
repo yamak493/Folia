@@ -9,7 +9,7 @@
      protected int autoSpinAttackTicks;
      protected float autoSpinAttackDmg;
      @Nullable
-@@ -307,6 +_,21 @@
+@@ -307,6 +_,26 @@
          return this.getYHeadRot();
      }
      // CraftBukkit end
@@ -20,6 +20,11 @@
 +        if (this.lastDamageStamp != Long.MIN_VALUE) {
 +            this.lastDamageStamp += fromRedstoneTimeOffset;
 +        }
++    }
++
++    @Override
++    public boolean canBeSpectated() {
++        return super.canBeSpectated() && this.getHealth() > 0.0F;
 +    }
 +
 +    @Override

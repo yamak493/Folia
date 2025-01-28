@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/TeleportUtils.java
-@@ -1,0 +_,70 @@
+@@ -1,0 +_,82 @@
 +package io.papermc.paper.threadedregions;
 +
 +import ca.spottedleaf.concurrentutil.completable.CallbackCompletable;
@@ -13,8 +13,14 @@
 +
 +public final class TeleportUtils {
 +
-+    public static void teleport(final Entity from, final boolean useFromRootVehicle, final Entity to, final Float yaw, final Float pitch,
-+                                final long teleportFlags, final PlayerTeleportEvent.TeleportCause cause, final Consumer<Entity> onComplete) {
++    public static <T extends Entity> void teleport(final T from, final boolean useFromRootVehicle, final Entity to, final Float yaw, final Float pitch,
++                                                   final long teleportFlags, final PlayerTeleportEvent.TeleportCause cause, final Consumer<Entity> onComplete) {
++        teleport(from, useFromRootVehicle, to, yaw, pitch, teleportFlags, cause, onComplete, null);
++    }
++
++    public static <T extends Entity> void teleport(final T from, final boolean useFromRootVehicle, final Entity to, final Float yaw, final Float pitch,
++                                                   final long teleportFlags, final PlayerTeleportEvent.TeleportCause cause, final Consumer<Entity> onComplete,
++                                                   final java.util.function.Predicate<T> preTeleport) {
 +        // retrieve coordinates
 +        final CallbackCompletable<Location> positionCompletable = new CallbackCompletable<>();
 +
@@ -27,10 +33,16 @@
 +                    return;
 +                }
 +                final boolean scheduled = from.getBukkitEntity().taskScheduler.schedule(
-+                    (final Entity realFrom) -> {
++                    (final T realFrom) -> {
 +                        final Vec3 pos = new Vec3(
 +                            loc.getX(), loc.getY(), loc.getZ()
 +                        );
++                        if (preTeleport != null && !preTeleport.test(realFrom)) {
++                            if (onComplete != null) {
++                                onComplete.accept(null);
++                            }
++                            return;
++                        }
 +                        (useFromRootVehicle ? realFrom.getRootVehicle() : realFrom).teleportAsync(
 +                            ((CraftWorld)loc.getWorld()).getHandle(), pos, null, null, null,
 +                            cause, teleportFlags, onComplete
