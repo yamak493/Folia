@@ -12,7 +12,35 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.world.entity.Entity;
  import net.minecraft.world.level.ChunkPos;
-@@ -119,50 +_,157 @@
+@@ -15,8 +_,26 @@
+ 
+     private static final Logger LOGGER = LoggerFactory.getLogger(TickThread.class);
+ 
++    private static String getRegionInfo(final ThreadedRegionizer.ThreadedRegion<TickRegions.TickRegionData, TickRegions.TickRegionSectionData> region) {
++        if (region == null) {
++            return "{null}";
++        }
++
++        final ChunkPos center = region.getCenterChunk();
++        final net.minecraft.server.level.ServerLevel world = region.regioniser.world;
++
++        return "{center=" + center + ",world=" + (world == null ? "null" : WorldUtil.getWorldName(world)) + "}";
++    }
++
+     private static String getThreadContext() {
+-        return "thread=" + Thread.currentThread().getName();
++        final Thread thread = Thread.currentThread();
++
++        if (!(thread instanceof TickThread)) {
++            return "[thread=" + thread + ",class=" + thread.getClass().getName() + "]";
++        }
++
++        return "[thread=" + thread.getName() + ",class=" + thread.getClass().getName() + ",region=" + getRegionInfo(TickRegionScheduler.getCurrentRegion()) + "]";
++
+     }
+ 
+     /**
+@@ -123,50 +_,157 @@
      }
  
      public static boolean isShutdownThread() {

@@ -134,7 +134,7 @@
                          return;
                      }
  
-@@ -817,7 +_,7 @@
+@@ -824,7 +_,7 @@
              }
  
              // This needs to be on main
@@ -143,7 +143,7 @@
          } else if (!completions.isEmpty()) {
              final com.mojang.brigadier.suggestion.SuggestionsBuilder builder0 = new com.mojang.brigadier.suggestion.SuggestionsBuilder(packet.getCommand(), stringReader.getTotalLength());
              final com.mojang.brigadier.suggestion.SuggestionsBuilder builder = builder0.createOffset(builder0.getInput().lastIndexOf(' ') + 1);
-@@ -1200,11 +_,11 @@
+@@ -1207,11 +_,11 @@
          }
          // Paper end - Book size limits
          // CraftBukkit start
@@ -157,7 +157,7 @@
          // CraftBukkit end
          int slot = packet.slot();
          if (Inventory.isHotbarSlot(slot) || slot == 40) {
-@@ -1215,7 +_,22 @@
+@@ -1222,7 +_,22 @@
              Consumer<List<FilteredText>> consumer = optional.isPresent()
                  ? texts -> this.signBook(texts.get(0), texts.subList(1, texts.size()), slot)
                  : texts -> this.updateBookContents(texts, slot);
@@ -181,7 +181,7 @@
          }
      }
  
-@@ -1341,9 +_,10 @@
+@@ -1348,9 +_,10 @@
                                  int i = this.receivedMovePacketCount - this.knownMovePacketCount;
  
                                  // CraftBukkit start - handle custom speeds and skipped ticks
@@ -194,7 +194,7 @@
  
                                  if (i > Math.max(this.allowedPlayerTicks, 5)) {
                                      LOGGER.debug("{} is sending move packets too frequently ({} packets since last tick)", this.player.getName().getString(), i);
-@@ -1532,7 +_,7 @@
+@@ -1539,7 +_,7 @@
  
                                      // If the event is cancelled we move the player back to their old location.
                                      if (event.isCancelled()) {
@@ -203,7 +203,7 @@
                                          return;
                                      }
  
-@@ -1540,7 +_,7 @@
+@@ -1547,7 +_,7 @@
                                      // there to avoid any 'Moved wrongly' or 'Moved too quickly' errors.
                                      // We only do this if the Event was not cancelled.
                                      if (!oldTo.equals(event.getTo()) && !event.isCancelled()) {
@@ -212,7 +212,7 @@
                                          return;
                                      }
  
-@@ -1799,9 +_,9 @@
+@@ -1806,9 +_,9 @@
                      if (!this.player.isSpectator()) {
                          // limit how quickly items can be dropped
                          // If the ticks aren't the same then the count starts from 0 and we update the lastDropTick.
@@ -224,7 +224,7 @@
                          } else {
                              // Else we increment the drop count and check the amount.
                              this.dropCount++;
-@@ -1829,7 +_,7 @@
+@@ -1836,7 +_,7 @@
                  case ABORT_DESTROY_BLOCK:
                  case STOP_DESTROY_BLOCK:
                      // Paper start - Don't allow digging into unloaded chunks
@@ -233,7 +233,7 @@
                          this.player.connection.ackBlockChangesUpTo(packet.getSequence());
                          return;
                      }
-@@ -1911,7 +_,7 @@
+@@ -1918,7 +_,7 @@
                  }
                  // Paper end - improve distance check
                  BlockPos blockPos = hitResult.getBlockPos();
@@ -242,7 +242,7 @@
                      Vec3 vec3 = location.subtract(Vec3.atCenterOf(blockPos));
                      double d = 1.0000001;
                      if (Math.abs(vec3.x()) < 1.0000001 && Math.abs(vec3.y()) < 1.0000001 && Math.abs(vec3.z()) < 1.0000001) {
-@@ -2032,7 +_,7 @@
+@@ -2039,7 +_,7 @@
              for (ServerLevel serverLevel : this.server.getAllLevels()) {
                  Entity entity = packet.getEntity(serverLevel);
                  if (entity != null) {
@@ -251,7 +251,7 @@
                      return;
                  }
              }
-@@ -2064,7 +_,7 @@
+@@ -2071,7 +_,7 @@
          }
          // CraftBukkit end
          LOGGER.info("{} lost connection: {}", this.player.getName().getString(), details.reason().getString());
@@ -260,7 +260,7 @@
          super.onDisconnect(details, quitMessage); // Paper - Fix kick event leave message not being sent
      }
  
-@@ -2073,6 +_,8 @@
+@@ -2080,6 +_,8 @@
          this.removePlayerFromWorld(null);
      }
  
@@ -269,7 +269,7 @@
      private void removePlayerFromWorld(@Nullable net.kyori.adventure.text.Component quitMessage) {
          // Paper end - Fix kick event leave message not being sent
          this.chatMessageChain.close();
-@@ -2086,6 +_,8 @@
+@@ -2093,6 +_,8 @@
          this.player.disconnect();
          // Paper start - Adventure
          quitMessage = quitMessage == null ? this.server.getPlayerList().remove(this.player) : this.server.getPlayerList().remove(this.player, quitMessage); // Paper - pass in quitMessage to fix kick message not being used
@@ -278,7 +278,7 @@
          if ((quitMessage != null) && !quitMessage.equals(net.kyori.adventure.text.Component.empty())) {
              this.server.getPlayerList().broadcastSystemMessage(PaperAdventure.asVanilla(quitMessage), false);
              // Paper end - Adventure
-@@ -2324,7 +_,7 @@
+@@ -2331,7 +_,7 @@
              this.player.resetLastActionTime();
              // CraftBukkit start
              if (sync) {
@@ -287,7 +287,7 @@
              } else {
                  handler.run();
              }
-@@ -2379,7 +_,7 @@
+@@ -2386,7 +_,7 @@
              String originalFormat = event.getFormat(), originalMessage = event.getMessage();
              this.cserver.getPluginManager().callEvent(event);
  
@@ -296,7 +296,7 @@
                  // Evil plugins still listening to deprecated event
                  final PlayerChatEvent queueEvent = new PlayerChatEvent(player, event.getMessage(), event.getFormat(), event.getRecipients());
                  queueEvent.setCancelled(event.isCancelled());
-@@ -2476,6 +_,7 @@
+@@ -2483,6 +_,7 @@
          if (rawMessage.isEmpty()) {
              LOGGER.warn("{} tried to send an empty message", this.player.getScoreboardName());
          } else if (this.getCraftPlayer().isConversing()) {
@@ -304,7 +304,7 @@
              final String conversationInput = rawMessage;
              this.server.processQueue.add(() -> ServerGamePacketListenerImpl.this.getCraftPlayer().acceptConversationInput(conversationInput));
          } else if (this.player.getChatVisibility() == ChatVisiblity.SYSTEM) { // Re-add "Command Only" flag check
-@@ -2701,8 +_,25 @@
+@@ -2708,8 +_,25 @@
      // Spigot end
  
      public void switchToConfig() {
@@ -331,7 +331,7 @@
          this.send(ClientboundStartConfigurationPacket.INSTANCE);
          this.connection.setupOutboundProtocol(ConfigurationProtocols.CLIENTBOUND);
      }
-@@ -2727,7 +_,7 @@
+@@ -2734,7 +_,7 @@
              // Spigot end
              this.player.resetLastActionTime();
              this.player.setShiftKeyDown(packet.isUsingSecondaryAction());
@@ -340,7 +340,7 @@
                  if (!serverLevel.getWorldBorder().isWithinBounds(target.blockPosition())) {
                      return;
                  }
-@@ -2859,6 +_,12 @@
+@@ -2866,6 +_,12 @@
          switch (action) {
              case PERFORM_RESPAWN:
                  if (this.player.wonGame) {
@@ -353,7 +353,7 @@
                      this.player.wonGame = false;
                      this.player = this.server.getPlayerList().respawn(this.player, true, Entity.RemovalReason.CHANGED_DIMENSION, RespawnReason.END_PORTAL); // CraftBukkit
                      this.resetPosition();
-@@ -2868,6 +_,17 @@
+@@ -2875,6 +_,17 @@
                          return;
                      }
  
@@ -371,7 +371,7 @@
                      this.player = this.server.getPlayerList().respawn(this.player, false, Entity.RemovalReason.KILLED, RespawnReason.DEATH); // CraftBukkit
                      this.resetPosition();
                      if (this.server.isHardcore()) {
-@@ -3441,7 +_,21 @@
+@@ -3448,7 +_,21 @@
          }
          List<String> list = Stream.of(lines).map(ChatFormatting::stripFormatting).collect(Collectors.toList());
          // Paper end - Limit client sign length
