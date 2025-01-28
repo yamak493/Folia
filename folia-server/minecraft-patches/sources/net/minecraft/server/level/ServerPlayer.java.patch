@@ -188,7 +188,7 @@
                              } else {
                                  LOGGER.warn("Failed to spawn player ender pearl in level ({}), skipping", optional.get());
                              }
-@@ -1357,6 +_,324 @@
+@@ -1357,9 +_,332 @@
          }
      }
  
@@ -513,6 +513,14 @@
      @Nullable
      @Override
      public ServerPlayer teleport(TeleportTransition teleportTransition) {
++        // Folia start - region threading
++        if (true) {
++            throw new UnsupportedOperationException("Must use teleportAsync while in region threading");
++        }
++        // Folia end - region threading
+         if (this.isSleeping()) return null; // CraftBukkit - SPIGOT-3154
+         if (this.isRemoved()) {
+             return null;
 @@ -2398,6 +_,11 @@
      }
  
