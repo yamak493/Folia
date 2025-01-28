@@ -111,7 +111,7 @@
 +                        // Folia start - region threading
 +                        for (Entity possible : this.level.getCurrentWorldData().trackerEntities) {
 +                            ChunkMap.TrackedEntity trackedEntity1 = possible.moonrise$getTrackedEntity();
-+                            if (trackedEntity == null) {
++                            if (trackedEntity1 == null) {
 +                                continue;
 +                            }
 +                            // Folia end - region threading
