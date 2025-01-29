@@ -91,6 +91,37 @@
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot unload a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          if (world == null) {
              return false;
+@@ -3083,11 +_,27 @@
+ 
+     @Override
+     public double[] getTPS() {
++        // Folia start - region threading
++        ca.spottedleaf.concurrentutil.scheduler.SchedulerThreadPool.SchedulableTick task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentTickingTask();
++        if (task == null) {
++            // might be on the shutdown thread, try retrieving the current region
++            if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {
++                // we are on the shutdown thread
++                task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
++            }
++        }
++        if (!(task instanceof io.papermc.paper.threadedregions.TickRegionScheduler.RegionScheduleHandle tickHandle)) {
++            throw new UnsupportedOperationException("Not on any region");
++        }
++
++        // 1m, 5m, 15m
++        long currTime = System.nanoTime();
+         return new double[] {
+-            net.minecraft.server.MinecraftServer.getServer().tps1.getAverage(),
+-            net.minecraft.server.MinecraftServer.getServer().tps5.getAverage(),
+-            net.minecraft.server.MinecraftServer.getServer().tps15.getAverage()
++                tickHandle.getTickReport1m(currTime).tpsData().segmentAll().average(),
++                tickHandle.getTickReport5m(currTime).tpsData().segmentAll().average(),
++                tickHandle.getTickReport15m(currTime).tpsData().segmentAll().average(),
+         };
++        // Folia end - region threading
+     }
+ 
+     // Paper start - adventure sounds
 @@ -3258,7 +_,7 @@
  
      @Override
