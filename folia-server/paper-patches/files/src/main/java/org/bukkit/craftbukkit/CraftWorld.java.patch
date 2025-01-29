@@ -83,6 +83,32 @@
              return true;
          }
  
+@@ -648,21 +_,24 @@
+ 
+     @Override
+     public boolean isChunkForceLoaded(int x, int z) {
++        io.papermc.paper.threadedregions.RegionizedServer.ensureGlobalTickThread("Cannot read force-loaded chunk off global region"); // Folia - region threading
+         return this.getHandle().getForcedChunks().contains(ChunkPos.asLong(x, z));
+     }
+ 
+     @Override
+     public void setChunkForceLoaded(int x, int z, boolean forced) {
++        io.papermc.paper.threadedregions.RegionizedServer.ensureGlobalTickThread("Cannot modify force-loaded chunks off global region"); // Folia - region threading
+         warnUnsafeChunk("forceloading a faraway chunk", x, z); // Paper
+         this.getHandle().setChunkForced(x, z, forced);
+     }
+ 
+     @Override
+     public Collection<Chunk> getForceLoadedChunks() {
++        io.papermc.paper.threadedregions.RegionizedServer.ensureGlobalTickThread("Cannot read force-loaded chunks off global region"); // Folia - region threading
+         Set<Chunk> chunks = new HashSet<>();
+ 
+         for (long coord : this.getHandle().getForcedChunks()) {
+-            chunks.add(this.getChunkAt(ChunkPos.getX(coord), ChunkPos.getZ(coord)));
++            chunks.add(new org.bukkit.craftbukkit.CraftChunk(this.world, ChunkPos.getX(coord), ChunkPos.getZ(coord))); // Folia - region threading
+         }
+ 
+         return Collections.unmodifiableCollection(chunks);
 @@ -782,13 +_,15 @@
  
      @Override
