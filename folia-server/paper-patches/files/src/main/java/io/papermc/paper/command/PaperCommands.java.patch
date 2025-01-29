@@ -1,9 +1,10 @@
 --- a/src/main/java/io/papermc/paper/command/PaperCommands.java
 +++ b/src/main/java/io/papermc/paper/command/PaperCommands.java
-@@ -19,6 +_,7 @@
+@@ -18,7 +_,7 @@
+     static {
          COMMANDS.put("paper", new PaperCommand("paper"));
          COMMANDS.put("callback", new CallbackCommand("callback"));
-         COMMANDS.put("mspt", new MSPTCommand("mspt"));
+-        COMMANDS.put("mspt", new MSPTCommand("mspt"));
 +        COMMANDS.put("tps", new io.papermc.paper.threadedregions.commands.CommandServerHealth()); // Folia - region threading
      }
  
