@@ -27,7 +27,7 @@
      private EntityDimensions dimensions;
      private float eyeHeight;
      public boolean isInPowderSnow;
-@@ -525,6 +_,23 @@
+@@ -521,6 +_,23 @@
          }
      }
      // Paper end - optimise entity tracker
@@ -51,7 +51,7 @@
  
      public Entity(EntityType<?> entityType, Level level) {
          this.type = entityType;
-@@ -655,8 +_,7 @@
+@@ -651,8 +_,7 @@
      // due to interactions on the client.
      public void resendPossiblyDesyncedEntityData(net.minecraft.server.level.ServerPlayer player) {
          if (player.getBukkitEntity().canSee(this.getBukkitEntity())) {
@@ -61,7 +61,7 @@
              if (tracker == null) {
                  return;
              }
-@@ -823,7 +_,7 @@
+@@ -819,7 +_,7 @@
      public void postTick() {
          // No clean way to break out of ticking once the entity has been copied to a new world, so instead we move the portalling later in the tick cycle
          if (!(this instanceof ServerPlayer) && this.isAlive()) { // Paper - don't attempt to teleport dead entities
@@ -70,7 +70,7 @@
          }
      }
      // CraftBukkit end
-@@ -841,7 +_,7 @@
+@@ -837,7 +_,7 @@
              this.boardingCooldown--;
          }
  
@@ -79,7 +79,7 @@
          if (this.canSpawnSprintParticle()) {
              this.spawnSprintParticle();
          }
-@@ -1104,8 +_,8 @@
+@@ -1100,8 +_,8 @@
          } else {
              this.wasOnFire = this.isOnFire();
              if (type == MoverType.PISTON) {
@@ -90,7 +90,7 @@
                  movement = this.limitPistonMovement(movement);
                  if (movement.equals(Vec3.ZERO)) {
                      return;
-@@ -1404,7 +_,7 @@
+@@ -1400,7 +_,7 @@
          if (pos.lengthSqr() <= 1.0E-7) {
              return pos;
          } else {
@@ -99,7 +99,7 @@
              if (gameTime != this.pistonDeltasGameTime) {
                  Arrays.fill(this.pistonDeltas, 0.0);
                  this.pistonDeltasGameTime = gameTime;
-@@ -3038,6 +_,7 @@
+@@ -3034,6 +_,7 @@
              }
  
              if (force || this.canRide(vehicle) && vehicle.canAddPassenger(this)) {
@@ -107,7 +107,7 @@
                  // CraftBukkit start
                  if (vehicle.getBukkitEntity() instanceof org.bukkit.entity.Vehicle && this.getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
                      org.bukkit.event.vehicle.VehicleEnterEvent event = new org.bukkit.event.vehicle.VehicleEnterEvent((org.bukkit.entity.Vehicle) vehicle.getBukkitEntity(), this.getBukkitEntity());
-@@ -3059,6 +_,7 @@
+@@ -3055,6 +_,7 @@
                      return false;
                  }
                  // CraftBukkit end
@@ -115,7 +115,7 @@
                  if (this.isPassenger()) {
                      this.stopRiding();
                  }
-@@ -3126,7 +_,7 @@
+@@ -3122,7 +_,7 @@
                  this.passengers = ImmutableList.copyOf(list);
              }
  
@@ -124,7 +124,7 @@
          }
      }
  
-@@ -3140,6 +_,7 @@
+@@ -3136,6 +_,7 @@
              throw new IllegalStateException("Use x.stopRiding(y), not y.removePassenger(x)");
          } else {
              // CraftBukkit start
@@ -132,7 +132,7 @@
              org.bukkit.craftbukkit.entity.CraftEntity craft = (org.bukkit.craftbukkit.entity.CraftEntity) passenger.getBukkitEntity().getVehicle();
              Entity orig = craft == null ? null : craft.getHandle();
              if (this.getBukkitEntity() instanceof org.bukkit.entity.Vehicle && passenger.getBukkitEntity() instanceof org.bukkit.entity.LivingEntity) {
-@@ -3167,6 +_,7 @@
+@@ -3163,6 +_,7 @@
                  return false;
              }
              // CraftBukkit end
@@ -140,7 +140,7 @@
              if (this.passengers.size() == 1 && this.passengers.get(0) == passenger) {
                  this.passengers = ImmutableList.of();
              } else {
-@@ -3174,7 +_,7 @@
+@@ -3170,7 +_,7 @@
              }
  
              passenger.boardingCooldown = 60;
@@ -149,7 +149,7 @@
          }
          return true; // CraftBukkit
      }
-@@ -3258,7 +_,7 @@
+@@ -3254,7 +_,7 @@
          }
      }
  
@@ -158,7 +158,7 @@
          if (this.level() instanceof ServerLevel serverLevel) {
              this.processPortalCooldown();
              if (this.portalProcess != null) {
-@@ -3266,21 +_,20 @@
+@@ -3262,21 +_,20 @@
                      ProfilerFiller profilerFiller = Profiler.get();
                      profilerFiller.push("portal");
                      this.setPortalCooldown();
@@ -188,7 +188,7 @@
      }
  
      public int getDimensionChangingDelay() {
-@@ -3420,6 +_,11 @@
+@@ -3416,6 +_,11 @@
  
      @Nullable
      public PlayerTeam getTeam() {
@@ -200,7 +200,7 @@
          if (!this.level().paperConfig().scoreboards.allowNonPlayerEntitiesOnScoreboards && !(this instanceof Player)) { return null; } // Paper - Perf: Disable Scoreboards for non players by default
          return this.level().getScoreboard().getPlayersTeam(this.getScoreboardName());
      }
-@@ -3726,8 +_,789 @@
+@@ -3722,8 +_,789 @@
          this.portalProcess = entity.portalProcess;
      }
  
@@ -990,7 +990,7 @@
          // Paper start - Fix item duplication and teleport issues
          if ((!this.isAlive() || !this.valid) && (teleportTransition.newLevel() != this.level)) {
              LOGGER.warn("Illegal Entity Teleport " + this + " to " + teleportTransition.newLevel() + ":" + teleportTransition.position(), new Throwable());
-@@ -3911,6 +_,12 @@
+@@ -3907,6 +_,12 @@
          }
      }
  
@@ -1003,7 +1003,7 @@
      protected void removeAfterChangingDimensions() {
          this.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION, null); // CraftBukkit - add Bukkit remove cause
          if (this instanceof Leashable leashable && leashable.isLeashed()) { // Paper - only call if it is leashed
-@@ -4246,6 +_,12 @@
+@@ -4242,6 +_,12 @@
      }
  
      public void startSeenByPlayer(ServerPlayer serverPlayer) {
@@ -1016,7 +1016,7 @@
      }
  
      public void stopSeenByPlayer(ServerPlayer serverPlayer) {
-@@ -4255,6 +_,12 @@
+@@ -4251,6 +_,12 @@
              new io.papermc.paper.event.player.PlayerUntrackEntityEvent(serverPlayer.getBukkitEntity(), this.getBukkitEntity()).callEvent();
          }
          // Paper end - entity tracking events
@@ -1029,7 +1029,7 @@
      }
  
      public float rotate(Rotation transformRotation) {
-@@ -4790,7 +_,8 @@
+@@ -4786,7 +_,8 @@
              }
          }
          // Paper end - Fix MC-4
@@ -1039,7 +1039,7 @@
              synchronized (this.posLock) { // Paper - detailed watchdog information
              this.position = new Vec3(x, y, z);
              } // Paper - detailed watchdog information
-@@ -4809,7 +_,7 @@
+@@ -4805,7 +_,7 @@
          }
          // Paper start - Block invalid positions and bounding box; don't allow desync of pos and AABB
          // hanging has its own special logic
@@ -1048,7 +1048,7 @@
              this.setBoundingBox(this.makeBoundingBox());
          }
          // Paper end - Block invalid positions and bounding box
-@@ -4893,6 +_,12 @@
+@@ -4889,6 +_,12 @@
          return this.removalReason != null;
      }
  
@@ -1061,7 +1061,7 @@
      @Nullable
      public Entity.RemovalReason getRemovalReason() {
          return this.removalReason;
-@@ -4915,6 +_,9 @@
+@@ -4911,6 +_,9 @@
          org.bukkit.craftbukkit.event.CraftEventFactory.callEntityRemoveEvent(this, cause);
          // CraftBukkit end
          final boolean alreadyRemoved = this.removalReason != null; // Paper - Folia schedulers
@@ -1071,7 +1071,7 @@
          if (this.removalReason == null) {
              this.removalReason = removalReason;
          }
-@@ -4937,6 +_,10 @@
+@@ -4933,6 +_,10 @@
      public void unsetRemoved() {
          this.removalReason = null;
      }
