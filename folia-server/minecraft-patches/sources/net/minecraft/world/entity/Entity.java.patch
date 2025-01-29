@@ -200,7 +200,7 @@
          if (!this.level().paperConfig().scoreboards.allowNonPlayerEntitiesOnScoreboards && !(this instanceof Player)) { return null; } // Paper - Perf: Disable Scoreboards for non players by default
          return this.level().getScoreboard().getPlayersTeam(this.getScoreboardName());
      }
-@@ -3726,8 +_,782 @@
+@@ -3726,8 +_,789 @@
          this.portalProcess = entity.portalProcess;
      }
  
@@ -589,25 +589,32 @@
 +                    ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkX(pos), ca.spottedleaf.moonrise.common.util.CoordinateUtils.getChunkZ(pos)
 +                )
 +            ) {
++                boolean hasPassengers = !this.passengers.isEmpty();
 +                EntityTreeNode passengerTree = this.detachPassengers();
-+                // Note: The client does not accept position updates for controlled entities. So, we must
-+                // perform a lot of tracker updates here to make it all work out.
 +
-+                // first, clear the tracker
-+                passengerTree.clearTracker();
++                if (hasPassengers) {
++                    // Note: The client does not accept position updates for controlled entities. So, we must
++                    // perform a lot of tracker updates here to make it all work out.
++
++                    // first, clear the tracker
++                    passengerTree.clearTracker();
++                }
++
 +                for (EntityTreeNode entity : passengerTree.getFullTree()) {
 +                    entity.root.teleportSyncSameRegion(pos, yaw, pitch, velocity);
 +                }
 +
-+                passengerTree.restore();
-+                // re-add to the tracker once the tree is restored
-+                passengerTree.addTracker();
++                if (hasPassengers) {
++                    passengerTree.restore();
++                    // re-add to the tracker once the tree is restored
++                    passengerTree.addTracker();
 +
-+                // adjust entities to final position
-+                passengerTree.adjustRiders(true);
++                    // adjust entities to final position
++                    passengerTree.adjustRiders(true);
 +
-+                // the tracker clear/add logic is only used in the same region, as the other logic
-+                // performs add/remove from world logic which will also perform add/remove tracker logic
++                    // the tracker clear/add logic is only used in the same region, as the other logic
++                    // performs add/remove from world logic which will also perform add/remove tracker logic
++                }
 +
 +                if (teleportComplete != null) {
 +                    teleportComplete.accept(this);
