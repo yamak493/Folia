@@ -1,6 +1,6 @@
 --- a/src/main/java/io/papermc/paper/entity/activation/ActivationType.java
 +++ b/src/main/java/io/papermc/paper/entity/activation/ActivationType.java
-@@ -19,7 +_,7 @@
+@@ -20,7 +_,7 @@
      RAIDER,
      MISC;
  
