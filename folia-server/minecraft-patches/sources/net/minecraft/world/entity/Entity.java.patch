@@ -200,7 +200,7 @@
          if (!this.level().paperConfig().scoreboards.allowNonPlayerEntitiesOnScoreboards && !(this instanceof Player)) { return null; } // Paper - Perf: Disable Scoreboards for non players by default
          return this.level().getScoreboard().getPlayersTeam(this.getScoreboardName());
      }
-@@ -3722,8 +_,789 @@
+@@ -3722,8 +_,791 @@
          this.portalProcess = entity.portalProcess;
      }
  
@@ -467,6 +467,8 @@
 +    // We add additional logic to reset these before teleporting to prevent issues with them possibly tripping thread checks.
 +    protected void resetStoredPositions() {
 +        this.mainSupportingBlockPos = Optional.empty();
++        // this is copied from teleportSetPosition
++        this.movementThisTick.clear();
 +    }
 +
 +    protected void teleportSyncSameRegion(Vec3 pos, Float yaw, Float pitch, Vec3 velocity) {
