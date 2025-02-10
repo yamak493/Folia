@@ -91,7 +91,7 @@
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot unload a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          if (world == null) {
              return false;
-@@ -3083,11 +_,27 @@
+@@ -3073,11 +_,27 @@
  
      @Override
      public double[] getTPS() {
@@ -122,7 +122,7 @@
      }
  
      // Paper start - adventure sounds
-@@ -3258,7 +_,7 @@
+@@ -3248,7 +_,7 @@
  
      @Override
      public int getCurrentTick() {
