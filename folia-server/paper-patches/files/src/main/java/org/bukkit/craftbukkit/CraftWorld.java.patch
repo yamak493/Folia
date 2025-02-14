@@ -1,6 +1,6 @@
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-@@ -233,7 +_,7 @@
+@@ -227,7 +_,7 @@
  
      @Override
      public int getTickableTileEntityCount() {
@@ -9,7 +9,7 @@
      }
  
      @Override
-@@ -300,7 +_,7 @@
+@@ -294,7 +_,7 @@
          // Paper start - per world spawn limits
          for (SpawnCategory spawnCategory : SpawnCategory.values()) {
              if (CraftSpawnCategory.isValidForLimits(spawnCategory)) {
@@ -18,7 +18,7 @@
              }
          }
          // Paper end - per world spawn limits
-@@ -371,6 +_,7 @@
+@@ -365,6 +_,7 @@
  
      @Override
      public Chunk getChunkAt(int x, int z) {
@@ -26,7 +26,7 @@
          warnUnsafeChunk("getting a faraway chunk", x, z); // Paper
          net.minecraft.world.level.chunk.LevelChunk chunk = (net.minecraft.world.level.chunk.LevelChunk) this.world.getChunk(x, z, ChunkStatus.FULL, true);
          return new CraftChunk(chunk);
-@@ -401,10 +_,10 @@
+@@ -395,10 +_,10 @@
      @Override
      public boolean isChunkGenerated(int x, int z) {
          // Paper start - Fix this method
@@ -39,7 +39,7 @@
          }
          ChunkAccess chunk = world.getChunkSource().getChunkAtImmediately(x, z);
          if (chunk != null) {
-@@ -461,7 +_,7 @@
+@@ -455,7 +_,7 @@
      }
  
      private boolean unloadChunk0(int x, int z, boolean save) {
@@ -48,7 +48,7 @@
          if (!this.isChunkLoaded(x, z)) {
              return true;
          }
-@@ -478,7 +_,7 @@
+@@ -472,7 +_,7 @@
  
      @Override
      public boolean regenerateChunk(int x, int z) {
@@ -57,7 +57,7 @@
          throw new UnsupportedOperationException("Not supported in this Minecraft version! Unless you can fix it, this is not a bug :)");
          /*
          if (!unloadChunk0(x, z, false)) {
-@@ -505,6 +_,7 @@
+@@ -499,6 +_,7 @@
  
      @Override
      public boolean refreshChunk(int x, int z) {
@@ -65,7 +65,7 @@
          ChunkHolder playerChunk = this.world.getChunkSource().chunkMap.getVisibleChunkIfPresent(ChunkPos.asLong(x, z));
          if (playerChunk == null) return false;
  
-@@ -555,7 +_,7 @@
+@@ -549,7 +_,7 @@
  
      @Override
      public boolean loadChunk(int x, int z, boolean generate) {
@@ -74,7 +74,7 @@
          warnUnsafeChunk("loading a faraway chunk", x, z); // Paper
          ChunkAccess chunk = this.world.getChunkSource().getChunk(x, z, generate || isChunkGenerated(x, z) ? ChunkStatus.FULL : ChunkStatus.EMPTY, true); // Paper
  
-@@ -595,7 +_,7 @@
+@@ -589,7 +_,7 @@
  
          final DistanceManager distanceManager = this.world.getChunkSource().chunkMap.distanceManager;
          if (distanceManager.addPluginRegionTicket(new ChunkPos(x, z), plugin)) {
@@ -83,7 +83,7 @@
              return true;
          }
  
-@@ -649,21 +_,24 @@
+@@ -643,21 +_,24 @@
  
      @Override
      public boolean isChunkForceLoaded(int x, int z) {
@@ -109,7 +109,7 @@
          }
  
          return Collections.unmodifiableCollection(chunks);
-@@ -783,13 +_,15 @@
+@@ -777,13 +_,15 @@
  
      @Override
      public boolean generateTree(Location loc, TreeType type, BlockChangeDelegate delegate) {
@@ -130,7 +130,7 @@
                  BlockPos position = ((CraftBlockState) blockstate).getPosition();
                  net.minecraft.world.level.block.state.BlockState oldBlock = this.world.getBlockState(position);
                  int flag = ((CraftBlockState) blockstate).getFlag();
-@@ -797,10 +_,10 @@
+@@ -791,10 +_,10 @@
                  net.minecraft.world.level.block.state.BlockState newBlock = this.world.getBlockState(position);
                  this.world.notifyAndUpdatePhysics(position, null, oldBlock, newBlock, newBlock, flag, 512);
              }
@@ -143,7 +143,7 @@
              return false;
          }
      }
-@@ -834,6 +_,7 @@
+@@ -828,6 +_,7 @@
  
      @Override
      public void setTime(long time) {
@@ -151,7 +151,7 @@
          long margin = (time - this.getFullTime()) % 24000;
          if (margin < 0) margin += 24000;
          this.setFullTime(this.getFullTime() + margin);
-@@ -846,6 +_,7 @@
+@@ -840,6 +_,7 @@
  
      @Override
      public void setFullTime(long time) {
@@ -159,7 +159,7 @@
          // Notify anyone who's listening
          TimeSkipEvent event = new TimeSkipEvent(this, TimeSkipEvent.SkipReason.CUSTOM, time - this.world.getDayTime());
          this.server.getPluginManager().callEvent(event);
-@@ -873,7 +_,7 @@
+@@ -867,7 +_,7 @@
  
      @Override
      public long getGameTime() {
@@ -168,7 +168,7 @@
      }
  
      @Override
-@@ -898,6 +_,7 @@
+@@ -892,6 +_,7 @@
      }
      public boolean createExplosion(double x, double y, double z, float power, boolean setFire, boolean breakBlocks, Entity source, Consumer<net.minecraft.world.level.ServerExplosion> configurator) {
      // Paper end - expand explosion API
@@ -176,7 +176,7 @@
          net.minecraft.world.level.Level.ExplosionInteraction explosionType;
          if (!breakBlocks) {
              explosionType = net.minecraft.world.level.Level.ExplosionInteraction.NONE; // Don't break blocks
-@@ -907,6 +_,7 @@
+@@ -901,6 +_,7 @@
              explosionType = net.minecraft.world.level.Level.ExplosionInteraction.MOB; // Respect mobGriefing gamerule
          }
  
@@ -184,7 +184,7 @@
          net.minecraft.world.entity.Entity entity = (source == null) ? null : ((CraftEntity) source).getHandle();
          return !this.world.explode0(entity, Explosion.getDefaultDamageSource(this.world, entity), null, x, y, z, power, setFire, explosionType, ParticleTypes.EXPLOSION, ParticleTypes.EXPLOSION_EMITTER, SoundEvents.GENERIC_EXPLODE, configurator).wasCanceled; // Paper - expand explosion API
      }
-@@ -989,6 +_,7 @@
+@@ -983,6 +_,7 @@
  
      @Override
      public int getHighestBlockYAt(int x, int z, org.bukkit.HeightMap heightMap) {
@@ -192,7 +192,7 @@
          warnUnsafeChunk("getting a faraway chunk", x >> 4, z >> 4); // Paper
          // Transient load for this tick
          return this.world.getChunk(x >> 4, z >> 4).getHeight(CraftHeightMap.toNMS(heightMap), x, z);
-@@ -1019,6 +_,7 @@
+@@ -1013,6 +_,7 @@
      @Override
      public void setBiome(int x, int y, int z, Holder<net.minecraft.world.level.biome.Biome> bb) {
          BlockPos pos = new BlockPos(x, 0, z);
@@ -200,7 +200,7 @@
          if (this.world.hasChunkAt(pos)) {
              net.minecraft.world.level.chunk.LevelChunk chunk = this.world.getChunkAt(pos);
  
-@@ -1349,6 +_,7 @@
+@@ -1343,6 +_,7 @@
  
      @Override
      public void setStorm(boolean hasStorm) {
@@ -208,7 +208,7 @@
          this.world.serverLevelData.setRaining(hasStorm, org.bukkit.event.weather.WeatherChangeEvent.Cause.PLUGIN); // Paper - Add cause to Weather/ThunderChangeEvents
          this.setWeatherDuration(0); // Reset weather duration (legacy behaviour)
          this.setClearWeatherDuration(0); // Reset clear weather duration (reset "/weather clear" commands)
-@@ -1361,6 +_,7 @@
+@@ -1355,6 +_,7 @@
  
      @Override
      public void setWeatherDuration(int duration) {
@@ -216,7 +216,7 @@
          this.world.serverLevelData.setRainTime(duration);
      }
  
-@@ -1371,6 +_,7 @@
+@@ -1365,6 +_,7 @@
  
      @Override
      public void setThundering(boolean thundering) {
@@ -224,7 +224,7 @@
          this.world.serverLevelData.setThundering(thundering, org.bukkit.event.weather.ThunderChangeEvent.Cause.PLUGIN); // Paper - Add cause to Weather/ThunderChangeEvents
          this.setThunderDuration(0); // Reset weather duration (legacy behaviour)
          this.setClearWeatherDuration(0); // Reset clear weather duration (reset "/weather clear" commands)
-@@ -1383,6 +_,7 @@
+@@ -1377,6 +_,7 @@
  
      @Override
      public void setThunderDuration(int duration) {
@@ -232,7 +232,7 @@
          this.world.serverLevelData.setThunderTime(duration);
      }
  
-@@ -1393,6 +_,7 @@
+@@ -1387,6 +_,7 @@
  
      @Override
      public void setClearWeatherDuration(int duration) {
@@ -240,7 +240,7 @@
          this.world.serverLevelData.setClearWeatherTime(duration);
      }
  
-@@ -1591,6 +_,7 @@
+@@ -1585,6 +_,7 @@
  
      @Override
      public void setKeepSpawnInMemory(boolean keepLoaded) {
@@ -248,7 +248,7 @@
          if (keepLoaded) {
              this.setGameRule(GameRule.SPAWN_CHUNK_RADIUS, this.getGameRuleDefault(GameRule.SPAWN_CHUNK_RADIUS));
          } else {
-@@ -1659,6 +_,7 @@
+@@ -1653,6 +_,7 @@
  
      @Override
      public void setHardcore(boolean hardcore) {
@@ -256,7 +256,7 @@
          this.world.serverLevelData.settings.hardcore = hardcore;
      }
  
-@@ -1671,6 +_,7 @@
+@@ -1665,6 +_,7 @@
      @Override
      @Deprecated
      public void setTicksPerAnimalSpawns(int ticksPerAnimalSpawns) {
@@ -264,7 +264,7 @@
          this.setTicksPerSpawns(SpawnCategory.ANIMAL, ticksPerAnimalSpawns);
      }
  
-@@ -1683,6 +_,7 @@
+@@ -1677,6 +_,7 @@
      @Override
      @Deprecated
      public void setTicksPerMonsterSpawns(int ticksPerMonsterSpawns) {
@@ -272,7 +272,7 @@
          this.setTicksPerSpawns(SpawnCategory.MONSTER, ticksPerMonsterSpawns);
      }
  
-@@ -1695,6 +_,7 @@
+@@ -1689,6 +_,7 @@
      @Override
      @Deprecated
      public void setTicksPerWaterSpawns(int ticksPerWaterSpawns) {
@@ -280,7 +280,7 @@
          this.setTicksPerSpawns(SpawnCategory.WATER_ANIMAL, ticksPerWaterSpawns);
      }
  
-@@ -1707,6 +_,7 @@
+@@ -1701,6 +_,7 @@
      @Override
      @Deprecated
      public void setTicksPerWaterAmbientSpawns(int ticksPerWaterAmbientSpawns) {
@@ -288,7 +288,7 @@
          this.setTicksPerSpawns(SpawnCategory.WATER_AMBIENT, ticksPerWaterAmbientSpawns);
      }
  
-@@ -1719,6 +_,7 @@
+@@ -1713,6 +_,7 @@
      @Override
      @Deprecated
      public void setTicksPerWaterUndergroundCreatureSpawns(int ticksPerWaterUndergroundCreatureSpawns) {
@@ -296,7 +296,7 @@
          this.setTicksPerSpawns(SpawnCategory.WATER_UNDERGROUND_CREATURE, ticksPerWaterUndergroundCreatureSpawns);
      }
  
-@@ -1731,11 +_,13 @@
+@@ -1725,11 +_,13 @@
      @Override
      @Deprecated
      public void setTicksPerAmbientSpawns(int ticksPerAmbientSpawns) {
@@ -310,7 +310,7 @@
          Preconditions.checkArgument(spawnCategory != null, "SpawnCategory cannot be null");
          Preconditions.checkArgument(CraftSpawnCategory.isValidForLimits(spawnCategory), "SpawnCategory.%s are not supported", spawnCategory);
  
-@@ -1752,21 +_,25 @@
+@@ -1746,21 +_,25 @@
  
      @Override
      public void setMetadata(String metadataKey, MetadataValue newMetadataValue) {
@@ -336,7 +336,7 @@
          this.server.getWorldMetadata().removeMetadata(this, metadataKey, owningPlugin);
      }
  
-@@ -1779,6 +_,7 @@
+@@ -1773,6 +_,7 @@
      @Override
      @Deprecated
      public void setMonsterSpawnLimit(int limit) {
@@ -344,7 +344,7 @@
          this.setSpawnLimit(SpawnCategory.MONSTER, limit);
      }
  
-@@ -1791,6 +_,7 @@
+@@ -1785,6 +_,7 @@
      @Override
      @Deprecated
      public void setAnimalSpawnLimit(int limit) {
@@ -352,7 +352,7 @@
          this.setSpawnLimit(SpawnCategory.ANIMAL, limit);
      }
  
-@@ -1803,6 +_,7 @@
+@@ -1797,6 +_,7 @@
      @Override
      @Deprecated
      public void setWaterAnimalSpawnLimit(int limit) {
@@ -360,7 +360,7 @@
          this.setSpawnLimit(SpawnCategory.WATER_ANIMAL, limit);
      }
  
-@@ -1815,6 +_,7 @@
+@@ -1809,6 +_,7 @@
      @Override
      @Deprecated
      public void setWaterAmbientSpawnLimit(int limit) {
@@ -368,7 +368,7 @@
          this.setSpawnLimit(SpawnCategory.WATER_AMBIENT, limit);
      }
  
-@@ -1827,6 +_,7 @@
+@@ -1821,6 +_,7 @@
      @Override
      @Deprecated
      public void setWaterUndergroundCreatureSpawnLimit(int limit) {
@@ -376,7 +376,7 @@
          this.setSpawnLimit(SpawnCategory.WATER_UNDERGROUND_CREATURE, limit);
      }
  
-@@ -1839,6 +_,7 @@
+@@ -1833,6 +_,7 @@
      @Override
      @Deprecated
      public void setAmbientSpawnLimit(int limit) {
@@ -384,7 +384,7 @@
          this.setSpawnLimit(SpawnCategory.AMBIENT, limit);
      }
  
-@@ -1861,6 +_,7 @@
+@@ -1855,6 +_,7 @@
  
      @Override
      public void setSpawnLimit(SpawnCategory spawnCategory, int limit) {
@@ -392,7 +392,7 @@
          Preconditions.checkArgument(spawnCategory != null, "SpawnCategory cannot be null");
          Preconditions.checkArgument(CraftSpawnCategory.isValidForLimits(spawnCategory), "SpawnCategory.%s are not supported", spawnCategory);
  
-@@ -1943,7 +_,7 @@
+@@ -1937,7 +_,7 @@
          if (!(entity instanceof CraftEntity craftEntity) || entity.getWorld() != this || sound == null || category == null) return;
  
          ClientboundSoundEntityPacket packet = new ClientboundSoundEntityPacket(CraftSound.bukkitToMinecraftHolder(sound), net.minecraft.sounds.SoundSource.valueOf(category.name()), craftEntity.getHandle(), volume, pitch, seed);
@@ -401,7 +401,7 @@
          if (entityTracker != null) {
              entityTracker.broadcastAndSend(packet);
          }
-@@ -1964,7 +_,7 @@
+@@ -1958,7 +_,7 @@
          if (!(entity instanceof CraftEntity craftEntity) || entity.getWorld() != this || sound == null || category == null) return;
  
          ClientboundSoundEntityPacket packet = new ClientboundSoundEntityPacket(Holder.direct(SoundEvent.createVariableRangeEvent(ResourceLocation.parse(sound))), net.minecraft.sounds.SoundSource.valueOf(category.name()), craftEntity.getHandle(), volume, pitch, seed);
@@ -410,7 +410,7 @@
          if (entityTracker != null) {
              entityTracker.broadcastAndSend(packet);
          }
-@@ -2047,6 +_,7 @@
+@@ -2041,6 +_,7 @@
  
      @Override
      public boolean setGameRuleValue(String rule, String value) {

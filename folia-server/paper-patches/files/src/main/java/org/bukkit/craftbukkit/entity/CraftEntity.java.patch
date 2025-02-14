@@ -32,7 +32,7 @@
          return this.entity;
      }
  
-@@ -723,7 +_,7 @@
+@@ -722,7 +_,7 @@
          ImmutableSet.Builder<Player> players = ImmutableSet.builder();
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -41,7 +41,7 @@
  
          if (entityTracker != null) {
              for (ServerPlayerConnection connection : entityTracker.seenBy) {
-@@ -1027,7 +_,7 @@
+@@ -1026,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -50,7 +50,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1046,7 +_,7 @@
+@@ -1045,7 +_,7 @@
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -59,7 +59,7 @@
  
          if (entityTracker == null) {
              return;
-@@ -1080,29 +_,43 @@
+@@ -1079,29 +_,43 @@
          location.checkFinite();
          Location locationClone = location.clone(); // clone so we don't need to worry about mutations after this call.
  
@@ -122,7 +122,7 @@
      }
      // Paper end - more teleport API / async chunk API
  
-@@ -1215,8 +_,7 @@
+@@ -1214,8 +_,7 @@
      // Paper start - tracked players API
      @Override
      public Set<org.bukkit.entity.Player> getTrackedPlayers() {
