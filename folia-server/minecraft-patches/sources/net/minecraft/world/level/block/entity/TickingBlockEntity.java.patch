@@ -1,9 +1,0 @@
---- a/net/minecraft/world/level/block/entity/TickingBlockEntity.java
-+++ b/net/minecraft/world/level/block/entity/TickingBlockEntity.java
-@@ -10,4 +_,6 @@
-     BlockPos getPos();
- 
-     String getType();
-+
-+    BlockEntity getTileEntity(); // Folia - region threading
- }
