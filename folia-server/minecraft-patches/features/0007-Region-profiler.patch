@@ -1705,7 +1705,7 @@ index 548f5f0382c81ca86d238bfd7f94008bbd6e41bc..ac06b8a4813716a8d136be5731cbd961
      }
  
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index ce310e2dc1bb46e17143bffc5e6cec7d43a0389d..d34ad333b6ea3855a24a58fcd80ccf19b2bbf41c 100644
+index 8026f9305faa85434b18366b30d64038290ec7e8..9cbd692680c66331ae8e1544ee8d2a7317262d01 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -729,6 +729,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -1795,7 +1795,7 @@ index ce310e2dc1bb46e17143bffc5e6cec7d43a0389d..d34ad333b6ea3855a24a58fcd80ccf19
          }
      }
  
-@@ -1312,6 +1334,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -1313,6 +1335,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          profilerFiller.push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
          profilerFiller.incrementCounter("tickNonPassenger");
          final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
@@ -1808,7 +1808,7 @@ index ce310e2dc1bb46e17143bffc5e6cec7d43a0389d..d34ad333b6ea3855a24a58fcd80ccf19
          if (isActive) { // Paper - EAR 2
          entity.tick();
          // Folia start - region threading
-@@ -1326,6 +1354,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -1327,6 +1355,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          // Folia end - region threading
          } else {entity.inactiveTick();} // Paper - EAR 2
          profilerFiller.pop();
@@ -1816,7 +1816,7 @@ index ce310e2dc1bb46e17143bffc5e6cec7d43a0389d..d34ad333b6ea3855a24a58fcd80ccf19
  
          for (Entity entity1 : entity.getPassengers()) {
              this.tickPassenger(entity, entity1, isActive); // Paper - EAR 2
-@@ -1341,6 +1370,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -1342,6 +1371,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          if (passengerEntity.isRemoved() || passengerEntity.getVehicle() != ridingEntity) {
              passengerEntity.stopRiding();
          } else if (passengerEntity instanceof Player || this.getCurrentWorldData().hasEntityTickingEntity(passengerEntity)) { // Folia - region threading
@@ -1828,8 +1828,8 @@ index ce310e2dc1bb46e17143bffc5e6cec7d43a0389d..d34ad333b6ea3855a24a58fcd80ccf19
 +            // Folia end - profiler
              passengerEntity.setOldPosAndRot();
              passengerEntity.tickCount++;
-             ProfilerFiller profilerFiller = Profiler.get();
-@@ -1371,6 +1406,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+             passengerEntity.totalEntityAge++; // Paper - age-like counter for all entities
+@@ -1373,6 +1408,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
              for (Entity entity : passengerEntity.getPassengers()) {
                  this.tickPassenger(passengerEntity, entity, isActive); // Paper - EAR 2
              }

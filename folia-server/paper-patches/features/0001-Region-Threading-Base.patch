@@ -2634,7 +2634,7 @@ index d657fd2c507a5b215aeab0a5f3e9c2ee892a27c8..399ef60ab5f1bf02b638c8c46a72d297
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index f8762064e0f377740688932c62145f7c789ea7ed..6919fbc5c432d510d965bb3fb2ea7537c87b3ea6 100644
+index 1ee0ad266955e36b729ba31eb75aad9289acd8e4..895695015d21b4ae0ab87ef68d6b3da30f4616c1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 @@ -83,6 +83,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
@@ -2661,7 +2661,7 @@ index f8762064e0f377740688932c62145f7c789ea7ed..6919fbc5c432d510d965bb3fb2ea7537
          // Paper end
          Preconditions.checkArgument(location != null, "location cannot be null");
          location.checkFinite();
-@@ -529,6 +539,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -530,6 +540,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
      }
  
      public Entity getHandle() {
@@ -2669,7 +2669,7 @@ index f8762064e0f377740688932c62145f7c789ea7ed..6919fbc5c432d510d965bb3fb2ea7537
          return this.entity;
      }
  
-@@ -722,7 +733,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -723,7 +734,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          ImmutableSet.Builder<Player> players = ImmutableSet.builder();
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -2678,7 +2678,7 @@ index f8762064e0f377740688932c62145f7c789ea7ed..6919fbc5c432d510d965bb3fb2ea7537
  
          if (entityTracker != null) {
              for (ServerPlayerConnection connection : entityTracker.seenBy) {
-@@ -1026,7 +1037,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1027,7 +1038,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -2687,7 +2687,7 @@ index f8762064e0f377740688932c62145f7c789ea7ed..6919fbc5c432d510d965bb3fb2ea7537
  
          if (entityTracker == null) {
              return;
-@@ -1045,7 +1056,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1046,7 +1057,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -2696,7 +2696,7 @@ index f8762064e0f377740688932c62145f7c789ea7ed..6919fbc5c432d510d965bb3fb2ea7537
  
          if (entityTracker == null) {
              return;
-@@ -1079,29 +1090,43 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1080,29 +1091,43 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          location.checkFinite();
          Location locationClone = location.clone(); // clone so we don't need to worry about mutations after this call.
  
@@ -2760,7 +2760,7 @@ index f8762064e0f377740688932c62145f7c789ea7ed..6919fbc5c432d510d965bb3fb2ea7537
      }
      // Paper end - more teleport API / async chunk API
  
-@@ -1214,8 +1239,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1215,8 +1240,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
      // Paper start - tracked players API
      @Override
      public Set<org.bukkit.entity.Player> getTrackedPlayers() {
