@@ -200,7 +200,7 @@
          if (!this.level().paperConfig().scoreboards.allowNonPlayerEntitiesOnScoreboards && !(this instanceof Player)) { return null; } // Paper - Perf: Disable Scoreboards for non players by default
          return this.level().getScoreboard().getPlayersTeam(this.getScoreboardName());
      }
-@@ -3722,8 +_,791 @@
+@@ -3722,8 +_,793 @@
          this.portalProcess = entity.portalProcess;
      }
  
@@ -708,7 +708,8 @@
 +                            // on the obsidian, we need to spawn at targetPos.y - 1
 +                            portalInfoCompletable.complete(
 +                                new net.minecraft.world.level.portal.TeleportTransition(
-+                                    destination, Vec3.atBottomCenterOf(targetPos.below()), Vec3.ZERO, 90.0f, 0.0f,
++                                    destination, Vec3.atBottomCenterOf(targetPos.below()), Vec3.ZERO, Direction.WEST.toYRot(), 0.0f,
++                                    Relative.union(Relative.DELTA, Set.of(Relative.X_ROT)),
 +                                    TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET),
 +                                    org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_PORTAL
 +                                )
@@ -727,7 +728,8 @@
 +                            // done
 +                            portalInfoCompletable.complete(
 +                                new net.minecraft.world.level.portal.TeleportTransition(
-+                                    destination, Vec3.atBottomCenterOf(adjustedSpawn), Vec3.ZERO, 90.0f, 0.0f,
++                                    destination, Vec3.atBottomCenterOf(adjustedSpawn), Vec3.ZERO, 0.0f, 0.0f,
++                                    Relative.union(Relative.DELTA, Relative.ROTATION),
 +                                    TeleportTransition.PLAY_PORTAL_SOUND.then(TeleportTransition.PLACE_PORTAL_TICKET),
 +                                    org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.END_PORTAL
 +                                )
