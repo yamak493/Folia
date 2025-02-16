@@ -13,8 +13,8 @@
      public org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason; // Paper - Entity#getEntitySpawnReason
  
      public boolean collisionLoadChunks = false; // Paper
--    private org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity;
-+    private volatile org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity; // Folia - region threading
+-    private @Nullable org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity;
++    private volatile @Nullable org.bukkit.craftbukkit.entity.CraftEntity bukkitEntity; // Folia - region threading
  
      public org.bukkit.craftbukkit.entity.CraftEntity getBukkitEntity() {
          if (this.bukkitEntity == null) {

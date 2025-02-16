@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/damagesource/DamageSource.java
 +++ b/net/minecraft/world/damagesource/DamageSource.java
-@@ -178,12 +_,12 @@
+@@ -163,12 +_,12 @@
          if (this.causingEntity == null && this.directEntity == null) {
              LivingEntity killCredit = livingEntity.getKillCredit();
              String string1 = string + ".player";

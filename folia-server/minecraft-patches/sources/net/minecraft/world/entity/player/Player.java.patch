@@ -1,6 +1,6 @@
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
-@@ -1504,6 +_,14 @@
+@@ -1506,6 +_,14 @@
          }
      }
  

@@ -82,7 +82,7 @@
 +                            // damage player
 +                            teleported.resetFallDistance();
 +                            player.resetCurrentImpulseContext();
-+                            player.hurtServer(player.serverLevel(), player.damageSources().enderPearl().customEventDamager(player), 5.0F); // CraftBukkit // Paper - fix DamageSource API
++                            player.hurtServer(player.serverLevel(), player.damageSources().enderPearl().eventEntityDamager(player), 5.0F); // CraftBukkit // Paper - fix DamageSource API
 +                            playSound(teleported.level(), to);
 +                        } else {
 +                            // reset fall damage so that if the entity was falling they do not instantly die
