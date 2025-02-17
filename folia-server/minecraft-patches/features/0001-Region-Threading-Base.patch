@@ -7580,10 +7580,10 @@ index c2b7164a1395842ab95428540782eeda4c7960b0..d5eefed0912c728ded360ddac4d9bcd1
      }
  
 diff --git a/net/minecraft/commands/Commands.java b/net/minecraft/commands/Commands.java
-index fa8c5ba4e0efd0c36613aaa8eaafba0cb70ceb87..d9b339eaa28aedbc7e7a1d4eebfebbb5ff16afe1 100644
+index f8969a68cd352ce4fe5109205e78f5e19ab6e020..009e6405a11a391adca41a7c4ecafbf3254d799d 100644
 --- a/net/minecraft/commands/Commands.java
 +++ b/net/minecraft/commands/Commands.java
-@@ -153,13 +153,13 @@ public class Commands {
+@@ -158,13 +158,13 @@ public class Commands {
          AdvancementCommands.register(this.dispatcher);
          AttributeCommand.register(this.dispatcher, context);
          ExecuteCommand.register(this.dispatcher, context);
@@ -7602,7 +7602,7 @@ index fa8c5ba4e0efd0c36613aaa8eaafba0cb70ceb87..d9b339eaa28aedbc7e7a1d4eebfebbb5
          DefaultGameModeCommands.register(this.dispatcher);
          DifficultyCommand.register(this.dispatcher);
          EffectCommands.register(this.dispatcher, context);
-@@ -169,47 +169,47 @@ public class Commands {
+@@ -174,47 +174,47 @@ public class Commands {
          FillCommand.register(this.dispatcher, context);
          FillBiomeCommand.register(this.dispatcher, context);
          ForceLoadCommand.register(this.dispatcher);
@@ -7666,7 +7666,7 @@ index fa8c5ba4e0efd0c36613aaa8eaafba0cb70ceb87..d9b339eaa28aedbc7e7a1d4eebfebbb5
          WeatherCommand.register(this.dispatcher);
          WorldBorderCommand.register(this.dispatcher);
          if (JvmProfiler.INSTANCE.isAvailable()) {
-@@ -237,8 +237,8 @@ public class Commands {
+@@ -242,8 +242,8 @@ public class Commands {
              OpCommand.register(this.dispatcher);
              PardonCommand.register(this.dispatcher);
              PardonIpCommand.register(this.dispatcher);
@@ -7677,7 +7677,7 @@ index fa8c5ba4e0efd0c36613aaa8eaafba0cb70ceb87..d9b339eaa28aedbc7e7a1d4eebfebbb5
              SaveOffCommand.register(this.dispatcher);
              SaveOnCommand.register(this.dispatcher);
              SetPlayerIdleTimeoutCommand.register(this.dispatcher);
-@@ -480,9 +480,12 @@ public class Commands {
+@@ -495,9 +495,12 @@ public class Commands {
          }
          // Paper start - Perf: Async command map building
          new com.destroystokyo.paper.event.brigadier.AsyncPlayerSendCommandsEvent<CommandSourceStack>(player.getBukkitEntity(), (RootCommandNode) rootCommandNode, false).callEvent(); // Paper - Brigadier API
@@ -16275,7 +16275,7 @@ index ef2afb17a22a703470e13d12c989a685e72f0ab8..984ac8efa2ed45be614e04eab8247481
                      wanderingTrader.setWanderTarget(blockPos1);
                      wanderingTrader.restrictTo(blockPos1, 16);
 diff --git a/net/minecraft/world/entity/player/Player.java b/net/minecraft/world/entity/player/Player.java
-index 092acdc1e41582b7b873af926ce3cf3e5ff23b67..d15304ec04bf22674ccd0b106f5d9ba7e609f5d0 100644
+index a0813aa9ebf5b32375b1bc9f294d8fc34cc867fe..e70919757dee4b02384ded3551c8f580d289584a 100644
 --- a/net/minecraft/world/entity/player/Player.java
 +++ b/net/minecraft/world/entity/player/Player.java
 @@ -1506,6 +1506,14 @@ public abstract class Player extends LivingEntity {
@@ -17976,7 +17976,7 @@ index 01cddd7001b4a7f99c1b1d147fac904d3064d733..177735cf744e564081e4c140a0f8210c
      public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
          double d = pos.getX() + random.nextDouble();
 diff --git a/net/minecraft/world/level/block/FarmBlock.java b/net/minecraft/world/level/block/FarmBlock.java
-index 47c9b32c89e7e6f84a279c2f6098ada77dc58b6b..1d97daccd595df427104aadf37eaa2861e6cb6e1 100644
+index 1fdede769b67cb5d2f9159c779f19e3639bb6ff5..81aa50abf396d7fe22dd95dacabf8b83786249fe 100644
 --- a/net/minecraft/world/level/block/FarmBlock.java
 +++ b/net/minecraft/world/level/block/FarmBlock.java
 @@ -95,8 +95,8 @@ public class FarmBlock extends Block {
