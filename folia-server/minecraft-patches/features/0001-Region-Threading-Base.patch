@@ -10443,7 +10443,7 @@ index e2697b03a0d204eea537e3aaec2dd8fb9f426722..f6af541a7076c3fefb237b865038d089
      }
  }
 diff --git a/net/minecraft/server/dedicated/DedicatedServer.java b/net/minecraft/server/dedicated/DedicatedServer.java
-index 97a294d2f5c1ddf0af7ffec3e1425eb329c5751b..341e400f789e0eda29827e2c45c483a470d2e982 100644
+index d2db6e3a4af13984b0a790fb38e83c253914a973..e3b7184e20bda4983ee1fc5463d91ca0cdd8ec1f 100644
 --- a/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/net/minecraft/server/dedicated/DedicatedServer.java
 @@ -425,7 +425,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
@@ -10455,9 +10455,9 @@ index 97a294d2f5c1ddf0af7ffec3e1425eb329c5751b..341e400f789e0eda29827e2c45c483a4
      }
  
      @Override
-@@ -732,7 +732,8 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+@@ -734,7 +734,8 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+         if (s.isBlank()) return ""; // Paper - Do not process empty rcon commands
  
-     public String runCommand(RconConsoleSource rconConsoleSource, String s) {
          rconConsoleSource.prepareForCommand();
 -        this.executeBlocking(() -> {
 +        final java.util.concurrent.atomic.AtomicReference<String> command = new java.util.concurrent.atomic.AtomicReference<>(s); // Folia start - region threading
@@ -10465,7 +10465,7 @@ index 97a294d2f5c1ddf0af7ffec3e1425eb329c5751b..341e400f789e0eda29827e2c45c483a4
              CommandSourceStack wrapper = rconConsoleSource.createCommandSourceStack();
              org.bukkit.event.server.RemoteServerCommandEvent event = new org.bukkit.event.server.RemoteServerCommandEvent(rconConsoleSource.getBukkitSender(wrapper), s);
              this.server.getPluginManager().callEvent(event);
-@@ -741,7 +742,16 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
+@@ -743,7 +744,16 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
              }
              ConsoleInput serverCommand = new ConsoleInput(event.getCommand(), wrapper);
              this.server.dispatchServerCommand(event.getSender(), serverCommand);
@@ -11080,7 +11080,7 @@ index 794770985c261fd56806188237921b5ec5e548e6..b715d1fbde9db81a2515249bb9a0fc7a
                  list.add(player);
              }
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index e6733c43d582c1c632ad0e6abc99e88e337c8911..8026f9305faa85434b18366b30d64038290ec7e8 100644
+index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f4042795da0 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -179,42 +179,40 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -13121,7 +13121,7 @@ index bd07e6a5aa1883786d789ea71711a0c0c0a95c26..09469ad131622158fe5579216fc41642
              }
              // Spigot end
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 660f9d44739909150635beaa2082e85dfde915c4..1f031366afa973fa3ed027505d149737febd169e 100644
+index 4068132a33f87dd07d6df1033ed11ba16a57313b..4e3cb90558533ea7ca0c838745e91ec5860c11ce 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -292,10 +292,10 @@ public class ServerGamePacketListenerImpl
@@ -15314,7 +15314,7 @@ index 1b54cf07616a10d93e9336dbd299ba5f09678a28..1e59c21d26baf50fd74bc99c04dbea0f
      /**
       * Invoked only when the entity is truly removed from the server, never to be added to any world.
 diff --git a/net/minecraft/world/entity/LivingEntity.java b/net/minecraft/world/entity/LivingEntity.java
-index d87e31572aa85bffc62dc017520dd408560f79b4..3e31fc5fcc15a139bc8d3eb91e89b0f4e28d7eea 100644
+index 4546aca8e2e144ec207653c713fc49f849908827..6258b008ad3e00d41e9f3014572d6f7a06b1847c 100644
 --- a/net/minecraft/world/entity/LivingEntity.java
 +++ b/net/minecraft/world/entity/LivingEntity.java
 @@ -278,7 +278,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
@@ -15416,7 +15416,7 @@ index d87e31572aa85bffc62dc017520dd408560f79b4..3e31fc5fcc15a139bc8d3eb91e89b0f4
              this.lastDamageSource = null;
          }
  
-@@ -2420,10 +2444,10 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -2427,10 +2451,10 @@ public abstract class LivingEntity extends Entity implements Attackable {
  
      @Nullable
      public LivingEntity getKillCredit() {
@@ -15429,7 +15429,7 @@ index d87e31572aa85bffc62dc017520dd408560f79b4..3e31fc5fcc15a139bc8d3eb91e89b0f4
          }
      }
  
-@@ -2502,7 +2526,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -2509,7 +2533,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
          }
  
          this.lastDamageSource = damageSource;
@@ -15438,7 +15438,7 @@ index d87e31572aa85bffc62dc017520dd408560f79b4..3e31fc5fcc15a139bc8d3eb91e89b0f4
      }
  
      @Override
-@@ -3497,7 +3521,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -3504,7 +3528,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
          this.pushEntities();
          profilerFiller.pop();
          // Paper start - Add EntityMoveEvent
@@ -15447,7 +15447,7 @@ index d87e31572aa85bffc62dc017520dd408560f79b4..3e31fc5fcc15a139bc8d3eb91e89b0f4
              if (this.xo != this.getX() || this.yo != this.getY() || this.zo != this.getZ() || this.yRotO != this.getYRot() || this.xRotO != this.getXRot()) {
                  Location from = new Location(this.level().getWorld(), this.xo, this.yo, this.zo, this.yRotO, this.xRotO);
                  Location to = new Location(this.level().getWorld(), this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
-@@ -4170,7 +4194,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -4177,7 +4201,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
          boolean flag = false;
          BlockPos blockPos = BlockPos.containing(x, y, z);
          Level level = this.level();
@@ -15456,7 +15456,7 @@ index d87e31572aa85bffc62dc017520dd408560f79b4..3e31fc5fcc15a139bc8d3eb91e89b0f4
              boolean flag1 = false;
  
              while (!flag1 && blockPos.getY() > level.getMinY()) {
-@@ -4332,6 +4356,11 @@ public abstract class LivingEntity extends Entity implements Attackable {
+@@ -4339,6 +4363,11 @@ public abstract class LivingEntity extends Entity implements Attackable {
                  this.setXRot(0.0F);
              }
          });

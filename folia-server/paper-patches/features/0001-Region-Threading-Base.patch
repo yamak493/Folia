@@ -435,10 +435,10 @@ index 42777adb028fe282c1619aeb5431c442ad5df0d0..de88c3d9d3523a7bd3f3dcbfc62d7265
 +    // Folia end - threaded regions
  }
 diff --git a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
-index d7c9acaffdcff5e35e026ae90a3e521bab13b074..321c4cad4f84c57f56e5bec3bcdbbef8823f70fe 100644
+index d193330bfd97767705c878e359969378d43b99d0..7694d9762af003351841c13eb83f9f095f4a67ca 100644
 --- a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
 +++ b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
-@@ -493,6 +493,14 @@ public class WorldConfiguration extends ConfigurationPart {
+@@ -496,6 +496,14 @@ public class WorldConfiguration extends ConfigurationPart {
      public Chunks chunks;
  
      public class Chunks extends ConfigurationPart {
@@ -809,7 +809,7 @@ index a4ac34ebb58a404f4fca7e763e61d4ab05ee3af4..4dcec640f5870d713bd3b98389a45dbe
          return new BlockPos(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
      }
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index cf5bcb0ebc79c318d106695e39ad2883a5734aa1..d1d7f1fe4fa20355af40e5d77d2c3fa55bdd0ecd 100644
+index a0a1ed48f67f238c492d4acdd3b21147595df9e2..853b583ea98be444de2a1bb4683d6039449e92c2 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 @@ -317,7 +317,7 @@ public final class CraftServer implements Server {
@@ -903,7 +903,7 @@ index cf5bcb0ebc79c318d106695e39ad2883a5734aa1..d1d7f1fe4fa20355af40e5d77d2c3fa5
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot unload a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          if (world == null) {
              return false;
-@@ -3079,11 +3118,27 @@ public final class CraftServer implements Server {
+@@ -3084,11 +3123,27 @@ public final class CraftServer implements Server {
  
      @Override
      public double[] getTPS() {
@@ -934,7 +934,7 @@ index cf5bcb0ebc79c318d106695e39ad2883a5734aa1..d1d7f1fe4fa20355af40e5d77d2c3fa5
      }
  
      // Paper start - adventure sounds
-@@ -3254,7 +3309,7 @@ public final class CraftServer implements Server {
+@@ -3259,7 +3314,7 @@ public final class CraftServer implements Server {
  
      @Override
      public int getCurrentTick() {
@@ -2335,10 +2335,10 @@ index 7babc404e4920cd264206d4e83b1be6f841cdb8c..7a5312ab0fe3a21907a1d6b82fab9b4d
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftCreaking.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftCreaking.java
-index 267f3c85058ef7c73e372c04493cfa6c907e44bb..df838d551fa08895e390eb793506e2f3697555f4 100644
+index d9b7ad7f3b9415f9ba9e43d88378b901ad7d508b..5d4aa9052434fb3bea7b8b4c4c1c3a9720ba341a 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftCreaking.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftCreaking.java
-@@ -9,8 +9,16 @@ public class CraftCreaking extends CraftMonster implements org.bukkit.entity.Cre
+@@ -17,8 +17,16 @@ public class CraftCreaking extends CraftMonster implements org.bukkit.entity.Cre
          super(server, entity);
      }
  
@@ -4026,7 +4026,7 @@ index 2638c341bc02f201f7ab17fdebcdbdf3a7ec05bf..074b2919be2b5544b0a46e6cd32f6c57
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 3260f20b667918dd7cd641d5d96688721fce2f9c..7723b2fbc8a1d1907ded37d7530e34d3cac8bdce 100644
+index 218a27def751fb657cdeee102d9ec4b26025bb30..2d1b672fc152054d7b6abf47f443b87f5a2ea3de 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -673,7 +673,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
