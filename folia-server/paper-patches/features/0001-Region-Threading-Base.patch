@@ -435,7 +435,7 @@ index 42777adb028fe282c1619aeb5431c442ad5df0d0..de88c3d9d3523a7bd3f3dcbfc62d7265
 +    // Folia end - threaded regions
  }
 diff --git a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
-index d193330bfd97767705c878e359969378d43b99d0..7694d9762af003351841c13eb83f9f095f4a67ca 100644
+index 84a5adb3631042dc1a5595c365ca6532fe26e293..61caad2a1baa01bea5ef20a5b52847fd16549786 100644
 --- a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
 +++ b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
 @@ -496,6 +496,14 @@ public class WorldConfiguration extends ConfigurationPart {
@@ -809,7 +809,7 @@ index a4ac34ebb58a404f4fca7e763e61d4ab05ee3af4..4dcec640f5870d713bd3b98389a45dbe
          return new BlockPos(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
      }
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index a0a1ed48f67f238c492d4acdd3b21147595df9e2..853b583ea98be444de2a1bb4683d6039449e92c2 100644
+index 99beb7ec6e1864426492f4e27e650ab97ce6d4b5..afe2b5a99d831ddc39fe76d19a2a6cea91fb8ee9 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 @@ -317,7 +317,7 @@ public final class CraftServer implements Server {
@@ -903,7 +903,7 @@ index a0a1ed48f67f238c492d4acdd3b21147595df9e2..853b583ea98be444de2a1bb4683d6039
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot unload a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          if (world == null) {
              return false;
-@@ -3084,11 +3123,27 @@ public final class CraftServer implements Server {
+@@ -3085,11 +3124,27 @@ public final class CraftServer implements Server {
  
      @Override
      public double[] getTPS() {
@@ -934,7 +934,7 @@ index a0a1ed48f67f238c492d4acdd3b21147595df9e2..853b583ea98be444de2a1bb4683d6039
      }
  
      // Paper start - adventure sounds
-@@ -3259,7 +3314,7 @@ public final class CraftServer implements Server {
+@@ -3260,7 +3315,7 @@ public final class CraftServer implements Server {
  
      @Override
      public int getCurrentTick() {

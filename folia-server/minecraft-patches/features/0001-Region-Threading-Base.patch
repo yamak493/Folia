@@ -7968,7 +7968,7 @@ index 54ca624a8194e7d1c0f3b1c0ddba81165523382c..a8cc20bfad1790f254c4793f09fc4dd3
          if (!this.haveTestsStarted()) {
              this.startTests(serverLevel);
 diff --git a/net/minecraft/network/Connection.java b/net/minecraft/network/Connection.java
-index e1000d8ab5ae0034b56a3524d2caee8c299b50e7..5f963104d67f41eba8a11246acac5c45b9c8beae 100644
+index 4ed9611994c5c8da01fede690197527c5b3a5731..6caa695417945dc5a534755d6590555e0e5c50d2 100644
 --- a/net/minecraft/network/Connection.java
 +++ b/net/minecraft/network/Connection.java
 @@ -85,7 +85,7 @@ public class Connection extends SimpleChannelInboundHandler<Packet<?>> {
@@ -11080,7 +11080,7 @@ index 794770985c261fd56806188237921b5ec5e548e6..b715d1fbde9db81a2515249bb9a0fc7a
                  list.add(player);
              }
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f4042795da0 100644
+index d3c50acc5ca30b608825d4baff4b7e09a9e0f586..464bd9e968610ef9144f7dff1eead3db81be3caf 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -179,42 +179,40 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -12094,7 +12094,7 @@ index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f40
      }
      // Paper end - optimize redstone (Alternate Current)
  
-@@ -2594,18 +2700,18 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2595,18 +2701,18 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
          @Override
          public void onDestroyed(Entity entity) {
@@ -12116,7 +12116,7 @@ index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f40
              // Paper start - Reset pearls when they stop being ticked
              if (ServerLevel.this.paperConfig().fixes.disableUnloadedChunkEnderpearlExploit && ServerLevel.this.paperConfig().misc.legacyEnderPearlBehavior && entity instanceof net.minecraft.world.entity.projectile.ThrownEnderpearl pearl) {
                  pearl.cachedOwner = null;
-@@ -2617,6 +2723,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2618,6 +2724,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          @Override
          public void onTrackingStart(Entity entity) {
              org.spigotmc.AsyncCatcher.catchOp("entity register"); // Spigot
@@ -12124,7 +12124,7 @@ index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f40
              // ServerLevel.this.getChunkSource().addEntity(entity); // Paper - ignore and warn about illegal addEntity calls instead of crashing server; moved down below valid=true
              if (entity instanceof ServerPlayer serverPlayer) {
                  ServerLevel.this.players.add(serverPlayer);
-@@ -2631,12 +2738,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2632,12 +2739,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                      );
                  }
  
@@ -12139,7 +12139,7 @@ index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f40
                  }
              }
  
-@@ -2659,18 +2766,27 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2660,18 +2767,27 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          @Override
          public void onTrackingEnd(Entity entity) {
              org.spigotmc.AsyncCatcher.catchOp("entity unregister"); // Spigot
@@ -12168,7 +12168,7 @@ index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f40
                      }
                  }
              }
-@@ -2701,18 +2817,19 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2702,18 +2818,19 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                      );
                  }
  
@@ -12190,7 +12190,7 @@ index b93c617cef5df0d7d01f683b05847a4908104fd6..05e2f2751459e558d4a8859cae455f40
              if (!(entity instanceof ServerPlayer)) {
                  for (ServerPlayer player : ServerLevel.this.server.getPlayerList().players) { // Paper - call onEntityRemove for all online players
                      player.getBukkitEntity().onEntityRemove(entity);
-@@ -2740,11 +2857,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -2741,11 +2858,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      private long lagCompensationTick = MinecraftServer.SERVER_INIT;
  
      public long getLagCompensationTick() {
@@ -14224,7 +14224,7 @@ index a3c7d68469075bf8d33f2016149a181b0fb87e0e..73c581d3ee21d8fa96eae3e47afd6ce2
              return blockToFallLocation(blockState);
          } else {
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 1b54cf07616a10d93e9336dbd299ba5f09678a28..1e59c21d26baf50fd74bc99c04dbea0faede446a 100644
+index b2b61203438bb1fad1ee807729781718d2467155..2cd2ce1060f567be6c72b7bc9d02651ec7166203 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -145,7 +145,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
@@ -15469,7 +15469,7 @@ index 4546aca8e2e144ec207653c713fc49f849908827..6258b008ad3e00d41e9f3014572d6f7a
          this.setPose(Pose.STANDING);
          this.setPos(vec3.x, vec3.y, vec3.z);
 diff --git a/net/minecraft/world/entity/Mob.java b/net/minecraft/world/entity/Mob.java
-index 1ed07fd23985a6bf8cf8300f74c92b7531a79fc6..6394b0899095b047ca9266135fc44aa0c32467cf 100644
+index e330bf990e4874baed1b21cd8c9b44d66ec5b823..da922d4c0ffa0f40d5e8dd69487bf30dbbbeed87 100644
 --- a/net/minecraft/world/entity/Mob.java
 +++ b/net/minecraft/world/entity/Mob.java
 @@ -254,8 +254,20 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
@@ -15502,7 +15502,7 @@ index 1ed07fd23985a6bf8cf8300f74c92b7531a79fc6..6394b0899095b047ca9266135fc44aa0
              return false;
          }
          if (fireEvent) {
-@@ -1663,12 +1675,26 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
+@@ -1665,12 +1677,26 @@ public abstract class Mob extends LivingEntity implements EquipmentUser, Leashab
      @Override
      protected void removeAfterChangingDimensions() {
          super.removeAfterChangingDimensions();
@@ -16079,7 +16079,7 @@ index af3fef70998cff4e4832adfa2071832324ebd91c..8751f80d48d11c33ddb6c553894c31e8
              }
  
 diff --git a/net/minecraft/world/entity/monster/ZombieVillager.java b/net/minecraft/world/entity/monster/ZombieVillager.java
-index 9061e0b6544d6a31a4dc5b51037f608031a00553..76fa0a25fe084f17045f72a1750c6e8b1eb7cb14 100644
+index 8403257d81367c7371fa94d458a59a4589dc0bd7..d0e7eb3394b4e5b244cbd28424ff47ddf1b8f2bb 100644
 --- a/net/minecraft/world/entity/monster/ZombieVillager.java
 +++ b/net/minecraft/world/entity/monster/ZombieVillager.java
 @@ -69,7 +69,7 @@ public class ZombieVillager extends Zombie implements VillagerDataHolder {
