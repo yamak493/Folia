@@ -4026,7 +4026,7 @@ index 2638c341bc02f201f7ab17fdebcdbdf3a7ec05bf..074b2919be2b5544b0a46e6cd32f6c57
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 218a27def751fb657cdeee102d9ec4b26025bb30..2d1b672fc152054d7b6abf47f443b87f5a2ea3de 100644
+index 0e0abc233f6425a6303672d87429bcdfaf04f842..c9afcd46f6a1b74b82ed68f1df6188369cf53a73 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -673,7 +673,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
@@ -4095,7 +4095,7 @@ index 218a27def751fb657cdeee102d9ec4b26025bb30..2d1b672fc152054d7b6abf47f443b87f
      }
  
      public void setHandle(final ServerPlayer entity) {
-@@ -3355,7 +3367,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -3352,7 +3364,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
          {
              if ( CraftPlayer.this.getHealth() <= 0 && CraftPlayer.this.isOnline() )
              {
