@@ -12205,7 +12205,7 @@ index d3c50acc5ca30b608825d4baff4b7e09a9e0f586..464bd9e968610ef9144f7dff1eead3db
      // Paper end - lag compensation
  }
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4ddad9193f7 100644
+index 3de65c4025be91d938a350c884975cb6edc234d3..310ec59ca44f27403c3e1448441d0dec033a3967 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -180,7 +180,7 @@ import org.slf4j.Logger;
@@ -12217,7 +12217,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
      private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_XZ = 32;
      private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_Y = 10;
      private static final int FLY_STAT_RECORDING_SPEED = 25;
-@@ -443,8 +443,149 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -450,8 +450,149 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          this.maxHealthCache = this.getMaxHealth();
      }
  
@@ -12367,7 +12367,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
          AABB aabb = this.getDimensions(Pose.STANDING).makeBoundingBox(Vec3.ZERO);
          BlockPos blockPos = pos;
          if (level.dimensionType().hasSkyLight() && level.serverLevelData.getGameType() != GameType.ADVENTURE) { // CraftBukkit
-@@ -533,7 +674,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -540,7 +681,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          this.getBukkitEntity().readExtraData(compound); // CraftBukkit
  
          if (this.isSleeping()) {
@@ -12376,7 +12376,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
          }
  
          // CraftBukkit start
-@@ -709,10 +850,17 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -716,10 +857,17 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
                          ServerLevel level = this.level().getServer().getLevel(optional.get());
                          if (level != null) {
                              Entity entity = EntityType.loadEntityRecursive(
@@ -12396,7 +12396,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
                              } else {
                                  LOGGER.warn("Failed to spawn player ender pearl in level ({}), skipping", optional.get());
                              }
-@@ -817,12 +965,23 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -824,12 +972,23 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
          Entity camera = this.getCamera();
          if (camera != this) {
@@ -12421,7 +12421,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
              } else {
                  this.setCamera(this);
              }
-@@ -1357,9 +1516,332 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -1364,9 +1523,332 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          }
      }
  
@@ -12754,7 +12754,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
          if (this.isSleeping()) return null; // CraftBukkit - SPIGOT-3154
          if (this.isRemoved()) {
              return null;
-@@ -2397,7 +2879,30 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2404,7 +2886,30 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          return (Entity)(this.camera == null ? this : this.camera);
      }
  
@@ -12785,7 +12785,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
          Entity camera = this.getCamera();
          this.camera = (Entity)(entityToSpectate == null ? this : entityToSpectate);
          if (camera != this.camera) {
-@@ -2416,16 +2921,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2423,16 +2928,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
                  }
              }
              // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
@@ -12812,7 +12812,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
          }
      }
  
-@@ -2896,11 +3404,11 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2903,11 +3411,11 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      }
  
      public void registerEnderPearl(ThrownEnderpearl enderPearl) {
@@ -12826,7 +12826,7 @@ index 57d432dc9e8d8e9a3e088e7c40b35178c30fe786..f5615c7f7127edda460db9158d6bd4dd
      }
  
      public Set<ThrownEnderpearl> getEnderPearls() {
-@@ -3054,7 +3562,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -3061,7 +3569,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          this.experienceLevel = this.newLevel;
          this.totalExperience = this.newTotalExp;
          this.experienceProgress = 0;
@@ -13121,7 +13121,7 @@ index bd07e6a5aa1883786d789ea71711a0c0c0a95c26..09469ad131622158fe5579216fc41642
              }
              // Spigot end
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 1205307b7d2336fa6c5395a65be6643228c49d72..a2fe9286d432909ba0cb3731a166514af768dc37 100644
+index b4a284a0617167fd12e9d9414b17f86c169ba563..3977d5b52c4473ed04019f8e93d7dbf084070a97 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -292,10 +292,10 @@ public class ServerGamePacketListenerImpl
@@ -13621,7 +13621,7 @@ index 7dbcd9d96f052bb10127ad2b061154c23cc9ffd4..20d895ed04cd2263560f91ef38dda6aa
              date = defaultValue;
          }
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 5a4960fdbd97d830ac79845697eea9372c48a13b..7b13a9e7d38efe7786023747f55ebf5a2ba80688 100644
+index c9dbe659374e3ce140316116e05110567e44b810..f2cf984f053b7a60255eaa245777abb0e1557c54 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -110,10 +110,10 @@ public abstract class PlayerList {
@@ -14011,7 +14011,7 @@ index 5a4960fdbd97d830ac79845697eea9372c48a13b..7b13a9e7d38efe7786023747f55ebf5a
                  this.save(player);
                  if (interval != -1 && ++numSaved >= io.papermc.paper.configuration.GlobalConfiguration.get().playerAutoSave.maxPerTick()) {
                      break;
-@@ -1194,6 +1280,20 @@ public abstract class PlayerList {
+@@ -1199,6 +1285,20 @@ public abstract class PlayerList {
      }
  
      public void removeAll(boolean isRestarting) {
@@ -14032,7 +14032,7 @@ index 5a4960fdbd97d830ac79845697eea9372c48a13b..7b13a9e7d38efe7786023747f55ebf5a
          // Paper end
          // CraftBukkit start - disconnect safely
          for (ServerPlayer player : this.players) {
-@@ -1203,7 +1303,7 @@ public abstract class PlayerList {
+@@ -1208,7 +1308,7 @@ public abstract class PlayerList {
          // CraftBukkit end
  
          // Paper start - Configurable player collision; Remove collideRule team if it exists
