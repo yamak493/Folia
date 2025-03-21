@@ -396,10 +396,10 @@ index c6e487a4c14e6b82533881d01f32349b9ae28728..b8f1f042342d3fed5fa26df0de07e8e2
          }
 diff --git a/io/papermc/paper/threadedregions/ScheduledTaskThreadPool.java b/io/papermc/paper/threadedregions/ScheduledTaskThreadPool.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1df90761d
+index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a4082170410a
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/ScheduledTaskThreadPool.java
-@@ -0,0 +1,1158 @@
+@@ -0,0 +1,1164 @@
 +package io.papermc.paper.threadedregions;
 +
 +import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
@@ -638,7 +638,6 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +    private void insert(final SchedulableTick tick, final boolean hasTasks) {
 +        final long scheduleTime = tick.getScheduledStart();
 +        final long timeNow = System.nanoTime();
-+        final long nextTaskProcess = timeNow + (this.taskTimeSliceNS >>> 1);
 +
 +        for (;;) {
 +            final Map.Entry<WaitState, WaitState> lastIdle = this.waitingOrIdleRunners.firstEntry();
@@ -651,7 +650,7 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +                        tick,
 +                        // offset start by steal threshold so that it will hopefully start at its scheduled time
 +                        scheduleTime - this.stealThresholdNS,
-+                        nextTaskProcess,
++                        timeNow,
 +                        null
 +                );
 +
@@ -672,7 +671,7 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +                    continue;
 +                }
 +
-+                final ScheduledTickTask task = tick.task = new ScheduledTickTask(tick, scheduleTime, nextTaskProcess, waitState.runner);
++                final ScheduledTickTask task = tick.task = new ScheduledTickTask(tick, scheduleTime, timeNow, waitState.runner);
 +
 +                this.unwatchedScheduledTicks.put(task, task);
 +                waitState.runner.scheduledTicks.put(task, task);
@@ -1226,12 +1225,13 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +                    return toWaitFor;
 +                }
 +
-+                if (toWaitFor == globalFirst && globalFirst != ourFirst) {
-+                    if (!toWaitFor.watch()) {
++                if (toWaitFor == globalFirst) {
++                    if (toWaitFor.watch()) {
++                        this.scheduler.unwatchedScheduledTicks.remove(toWaitFor);
++                        this.watch = toWaitFor;
++                    } else if (toWaitFor != ourFirst) {
 +                        continue;
-+                    }
-+                    this.scheduler.unwatchedScheduledTicks.remove(toWaitFor);
-+                    this.watch = toWaitFor;
++                    } // else: failed to watch, but we are waiting for our task
 +                }
 +
 +                return toWaitFor;
@@ -1261,7 +1261,6 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +                                }
 +                                break;
 +                            }
-+
 +                        }
 +                    }
 +                }
@@ -1286,11 +1285,10 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +        }
 +
 +        private void reinsert(final ScheduledTickTask tick, final TickThreadRunner owner) {
-+            final ScheduledTickTask newTask = new ScheduledTickTask(
++            final ScheduledTickTask newTask = tick.tick.task = new ScheduledTickTask(
 +                    tick.tick, tick.tick.getScheduledStart(), System.nanoTime(), owner
 +            );
 +
-+            newTask.tick.task = newTask;
 +            this.scheduler.unwatchedScheduledTicks.put(newTask, newTask);
 +            if (owner != null) {
 +                owner.scheduledTicks.put(newTask, newTask);
@@ -1302,7 +1300,13 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +        }
 +
 +        private void runTasks(final ScheduledTickTask tick, final long deadline) {
++            if (STATE_WAITING != this.compareAndExchangeStateVolatile(STATE_WAITING, STATE_TASKS)) {
++                // interrupted or halted
++                return;
++            }
++
 +            if (!tick.take()) {
++                this.compareAndExchangeStateVolatile(STATE_TASKS, STATE_WAITING);
 +                return;
 +            }
 +
@@ -1315,12 +1319,14 @@ index 0000000000000000000000000000000000000000..1525be087f2b021e9ba4c1489d2144c1
 +            }
 +
 +            final BooleanSupplier canContinue = () -> {
-+                return TickThreadRunner.this.getStateVolatile() == STATE_WAITING && (System.nanoTime() - deadline < 0L);
++                return TickThreadRunner.this.getStateVolatile() == STATE_TASKS && (System.nanoTime() - deadline < 0L);
 +            };
 +
 +            if (tick.tick.tasks(canContinue)) {
 +                this.reinsert(tick, tick.owner == null ? this : tick.owner);
 +            }
++
++            this.compareAndExchangeStateVolatile(STATE_TASKS, STATE_WAITING);
 +        }
 +
 +        private ScheduledTickTask waitForTick() {
