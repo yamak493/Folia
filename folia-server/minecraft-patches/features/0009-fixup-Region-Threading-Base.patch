@@ -396,16 +396,17 @@ index c6e487a4c14e6b82533881d01f32349b9ae28728..b8f1f042342d3fed5fa26df0de07e8e2
          }
 diff --git a/io/papermc/paper/threadedregions/ScheduledTaskThreadPool.java b/io/papermc/paper/threadedregions/ScheduledTaskThreadPool.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a4082170410a
+index 0000000000000000000000000000000000000000..5c591b0d6eac45d6094ce44bf62ad976bf995e66
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/ScheduledTaskThreadPool.java
-@@ -0,0 +1,1164 @@
+@@ -0,0 +1,1243 @@
 +package io.papermc.paper.threadedregions;
 +
 +import ca.spottedleaf.concurrentutil.util.ConcurrentUtil;
 +import ca.spottedleaf.concurrentutil.util.TimeUtil;
 +import java.lang.invoke.VarHandle;
 +import java.util.Comparator;
++import java.util.Iterator;
 +import java.util.Map;
 +import java.util.concurrent.ConcurrentSkipListMap;
 +import java.util.concurrent.ThreadFactory;
@@ -439,7 +440,7 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +        this.taskTimeSliceNS = taskTimeSliceNS;
 +
 +        if (threadFactory == null) {
-+            throw new IllegalStateException("Null thread factory");
++            throw new NullPointerException("Null thread factory");
 +        }
 +        if (stealThresholdNS < 0L) {
 +            throw new IllegalArgumentException("Steal threshold must be >= 0");
@@ -650,7 +651,7 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +                        tick,
 +                        // offset start by steal threshold so that it will hopefully start at its scheduled time
 +                        scheduleTime - this.stealThresholdNS,
-+                        timeNow,
++                        hasTasks ? timeNow : DEADLINE_NOT_SET,
 +                        null
 +                );
 +
@@ -671,7 +672,9 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +                    continue;
 +                }
 +
-+                final ScheduledTickTask task = tick.task = new ScheduledTickTask(tick, scheduleTime, timeNow, waitState.runner);
++                final ScheduledTickTask task = tick.task = new ScheduledTickTask(
++                    tick, scheduleTime, hasTasks ? timeNow : DEADLINE_NOT_SET, waitState.runner
++                );
 +
 +                this.unwatchedScheduledTicks.put(task, task);
 +                waitState.runner.scheduledTicks.put(task, task);
@@ -724,6 +727,8 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +            // will be handled by scheduling code
 +            return;
 +        }
++
++        task.setLastTaskNotify(System.nanoTime());
 +
 +        final TickThreadRunner runner = task.owner;
 +        this.scheduledTasks.put(task, task);
@@ -1174,7 +1179,30 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +        }
 +
 +        private void halt() {
-+            this.setStateVolatile(STATE_HALTED);
++            for (int curr = this.getStateVolatile();;) {
++                switch (curr) {
++                    case STATE_HALTED: {
++                        return;
++                    }
++                    case STATE_IDLE:
++                    case STATE_WAITING:
++                    case STATE_TASKS:
++                    case STATE_INTERRUPT:
++                    case STATE_TICKING: {
++                        if (curr == (curr = this.compareAndExchangeStateVolatile(curr, STATE_HALTED))) {
++                            if (curr == STATE_IDLE || curr == STATE_WAITING) {
++                                LockSupport.unpark(this.thread);
++                            }
++                            return;
++                        }
++                        continue;
++                    }
++
++                    default: {
++                        throw new IllegalStateException("Unknown state: " + curr);
++                    }
++                }
++            }
 +        }
 +
 +        private boolean isHalted() {
@@ -1286,7 +1314,7 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +
 +        private void reinsert(final ScheduledTickTask tick, final TickThreadRunner owner) {
 +            final ScheduledTickTask newTask = tick.tick.task = new ScheduledTickTask(
-+                    tick.tick, tick.tick.getScheduledStart(), System.nanoTime(), owner
++                    tick.tick, tick.tick.getScheduledStart(), DEADLINE_NOT_SET, owner
 +            );
 +
 +            this.scheduler.unwatchedScheduledTicks.put(newTask, newTask);
@@ -1329,6 +1357,29 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +            this.compareAndExchangeStateVolatile(STATE_TASKS, STATE_WAITING);
 +        }
 +
++        private ScheduledTickTask findTaskNotBehind(final ConcurrentSkipListMap<ScheduledTickTask, ScheduledTickTask> map,
++                                                    final long timeNow) {
++            for (final Iterator<ScheduledTickTask> iterator = map.keySet().iterator(); iterator.hasNext();) {
++                final ScheduledTickTask task = iterator.next();
++                if (task.isTaken()) {
++                    iterator.remove();
++                    continue;
++                }
++
++                // try to avoid stealing tasks accidentally by subtracting the steal threshold instead
++                final long tickStart = task.owner == this ? task.tickStart : task.tickStart - this.scheduler.stealThresholdNS;
++
++                if (tickStart - timeNow <= 0L) {
++                    // skip tasks already behind
++                    continue;
++                }
++
++                return task;
++            }
++
++            return null;
++        }
++
 +        private ScheduledTickTask waitForTick() {
 +            final ScheduledTickTask tick = this.findTick();
 +
@@ -1350,10 +1401,11 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +                    return null;
 +                }
 +
-+                final ScheduledTickTask ourTask = findFirstNonTaken(this.scheduledTasks);
-+                final ScheduledTickTask globalTask = findFirstNonTaken(this.scheduler.scheduledTasks);
-+
 +                final long timeNow = System.nanoTime();
++
++                final ScheduledTickTask ourTask = findFirstNonTaken(this.scheduledTasks);
++                // avoid stealing global tasks that are behind schedule
++                final ScheduledTickTask globalTask = this.findTaskNotBehind(this.scheduler.scheduledTasks, timeNow);
 +
 +                if (timeNow - tickDeadline >= 0L) {
 +                    if (!tick.take()) {
@@ -1376,9 +1428,23 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +                } else if (globalTask == null) {
 +                    toTask = ourTask;
 +                } else {
-+                    // try to use global task
-+                    if (globalTask.lastTaskParse + this.scheduler.taskTimeSliceNS - ourTask.lastTaskParse < 0L) {
-+                        toTask = globalTask;
++                    // try to use global task only if it is behind
++                    if (globalTask.getLastTaskNotify() + this.scheduler.stealThresholdNS - ourTask.getLastTaskNotify() < 0L) {
++                        final int ownerState = globalTask.owner == null ? STATE_HALTED : globalTask.owner.getStateVolatile();
++                        // steal if not idle, waiting, interrupt
++                        switch (ownerState) {
++                            case STATE_IDLE:
++                            case STATE_WAITING:
++                            case STATE_INTERRUPT: {
++                                // owner will probably get to it
++                                toTask = ourTask;
++                                break;
++                            }
++                            default: {
++                                toTask = globalTask;
++                                break;
++                            }
++                        }
 +                    } else {
 +                        toTask = ourTask;
 +                    }
@@ -1387,6 +1453,11 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +                long deadline = tickDeadline;
 +                deadline = Math.min(deadline, timeNow + this.scheduler.taskTimeSliceNS);
 +                deadline = Math.min(deadline, toTask.tickStart);
++
++                // before parsing tasks: were we interrupted?
++                if (this.getStateVolatile() != STATE_WAITING) {
++                    continue;
++                }
 +
 +                this.runTasks(toTask, deadline);
 +            }
@@ -1517,7 +1588,7 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +            return Long.signum(t1.tick.id - t2.tick.id);
 +        };
 +        private static final Comparator<ScheduledTickTask> TASK_COMPARATOR = (final ScheduledTickTask t1, final ScheduledTickTask t2) -> {
-+            final int timeCmp = TimeUtil.compareTimes(t1.lastTaskParse, t2.lastTaskParse);
++            final int timeCmp = TimeUtil.compareTimes(t1.lastTaskNotify, t2.lastTaskNotify);
 +            if (timeCmp != 0L) {
 +                return timeCmp;
 +            }
@@ -1527,7 +1598,7 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +
 +        private final SchedulableTick tick;
 +        private final long tickStart;
-+        private final long lastTaskParse;
++        private long lastTaskNotify;
 +        private final TickThreadRunner owner;
 +
 +        private volatile boolean taken;
@@ -1535,11 +1606,11 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +        private volatile boolean watched;
 +        private static final VarHandle WATCHED_HANDLE = ConcurrentUtil.getVarHandle(ScheduledTickTask.class, "watched", boolean.class);
 +
-+        private ScheduledTickTask(final SchedulableTick tick, final long tickStart, final long lastTaskParse,
++        private ScheduledTickTask(final SchedulableTick tick, final long tickStart, final long lastTaskNotify,
 +                                  final TickThreadRunner owner) {
 +            this.tick = tick;
 +            this.tickStart = tickStart;
-+            this.lastTaskParse = lastTaskParse;
++            this.lastTaskNotify = lastTaskNotify;
 +            this.owner = owner;
 +        }
 +
@@ -1561,6 +1632,14 @@ index 0000000000000000000000000000000000000000..c7627ababadf72231682baa9c056a408
 +
 +        public boolean isWatched() {
 +            return (boolean)TAKEN_HANDLE.getVolatile(this);
++        }
++
++        public long getLastTaskNotify() {
++            return this.lastTaskNotify;
++        }
++
++        public void setLastTaskNotify(final long value) {
++            this.lastTaskNotify = value;
 +        }
 +    }
 +}
