@@ -31,8 +31,8 @@ jobs:
         run: ./gradlew applyAllPatches
       - name: Build
         run: ./gradlew build
-      - name: Build2
-        run: ./gradlew createReobfBundlerJar
+#      - name: Build2
+#        run: ./gradlew createReobfBundlerJar
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
