@@ -32,7 +32,7 @@ jobs:
       - name: Build
         run: ./gradlew build
       - name: Build2
-        run: ./gradlew  createMojmapPaperclipJar
+        run: ./gradlew createMojmapPaperclipJar
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
