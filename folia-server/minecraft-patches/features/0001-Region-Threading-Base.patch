@@ -12928,7 +12928,7 @@ index 7fa41dea184b01891f45d8e404bc1cba19cf1bcf..43de96cc3c2b1259b1edb5feae3f202d
  
      public boolean isOldChunkAround(ChunkPos pos, int radius) {
 diff --git a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
-index e71c1a564e5d4ac43460f89879ff709ee685706f..6eca15223b92aedac74233db886e2c1248750e2c 100644
+index af75f1ca60dc01045f27cb550ac9e3deacf1a1cf..79fe336adf35f4f007461ed050e6301764fe7fc3 100644
 --- a/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerCommonPacketListenerImpl.java
 @@ -96,6 +96,10 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
@@ -12961,7 +12961,7 @@ index e71c1a564e5d4ac43460f89879ff709ee685706f..6eca15223b92aedac74233db886e2c12
      }
  
      @Override
-@@ -330,24 +342,8 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+@@ -334,24 +346,8 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
          if (this.processedDisconnect) {
              return;
          }
@@ -12988,7 +12988,7 @@ index e71c1a564e5d4ac43460f89879ff709ee685706f..6eca15223b92aedac74233db886e2c12
              return;
          }
  
-@@ -378,7 +374,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+@@ -382,7 +378,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
          this.onDisconnect(disconnectionDetails, leaveMessage); // CraftBukkit - fire quit instantly // Paper - use kick event leave message
          this.connection.setReadOnly();
          // CraftBukkit - Don't wait
@@ -12997,7 +12997,7 @@ index e71c1a564e5d4ac43460f89879ff709ee685706f..6eca15223b92aedac74233db886e2c12
      }
  
      // Paper start - add proper async disconnect
-@@ -391,19 +387,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
+@@ -395,19 +391,7 @@ public abstract class ServerCommonPacketListenerImpl implements ServerCommonPack
      }
  
      public void disconnectAsync(DisconnectionDetails disconnectionInfo, org.bukkit.event.player.PlayerKickEvent.Cause cause) {
@@ -13121,7 +13121,7 @@ index bd07e6a5aa1883786d789ea71711a0c0c0a95c26..09469ad131622158fe5579216fc41642
              }
              // Spigot end
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index b4a284a0617167fd12e9d9414b17f86c169ba563..3977d5b52c4473ed04019f8e93d7dbf084070a97 100644
+index 876d207996724727ca26b139af759eab2e6f4131..a107d9ee24d0e39ce3e3e09bf27af1ea4ae35b96 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -292,10 +292,10 @@ public class ServerGamePacketListenerImpl
@@ -13430,7 +13430,7 @@ index b4a284a0617167fd12e9d9414b17f86c169ba563..3977d5b52c4473ed04019f8e93d7dbf0
              final String conversationInput = rawMessage;
              this.server.processQueue.add(() -> ServerGamePacketListenerImpl.this.getCraftPlayer().acceptConversationInput(conversationInput));
          } else if (this.player.getChatVisibility() == ChatVisiblity.SYSTEM) { // Re-add "Command Only" flag check
-@@ -2718,8 +2774,25 @@ public class ServerGamePacketListenerImpl
+@@ -2720,8 +2776,25 @@ public class ServerGamePacketListenerImpl
      // Spigot end
  
      public void switchToConfig() {
@@ -13457,7 +13457,7 @@ index b4a284a0617167fd12e9d9414b17f86c169ba563..3977d5b52c4473ed04019f8e93d7dbf0
          this.send(ClientboundStartConfigurationPacket.INSTANCE);
          this.connection.setupOutboundProtocol(ConfigurationProtocols.CLIENTBOUND);
      }
-@@ -2744,7 +2817,7 @@ public class ServerGamePacketListenerImpl
+@@ -2746,7 +2819,7 @@ public class ServerGamePacketListenerImpl
              // Spigot end
              this.player.resetLastActionTime();
              this.player.setShiftKeyDown(packet.isUsingSecondaryAction());
@@ -13466,7 +13466,7 @@ index b4a284a0617167fd12e9d9414b17f86c169ba563..3977d5b52c4473ed04019f8e93d7dbf0
                  if (!serverLevel.getWorldBorder().isWithinBounds(target.blockPosition())) {
                      return;
                  }
-@@ -2877,6 +2950,12 @@ public class ServerGamePacketListenerImpl
+@@ -2879,6 +2952,12 @@ public class ServerGamePacketListenerImpl
          switch (action) {
              case PERFORM_RESPAWN:
                  if (this.player.wonGame) {
@@ -13479,7 +13479,7 @@ index b4a284a0617167fd12e9d9414b17f86c169ba563..3977d5b52c4473ed04019f8e93d7dbf0
                      this.player.wonGame = false;
                      this.player = this.server.getPlayerList().respawn(this.player, true, Entity.RemovalReason.CHANGED_DIMENSION, RespawnReason.END_PORTAL); // CraftBukkit
                      this.resetPosition();
-@@ -2886,6 +2965,17 @@ public class ServerGamePacketListenerImpl
+@@ -2888,6 +2967,17 @@ public class ServerGamePacketListenerImpl
                          return;
                      }
  
@@ -13497,7 +13497,7 @@ index b4a284a0617167fd12e9d9414b17f86c169ba563..3977d5b52c4473ed04019f8e93d7dbf0
                      this.player = this.server.getPlayerList().respawn(this.player, false, Entity.RemovalReason.KILLED, RespawnReason.DEATH); // CraftBukkit
                      this.resetPosition();
                      if (this.server.isHardcore()) {
-@@ -3462,7 +3552,21 @@ public class ServerGamePacketListenerImpl
+@@ -3464,7 +3554,21 @@ public class ServerGamePacketListenerImpl
          }
          List<String> list = Stream.of(lines).map(ChatFormatting::stripFormatting).collect(Collectors.toList());
          // Paper end - Limit client sign length
@@ -16327,7 +16327,7 @@ index 9a99b813de8b606fab26c87086a21372e5172ba3..4eeb1017576d23d206a7a47b9e9e74b1
                  this.igniteForSeconds(1.0F);
              }
 diff --git a/net/minecraft/world/entity/projectile/FireworkRocketEntity.java b/net/minecraft/world/entity/projectile/FireworkRocketEntity.java
-index 774ca9e0b56fd175ae246051de762d0c4256ca58..0cfd2c937f93f1acb4afc01251f882710baf2591 100644
+index c7ae41b2cbc1eb85a6eb9c16813bd326fb8f49f0..74d600367b0ddba693dcf5afd29a8da1cc202de5 100644
 --- a/net/minecraft/world/entity/projectile/FireworkRocketEntity.java
 +++ b/net/minecraft/world/entity/projectile/FireworkRocketEntity.java
 @@ -130,6 +130,11 @@ public class FireworkRocketEntity extends Projectile implements ItemSupplier {
