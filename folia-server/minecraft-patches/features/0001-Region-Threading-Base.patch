@@ -2764,10 +2764,10 @@ index 0000000000000000000000000000000000000000..2147f3647d47e9a45e0e3017026523ee
 \ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/RegionizedWorldData.java b/io/papermc/paper/threadedregions/RegionizedWorldData.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..44db84322aa0bca7b0d49e1f62032fb367d56a0c
+index 0000000000000000000000000000000000000000..17bf9a4cf48273d5021d48ae57acc4fd053dd32d
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/RegionizedWorldData.java
-@@ -0,0 +1,770 @@
+@@ -0,0 +1,768 @@
 +package io.papermc.paper.threadedregions;
 +
 +import ca.spottedleaf.moonrise.common.list.IteratorSafeOrderedReferenceSet;
@@ -3167,10 +3167,8 @@ index 0000000000000000000000000000000000000000..44db84322aa0bca7b0d49e1f62032fb3
 +    // From Level
 +    public boolean populating;
 +    public final NeighborUpdater neighborUpdater;
-+    public boolean preventPoiUpdated = false; // CraftBukkit - SPIGOT-5710
 +    public boolean captureBlockStates = false;
 +    public boolean captureTreeGeneration = false;
-+    public boolean isBlockPlaceCancelled = false; // Paper - prevent calling cleanup logic when undoing a block place upon a cancelled BlockPlaceEvent
 +    public final Map<BlockPos, CraftBlockState> capturedBlockStates = new java.util.LinkedHashMap<>(); // Paper
 +    public final Map<BlockPos, BlockEntity> capturedTileEntities = new java.util.LinkedHashMap<>(); // Paper
 +    public List<ItemEntity> captureDrops;
