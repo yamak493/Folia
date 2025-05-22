@@ -25,7 +25,7 @@
 -val log4jPlugins = sourceSets.create("log4jPlugins")
 +sourceSets {
 +    main {
-+        java { srcDir("../paper-server/src/main/java") }
++        java { srcDir("../paper-server/src/main/java"); srcDir("../paper-server/src/generated/java") }
 +        resources { srcDir("../paper-server/src/main/resources") }
 +    }
 +    test {

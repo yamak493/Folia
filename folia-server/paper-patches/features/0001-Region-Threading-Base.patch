@@ -756,7 +756,7 @@ index c03608fec96b51e1867f43d8f42e5aefb1520e46..127d96280cad2d4e5db574a089d67ad6
       * Retires the scheduler, preventing new tasks from being scheduled and invoking the retired callback
       * on all currently scheduled tasks.
 diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
-index 27927bb7967a417dd3542e7d62d67a13118ed98e..e523f2292a480b1dd1f4eb732be119e21e93b9f7 100644
+index 27927bb7967a417dd3542e7d62d67a13118ed98e..eb94f71f626c1f89f1b9048a8e68ae09ff17effc 100644
 --- a/src/main/java/io/papermc/paper/util/MCUtil.java
 +++ b/src/main/java/io/papermc/paper/util/MCUtil.java
 @@ -92,6 +92,7 @@ public final class MCUtil {
@@ -778,8 +778,8 @@ index 27927bb7967a417dd3542e7d62d67a13118ed98e..e523f2292a480b1dd1f4eb732be119e2
 +     * @param pos
 +     * @return
 +     */
-+    public static Location toLocation(Level world, Vec3 pos) {
-+        return new Location(world.getWorld(), pos.x(), pos.y(), pos.z());
++    public static org.bukkit.Location toLocation(net.minecraft.world.level.Level world, Vec3 pos) {
++        return new org.bukkit.Location(world.getWorld(), pos.x(), pos.y(), pos.z());
 +    }
 +
 +    /**
@@ -790,8 +790,8 @@ index 27927bb7967a417dd3542e7d62d67a13118ed98e..e523f2292a480b1dd1f4eb732be119e2
 +     * @param pitch
 +     * @return
 +     */
-+    public static Location toLocation(Level world, Vec3 pos, float yaw, float pitch) {
-+        return new Location(world.getWorld(), pos.x(), pos.y(), pos.z(), yaw, pitch);
++    public static org.bukkit.Location toLocation(net.minecraft.world.level.Level world, Vec3 pos, float yaw, float pitch) {
++        return new org.bukkit.Location(world.getWorld(), pos.x(), pos.y(), pos.z(), yaw, pitch);
 +    }
 +    // Folia end - TODO MERGE INTO MCUTIL
 +
@@ -934,7 +934,7 @@ index 1da86b25e3b89c79d4f3920c8d2ef10ee2757f65..e1779224a73b5fe2df33ed8b2ab170b8
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index aae378697b2f2e388d2a5dfaca24c9197b8abf3e..140fdbae1141935e9c0cea7fd9e36572f31bdbf7 100644
+index aae378697b2f2e388d2a5dfaca24c9197b8abf3e..85953b02763b4dfddfc00c095f1ec4a019a1a30f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 @@ -228,7 +228,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
@@ -1367,6 +1367,15 @@ index aae378697b2f2e388d2a5dfaca24c9197b8abf3e..140fdbae1141935e9c0cea7fd9e36572
          getHandle().gameEvent(sourceEntity != null ? ((CraftEntity) sourceEntity).getHandle(): null, net.minecraft.core.registries.BuiltInRegistries.GAME_EVENT.get(org.bukkit.craftbukkit.util.CraftNamespacedKey.toMinecraft(gameEvent.getKey())).orElseThrow(), org.bukkit.craftbukkit.util.CraftVector.toBlockPos(position));
      }
      // Paper end
+@@ -2329,7 +2375,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
+         Preconditions.checkArgument(radius >= 0, "Radius value (%s) cannot be negative", radius);
+ 
+         Raids persistentRaid = this.world.getRaids();
+-        net.minecraft.world.entity.raid.Raid raid = persistentRaid.getNearbyRaid(CraftLocation.toBlockPosition(location), radius * radius);
++        net.minecraft.world.entity.raid.Raid raid = persistentRaid.getNearbyRaid(this.world, CraftLocation.toBlockPosition(location), radius * radius); // Folia - make raids thread-safe - add ServerLevel param
+         return (raid == null) ? null : new CraftRaid(raid, this.world);
+     }
+ 
 diff --git a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java b/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
 index a4d5c65edc1db59f3486ce5d3757cc306211a54b..97faf66a3d0e0e2158830ed0d787fdca6d5b8f7e 100644
 --- a/src/main/java/org/bukkit/craftbukkit/block/CraftBlock.java
@@ -2256,7 +2265,7 @@ index 000c5ea5d39d5ab6e5592012ab1cc7ee547505dc..ab2ee478c53923be85f5a6d4971bed5b
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index 3b41a37f852c3b494b158e447eade9b030f26556..67627c45f2af863b88b65391368b254ea569cd53 100644
+index 3b41a37f852c3b494b158e447eade9b030f26556..255eef45cb4e41a6936fafa225cbc75387327e7b 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 @@ -93,6 +93,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
@@ -2300,6 +2309,15 @@ index 3b41a37f852c3b494b158e447eade9b030f26556..67627c45f2af863b88b65391368b254e
  
          if (entityTracker != null) {
              for (ServerPlayerConnection connection : entityTracker.seenBy) {
+@@ -751,7 +762,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+         Preconditions.checkArgument(player != null, "Player cannot be null");
+ 
+         ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
+-        ChunkMap.TrackedEntity entityTracker = world.getChunkSource().chunkMap.entityMap.get(this.getEntityId());
++        ChunkMap.TrackedEntity entityTracker = this.getHandle().moonrise$getTrackedEntity(); // Folia - region threading
+         if (entityTracker == null) return false;
+ 
+         return entityTracker.seenBy.contains(((CraftPlayer) player).getHandle().connection);
 @@ -1047,7 +1058,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          }
  
@@ -3102,7 +3120,7 @@ index d927938df4ac2b5de7ef2d26a3f0056b8310ddcd..2778d675b436642667780758c2e09d60
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..95ca1fbe0a0ee53d2891a07507ee2046df608b05 100644
+index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b657519b51abc 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -234,7 +234,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
@@ -3167,7 +3185,7 @@ index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..95ca1fbe0a0ee53d2891a07507ee2046
          public void respawn() {
              if (CraftPlayer.this.getHealth() <= 0 && CraftPlayer.this.isOnline()) {
 -                CraftPlayer.this.server.getServer().getPlayerList().respawn(CraftPlayer.this.getHandle(), false, Entity.RemovalReason.KILLED, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.PLUGIN);
-+                CraftPlayer.this.getHandle().respawn(null, Entity.RemovalReason.KILLED, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.PLUGIN); // Folia - region threading
++                CraftPlayer.this.getHandle().respawn(null, org.bukkit.event.player.PlayerRespawnEvent.RespawnReason.PLUGIN); // Folia - region threading
              }
          }
  
@@ -3866,7 +3884,7 @@ index 582cdc9e028c882dad0504fef4afd5a86f0f8431..c4a5769bd3d27a7d56e0fd29856d8247
          net.minecraft.world.scores.Scoreboard newBoard = scoreboard.getHandle();
          if (oldBoard == newBoard) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index a287ad5cce532229f2a514956d34a9358175bc45..e1d4da012fa5dbf7f6397b0418c70b666b7b11d3 100644
+index a287ad5cce532229f2a514956d34a9358175bc45..c9fa6339f4821319b942b443fbe26d6b9b94ecb8 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 @@ -370,6 +370,12 @@ public final class CraftMagicNumbers implements UnsafeValues {
@@ -3874,8 +3892,8 @@ index a287ad5cce532229f2a514956d34a9358175bc45..e1d4da012fa5dbf7f6397b0418c70b66
          }
  
 +        // Folia start - block plugins not marked as supported
-+        if (!pdf.isFoliaSupported()) {
-+            throw new InvalidPluginException("Plugin " + pdf.getFullName() + " is not marked as supporting regionised multithreading");
++        if (!descriptionFile.isFoliaSupported()) {
++            throw new InvalidPluginException("Plugin " + descriptionFile.getFullName() + " is not marked as supporting regionised multithreading");
 +        }
 +        // Folia end - block plugins not marked as supported
 +
