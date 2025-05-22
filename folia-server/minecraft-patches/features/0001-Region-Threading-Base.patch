@@ -1474,13 +1474,14 @@ index 0000000000000000000000000000000000000000..a1043c426d031755b57b77a9b2eec685
 \ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/RegionizedServer.java b/io/papermc/paper/threadedregions/RegionizedServer.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..1382c695c4991488b113401e231875ddc74f6b01
+index 0000000000000000000000000000000000000000..8e91ec81128bdbd5f78e1f04fe17bcbd6e5dc280
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/RegionizedServer.java
-@@ -0,0 +1,455 @@
+@@ -0,0 +1,468 @@
 +package io.papermc.paper.threadedregions;
 +
 +import ca.spottedleaf.concurrentutil.collection.MultiThreadedQueue;
++import ca.spottedleaf.concurrentutil.completable.Completable;
 +import ca.spottedleaf.concurrentutil.scheduler.SchedulerThreadPool;
 +import ca.spottedleaf.moonrise.common.util.TickThread;
 +import com.mojang.logging.LogUtils;
@@ -1558,6 +1559,18 @@ index 0000000000000000000000000000000000000000..1382c695c4991488b113401e231875dd
 +    public void addTask(final Runnable run) {
 +        this.addTaskWithoutNotify(run);
 +        TickRegions.getScheduler().setHasTasks(this.tickHandle);
++    }
++
++    public void blockOn(final Runnable run) {
++        if (isGlobalTickThread()) {
++            run.run();
++            return;
++        }
++        Completable.suppliedAsync(() -> {
++            run.run();
++            return null;
++        }, this::addTask).join();
++        return;
 +    }
 +
 +    /**
@@ -12854,7 +12867,7 @@ index bd07e6a5aa1883786d789ea71711a0c0c0a95c26..09469ad131622158fe5579216fc41642
              }
              // Spigot end
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 064a9b6cf6792192fc1fa80095a48c2025cebf2a..d83dbd090237a405bda578160f3c7d7d5a42a692 100644
+index 064a9b6cf6792192fc1fa80095a48c2025cebf2a..77546196289bccbbc0c40c2d69ff9ddd2bc98ffe 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -284,10 +284,10 @@ public class ServerGamePacketListenerImpl
@@ -13229,6 +13242,15 @@ index 064a9b6cf6792192fc1fa80095a48c2025cebf2a..d83dbd090237a405bda578160f3c7d7d
      }
  
      private void updateSignText(ServerboundSignUpdatePacket packet, List<FilteredText> filteredText) {
+@@ -3575,7 +3663,7 @@ public class ServerGamePacketListenerImpl
+         this.chatMessageChain
+             .append(
+                 () -> {
+-                    server.executeBlocking(() -> { // Paper - Broadcast chat session update sync
++                    io.papermc.paper.threadedregions.RegionizedServer.getInstance().blockOn(() -> { // Paper - Broadcast chat session update sync // Folia - region threading
+                     this.player.setChatSession(chatSession);
+                     this.server
+                         .getPlayerList()
 diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
 index 7950f4f88d8a83ed5610b7af4e134557d32da3f0..983b2e68aa9db72d0fca42016272b9203bfb7a17 100644
 --- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
