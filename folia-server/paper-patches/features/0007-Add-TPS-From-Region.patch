@@ -5,13 +5,14 @@ Subject: [PATCH] Add TPS From Region
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 65d3ce8e2d772f00be6bd652866f7ca4f258e26f..ae7ee8c67a71b0bc319d8079094b1806fc3e305a 100644
+index e1779224a73b5fe2df33ed8b2ab170b8c89edd8c..1091d2747c04166447540b37d86f51fe2591adc8 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -3346,4 +3346,68 @@ public final class CraftServer implements Server {
+@@ -3261,4 +3261,69 @@ public final class CraftServer implements Server {
+     public void allowPausing(final Plugin plugin, final boolean value) {
          this.console.addPluginAllowingSleep(plugin.getName(), value);
      }
-     // Paper end - API to check if the server is sleeping
++
 +    // Folia start - region TPS API
 +    /**
 +     * Gets the TPS from the region which owns the specified location, or {@code null} if no region owns
@@ -59,7 +60,7 @@ index 65d3ce8e2d772f00be6bd652866f7ca4f258e26f..ae7ee8c67a71b0bc319d8079094b1806
 +
 +    private static double[] getTPSFromRegion(ServerLevel world, int chunkX, int chunkZ) {
 +        io.papermc.paper.threadedregions.ThreadedRegionizer.ThreadedRegion<io.papermc.paper.threadedregions.TickRegions.TickRegionData, io.papermc.paper.threadedregions.TickRegions.TickRegionSectionData>
-+            region = world.regioniser.getRegionAtSynchronised(chunkX, chunkZ);
++                region = world.regioniser.getRegionAtSynchronised(chunkX, chunkZ);
 +        if (region == null) {
 +            return null;
 +        } else {
@@ -67,11 +68,11 @@ index 65d3ce8e2d772f00be6bd652866f7ca4f258e26f..ae7ee8c67a71b0bc319d8079094b1806
 +            final long currTime = System.nanoTime();
 +            final io.papermc.paper.threadedregions.TickRegionScheduler.RegionScheduleHandle regionScheduleHandle = regionData.getRegionSchedulingHandle();
 +            return new double[] {
-+                regionScheduleHandle.getTickReport5s(currTime).tpsData().segmentAll().average(),
-+                regionScheduleHandle.getTickReport15s(currTime).tpsData().segmentAll().average(),
-+                regionScheduleHandle.getTickReport1m(currTime).tpsData().segmentAll().average(),
-+                regionScheduleHandle.getTickReport5m(currTime).tpsData().segmentAll().average(),
-+                regionScheduleHandle.getTickReport15m(currTime).tpsData().segmentAll().average(),
++                    regionScheduleHandle.getTickReport5s(currTime).tpsData().segmentAll().average(),
++                    regionScheduleHandle.getTickReport15s(currTime).tpsData().segmentAll().average(),
++                    regionScheduleHandle.getTickReport1m(currTime).tpsData().segmentAll().average(),
++                    regionScheduleHandle.getTickReport5m(currTime).tpsData().segmentAll().average(),
++                    regionScheduleHandle.getTickReport15m(currTime).tpsData().segmentAll().average(),
 +            };
 +        }
 +    }

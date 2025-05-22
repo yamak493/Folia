@@ -7,15 +7,15 @@ When regions take too long, having the server print the stacktrace
 of the ticking region should help debug the cause.
 
 diff --git a/src/main/java/org/spigotmc/WatchdogThread.java b/src/main/java/org/spigotmc/WatchdogThread.java
-index dced8899be0bb8d562093dc3a7673ed8185b85a6..8228752184aaf91288092c1c60e8a431723ded41 100644
+index 471941a5bf691d4c31b2eb5ef4a11dc91499f674..6c6606800cf8b8ecc0da51963e846dbcab7f2fba 100644
 --- a/src/main/java/org/spigotmc/WatchdogThread.java
 +++ b/src/main/java/org/spigotmc/WatchdogThread.java
-@@ -159,7 +159,7 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
+@@ -156,7 +156,7 @@ public class WatchdogThread extends ca.spottedleaf.moonrise.common.util.TickThre
          }
      }
  
--    private static void dumpThread(ThreadInfo thread, Logger log) {
-+    public static void dumpThread(ThreadInfo thread, Logger log) { // Folia - watchdog
-         log.log(Level.SEVERE, "------------------------------");
+-    private static void dumpThread(ThreadInfo thread, Logger logger) {
++    public static void dumpThread(ThreadInfo thread, Logger logger) { // Folia - watchdog - public
+         logger.log(Level.SEVERE, "------------------------------");
  
-         log.log(Level.SEVERE, "Current Thread: " + thread.getThreadName());
+         logger.log(Level.SEVERE, "Current Thread: " + thread.getThreadName());
