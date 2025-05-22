@@ -1452,7 +1452,7 @@ index 4a7de2ed6eabe919f0c33de49ed7fab75abac1b4..7280ca2250ade4166a1a883b205bbc89
                          if (var4 instanceof ReportedException reportedException && reportedException.getCause() instanceof OutOfMemoryError) {
                              throw makeReportedException(var4, packet, processor);
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index e2ada0c98478df7b78b60085d12ab88941cb86de..004cb742f7227fcc6d4a150650c485771e13b81a 100644
+index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc980d4662f8 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -1577,6 +1577,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -1723,7 +1723,7 @@ index 8e0168b1d3aca3925a0774d64549b8d1556bcd7b..357d81d42f187fb1c52584e6c9cfe611
      }
  
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 9261393f50b9bfb9ad6cc60132e945b7b9b463c4..54cc15c2f47ceaaf47edeeb816ccfe46a1076408 100644
+index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25ebd3dc52 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -723,6 +723,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -1776,7 +1776,7 @@ index 9261393f50b9bfb9ad6cc60132e945b7b9b463c4..54cc15c2f47ceaaf47edeeb816ccfe46
                  profilerFiller.push("dragonFight");
                  this.dragonFight.tick();
 @@ -786,9 +798,13 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
-                             fightCenter
+                             null
                      );
                  } // Folia end - region threading
 +                } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.DRAGON_FIGHT_TICK); } // Folia - profiler

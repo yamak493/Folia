@@ -8104,7 +8104,7 @@ index 4535858701b2bb232b9d2feb2af6551526232ddc..4a7de2ed6eabe919f0c33de49ed7fab7
          }
      }
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index f1373fd5fdebb9f4600ba7f32a5df6188de3a0e9..e2ada0c98478df7b78b60085d12ab88941cb86de 100644
+index f1373fd5fdebb9f4600ba7f32a5df6188de3a0e9..6c2aa33856183516b9e0dbd2238cd6e3128ba13c 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
 @@ -183,7 +183,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -8264,7 +8264,7 @@ index f1373fd5fdebb9f4600ba7f32a5df6188de3a0e9..e2ada0c98478df7b78b60085d12ab889
 +                for (int currZ = -loadRegionRadius; currZ <= loadRegionRadius; ++currZ) {
 +                    ChunkPos pos = new ChunkPos(currX, currZ);
 +                    serverLevel.moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(
-+                            net.minecraft.server.level.TicketType.UNKNOWN, pos, ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL, pos
++                            net.minecraft.server.level.TicketType.UNKNOWN, pos, ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL, null
 +                    );
 +                }
 +            }
@@ -10845,7 +10845,7 @@ index 794770985c261fd56806188237921b5ec5e548e6..b715d1fbde9db81a2515249bb9a0fc7a
                  list.add(player);
              }
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..9261393f50b9bfb9ad6cc60132e945b7b9b463c4 100644
+index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..b1262fe49dd49e57f9fc13d5d10a9c7a104be94f 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -175,42 +175,40 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -11222,7 +11222,7 @@ index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..9261393f50b9bfb9ad6cc60132e945b7
 +                    ChunkPos fightCenter = new ChunkPos(this.dragonFight.origin);
 +                    this.moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(
 +                            TicketType.UNKNOWN, fightCenter, ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.MAX_TICKET_LEVEL,
-+                            fightCenter
++                            null
 +                    );
 +                } // Folia end - region threading
              }
@@ -12743,7 +12743,7 @@ index 186393485396cfe9b1baef29586198356e2d2600..8bc92e45099007fa2120184916c4cdca
      // Paper end - add proper async disconnect
  
 diff --git a/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java b/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java
-index 2e9eb04c7c4342393c05339906c267bca9ff29b1..8e6fae5b48e5607759826aeeef7beeec9595c2cf 100644
+index 2e9eb04c7c4342393c05339906c267bca9ff29b1..9a8abe02cc8a510fed2c6a5e920eb829c41f3a24 100644
 --- a/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerConfigurationPacketListenerImpl.java
 @@ -47,6 +47,7 @@ public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketLis
@@ -12780,7 +12780,7 @@ index 2e9eb04c7c4342393c05339906c267bca9ff29b1..8e6fae5b48e5607759826aeeef7beeec
 +                    net.minecraft.server.level.TicketType.LOGIN,
 +                    new net.minecraft.world.level.ChunkPos(chunkX, chunkZ),
 +                    ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.FULL_LOADED_TICKET_LEVEL,
-+                    net.minecraft.util.Unit.INSTANCE
++                    null
 +                );
 +
 +                io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueTickTaskQueue(
@@ -13909,7 +13909,7 @@ index a3c7d68469075bf8d33f2016149a181b0fb87e0e..73c581d3ee21d8fa96eae3e47afd6ce2
              return blockToFallLocation(blockState);
          } else {
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 81a18b8e605bd4c28b48a32c80be231609182970..b53c7c3f4d57d6fb1d88fbc72b04569cf3ab50ba 100644
+index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71e8f2d326 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -150,7 +150,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
@@ -14359,7 +14359,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..b53c7c3f4d57d6fb1d88fbc72b04569c
 +                        destination.moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(
 +                            TicketType.POST_TELEPORT, chunk.getPos(),
 +                            ca.spottedleaf.moonrise.patches.chunk_system.scheduling.ChunkHolderManager.FULL_LOADED_TICKET_LEVEL,
-+                            Integer.valueOf(Entity.this.getId())
++                            null
 +                        );
 +                    }
 +                    scheduleEntityJoin.run();
