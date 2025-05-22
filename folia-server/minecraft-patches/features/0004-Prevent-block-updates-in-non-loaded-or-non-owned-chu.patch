@@ -9,10 +9,10 @@ add explicit block update suppression techniques, it's better
 than the server crashing.
 
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index db4ce98706bf69dcd8144faba1780f83ca1f6787..4adc38a633180cdc04523d46f5e0932f1c60f411 100644
+index c85b408c6bfea324fe8a4d511d21cf3b2e91b07b..45f020dc4f7c4e63a3b9193aa8bc6d212f522faa 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -2053,7 +2053,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable, ca.spottedl
+@@ -2048,7 +2048,7 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
      public void updateNeighbourForOutputSignal(BlockPos pos, Block block) {
          for (Direction direction : Direction.Plane.HORIZONTAL) {
              BlockPos blockPos = pos.relative(direction);
@@ -22,10 +22,10 @@ index db4ce98706bf69dcd8144faba1780f83ca1f6787..4adc38a633180cdc04523d46f5e0932f
                  if (blockState.is(Blocks.COMPARATOR)) {
                      this.neighborChanged(blockState, blockPos, block, null, false);
 diff --git a/net/minecraft/world/level/block/DetectorRailBlock.java b/net/minecraft/world/level/block/DetectorRailBlock.java
-index 8f0217f25a2faf23833be10c85c5febc896ae292..6994a95e846a19525da1360c33f858ed29b64193 100644
+index 3022ddd38ac5d7ab17ad38dee2e69d3684ba45ca..ed7e9eda7d8f6f9c2dd27e14631813a3f9f1573f 100644
 --- a/net/minecraft/world/level/block/DetectorRailBlock.java
 +++ b/net/minecraft/world/level/block/DetectorRailBlock.java
-@@ -133,8 +133,8 @@ public class DetectorRailBlock extends BaseRailBlock {
+@@ -128,8 +128,8 @@ public class DetectorRailBlock extends BaseRailBlock {
          RailState railState = new RailState(level, pos, state);
  
          for (BlockPos blockPos : railState.getConnections()) {
@@ -37,10 +37,10 @@ index 8f0217f25a2faf23833be10c85c5febc896ae292..6994a95e846a19525da1360c33f858ed
      }
  
 diff --git a/net/minecraft/world/level/block/PoweredRailBlock.java b/net/minecraft/world/level/block/PoweredRailBlock.java
-index f33b53257a231dccf16740f1e78a3cdfa6e70726..f87f59ea29bd288cd6b7ff877c517dc6d9cdefea 100644
+index 5ec12356e9f044d99762bf64a6d3bf74856d97a6..1c852a410952b11c8d2b584f0cad1d9bc8153326 100644
 --- a/net/minecraft/world/level/block/PoweredRailBlock.java
 +++ b/net/minecraft/world/level/block/PoweredRailBlock.java
-@@ -108,8 +108,8 @@ public class PoweredRailBlock extends BaseRailBlock {
+@@ -102,8 +102,8 @@ public class PoweredRailBlock extends BaseRailBlock {
      }
  
      protected boolean isSameRailWithPower(Level level, BlockPos state, boolean searchForward, int recursionCount, RailShape shape) {
@@ -52,10 +52,10 @@ index f33b53257a231dccf16740f1e78a3cdfa6e70726..f87f59ea29bd288cd6b7ff877c517dc6
          } else {
              RailShape railShape = blockState.getValue(SHAPE);
 diff --git a/net/minecraft/world/level/block/RedStoneWireBlock.java b/net/minecraft/world/level/block/RedStoneWireBlock.java
-index 6ba86c5e55d09fd99e81e40db4614ef14246bdc3..996e8d5b4e4aac7a0c0f846dd765711a2dfb5682 100644
+index fde784fac9ee933d811d70701cb71684c816e966..4b37335e91a51b9a58ce0bce94b61ab5afbc6486 100644
 --- a/net/minecraft/world/level/block/RedStoneWireBlock.java
 +++ b/net/minecraft/world/level/block/RedStoneWireBlock.java
-@@ -236,8 +236,9 @@ public class RedStoneWireBlock extends Block {
+@@ -211,8 +211,9 @@ public class RedStoneWireBlock extends Block {
          BlockPos.MutableBlockPos mutableBlockPos = new BlockPos.MutableBlockPos();
  
          for (Direction direction : Direction.Plane.HORIZONTAL) {

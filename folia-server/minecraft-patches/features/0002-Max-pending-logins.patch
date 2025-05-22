@@ -6,10 +6,10 @@ Subject: [PATCH] Max pending logins
 Should help the floodgates on launch
 
 diff --git a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-index 6173f704b0d093813ec67eb231c75be49a462e7d..159f2f169d26b436a70006f7bc9bdc481315dd32 100644
+index 983b2e68aa9db72d0fca42016272b9203bfb7a17..829ff1f36d565f15cfe5d4997d3ccfdfe7898e0f 100644
 --- a/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerLoginPacketListenerImpl.java
-@@ -117,7 +117,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
+@@ -116,7 +116,7 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
              if (this.server.getPlayerList().pushPendingJoin(name, uniqueId, this.connection)) {
              // Folia end - region threading - rewrite login process
              this.verifyLoginAndFinishConnectionSetup(Objects.requireNonNull(this.authenticatedProfile));
@@ -19,7 +19,7 @@ index 6173f704b0d093813ec67eb231c75be49a462e7d..159f2f169d26b436a70006f7bc9bdc48
  
          // CraftBukkit start
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 7b13a9e7d38efe7786023747f55ebf5a2ba80688..b5e609a81ee0445226b61ba5bed69ad9f100f7af 100644
+index 82906a38984cffef30dff2f995633506cf28b031..448e9009781e94e3f2a5236efb6dc114a961b20d 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -151,6 +151,17 @@ public abstract class PlayerList {
