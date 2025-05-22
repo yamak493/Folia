@@ -10244,7 +10244,7 @@ index 31e02f50edd46220dac81500dbb273f1ccdbe0b9..2b3dbd53a08b3ff22732bb13df74b599
          // CraftBukkit end
      }
 diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
-index 0d8aefe8c886eaa4c33cbab53b0ad1c016f0531f..ed5f63deff49c76589c512a17da450a613ed3492 100644
+index 0d8aefe8c886eaa4c33cbab53b0ad1c016f0531f..272b853713250153d4faeba906c4f00535f873bc 100644
 --- a/net/minecraft/server/level/ChunkMap.java
 +++ b/net/minecraft/server/level/ChunkMap.java
 @@ -133,8 +133,8 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
@@ -10267,6 +10267,15 @@ index 0d8aefe8c886eaa4c33cbab53b0ad1c016f0531f..ed5f63deff49c76589c512a17da450a6
          if (nearbyPlayers == null) {
              return false;
          }
+@@ -725,7 +725,7 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
+     // Paper end - optimise chunk tick iteration
+ 
+     void collectSpawningChunks(List<LevelChunk> output) {
+-        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> tickingChunks = ((ca.spottedleaf.moonrise.patches.chunk_tick_iteration.ChunkTickServerLevel)this.level).moonrise$getPlayerTickingChunks();
++        final ca.spottedleaf.moonrise.common.list.ReferenceList<net.minecraft.world.level.chunk.LevelChunk> tickingChunks = this.level.getCurrentWorldData().getEntityTickingChunks(); // Folia - region threading
+ 
+         final LevelChunk[] raw = tickingChunks.getRawDataUnchecked();
+         final int size = tickingChunks.size();
 @@ -859,12 +859,12 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
  
      void updatePlayerStatus(ServerPlayer player, boolean track) {
