@@ -359,7 +359,7 @@ index 23432eea862c6df716d7726a32da3a0612a3fb77..f59e8bb72c5233f26a8a0d506ac64bb3
              }
          }
 diff --git a/src/main/java/io/papermc/paper/command/PaperCommands.java b/src/main/java/io/papermc/paper/command/PaperCommands.java
-index 6ca8b5fcaaa170f41dc44620cfdbb2b5a4137823..11b6c7a4aa254d520c92b65fbbfa0c2fe4daae6f 100644
+index f3f466ee58a2d90dcdbdf2b44f77bfb012ddd293..2c88740df6b9f20464fb89dccc169a96a7943936 100644
 --- a/src/main/java/io/papermc/paper/command/PaperCommands.java
 +++ b/src/main/java/io/papermc/paper/command/PaperCommands.java
 @@ -25,6 +25,7 @@ public final class PaperCommands {
@@ -412,10 +412,10 @@ index bd68139ae635f2ad7ec8e7a21e0056a139c4c62e..48a43341b17247355a531164019d5cc9
      }
  
 diff --git a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
-index 27940b86034f37e1c2d2bc45788ec121f91244a6..146efd6a4d88b97f32900ca80949ec7478ecf4ad 100644
+index c2b53adb5f0fd8207cf13cb6f7249385b1c30f34..3b99884a92a886b75a6502851d86704b919bf02a 100644
 --- a/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
 +++ b/src/main/java/io/papermc/paper/configuration/GlobalConfiguration.java
-@@ -406,4 +406,17 @@ public class GlobalConfiguration extends ConfigurationPart {
+@@ -404,4 +404,17 @@ public class GlobalConfiguration extends ConfigurationPart {
              }
          }
      }
@@ -934,7 +934,7 @@ index 1da86b25e3b89c79d4f3920c8d2ef10ee2757f65..e1779224a73b5fe2df33ed8b2ab170b8
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index 4a405744061b2689a207aa085bec9a6a223342f2..3f32acd1daea223d0f7ea6a88194ee83a1cc275f 100644
+index aae378697b2f2e388d2a5dfaca24c9197b8abf3e..140fdbae1141935e9c0cea7fd9e36572f31bdbf7 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 @@ -228,7 +228,7 @@ public class CraftWorld extends CraftRegionAccessor implements World {
@@ -2256,10 +2256,10 @@ index 000c5ea5d39d5ab6e5592012ab1cc7ee547505dc..ab2ee478c53923be85f5a6d4971bed5b
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d09893107734224c4a3 100644
+index 3b41a37f852c3b494b158e447eade9b030f26556..67627c45f2af863b88b65391368b254ea569cd53 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -92,6 +92,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -93,6 +93,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          return this.apiScheduler;
      };
      // Paper end - Folia schedulers
@@ -2271,7 +2271,7 @@ index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d0989310773
  
      public CraftEntity(final CraftServer server, final Entity entity) {
          this.server = server;
-@@ -126,6 +131,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -127,6 +132,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
      }
  
      public Entity getHandle() {
@@ -2279,7 +2279,7 @@ index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d0989310773
          return this.entity;
      }
  
-@@ -279,6 +285,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -280,6 +286,11 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
  
      @Override
      public boolean teleport(Location location, TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
@@ -2291,7 +2291,7 @@ index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d0989310773
          // Paper end
          Preconditions.checkArgument(location != null, "location cannot be null");
          location.checkFinite();
-@@ -727,7 +738,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -734,7 +745,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          ImmutableSet.Builder<Player> players = ImmutableSet.builder();
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -2300,7 +2300,7 @@ index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d0989310773
  
          if (entityTracker != null) {
              for (ServerPlayerConnection connection : entityTracker.seenBy) {
-@@ -1040,7 +1051,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1047,7 +1058,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -2309,7 +2309,7 @@ index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d0989310773
  
          if (entityTracker == null) {
              return;
-@@ -1057,7 +1068,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1064,7 +1075,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          }
  
          ServerLevel world = ((CraftWorld) this.getWorld()).getHandle();
@@ -2318,7 +2318,7 @@ index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d0989310773
  
          if (entityTracker == null) {
              return;
-@@ -1091,29 +1102,43 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1098,29 +1109,43 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          location.checkFinite();
          Location locationClone = location.clone(); // clone so we don't need to worry about mutations after this call.
  
@@ -2383,7 +2383,7 @@ index cfc926c97c7d65c6bee96f534bce247d6937bcad..1e2bc61736064a4b91923d0989310773
      }
      // Paper end - more teleport API / async chunk API
  
-@@ -1186,8 +1211,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1193,8 +1218,7 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
  
      @Override
      public Set<org.bukkit.entity.Player> getTrackedPlayers() {
@@ -2778,10 +2778,10 @@ index 32e426513f3e710abeda3363a4e2a08fe902c703..2655d6c0c58c27bd532d13fab723863c
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-index ff8987ca8f0d88c80f7229b33e6b356f1e342010..db0578481bd96763fab2322d299ff70c4f95afb4 100644
+index 13feb2f7a0e4be92cc8d57512475b7e335d581a8..cec510201ab5d084ea9f65fa6dff2b257a1362d8 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-@@ -109,6 +109,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+@@ -104,6 +104,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
  
      @Override
      public net.minecraft.world.entity.LivingEntity getHandle() {
@@ -3102,7 +3102,7 @@ index d927938df4ac2b5de7ef2d26a3f0056b8310ddcd..2778d675b436642667780758c2e09d60
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index c6ca86dbbb483c2093cbedd8588755dad67c981a..a1894f01320cc923fa0686d0971341df150c6aed 100644
+index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..95ca1fbe0a0ee53d2891a07507ee2046df608b05 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 @@ -234,7 +234,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
@@ -3114,7 +3114,7 @@ index c6ca86dbbb483c2093cbedd8588755dad67c981a..a1894f01320cc923fa0686d0971341df
      }
  
      @Override
-@@ -685,7 +685,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -684,7 +684,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public void kickPlayer(String message) {
@@ -3123,7 +3123,7 @@ index c6ca86dbbb483c2093cbedd8588755dad67c981a..a1894f01320cc923fa0686d0971341df
          this.getHandle().transferCookieConnection.kickPlayer(CraftChatMessage.fromStringOrEmpty(message, true), org.bukkit.event.player.PlayerKickEvent.Cause.PLUGIN); // Paper - kick event cause
      }
  
-@@ -698,7 +698,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -697,7 +697,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public void kick(net.kyori.adventure.text.Component message, org.bukkit.event.player.PlayerKickEvent.Cause cause) {
@@ -3132,7 +3132,7 @@ index c6ca86dbbb483c2093cbedd8588755dad67c981a..a1894f01320cc923fa0686d0971341df
          final ServerGamePacketListenerImpl connection = this.getHandle().connection;
          if (connection != null) {
              connection.disconnect(message == null ? net.kyori.adventure.text.Component.empty() : message, cause);
-@@ -1406,6 +1406,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -1405,6 +1405,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public boolean teleport(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
@@ -3144,7 +3144,7 @@ index c6ca86dbbb483c2093cbedd8588755dad67c981a..a1894f01320cc923fa0686d0971341df
          Set<io.papermc.paper.entity.TeleportFlag.Relative> relativeArguments;
          Set<io.papermc.paper.entity.TeleportFlag> allFlags;
          if (flags.length == 0) {
-@@ -2074,7 +2079,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -2072,7 +2077,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
      private void unregisterEntity(Entity other) {
          // Paper end
          ChunkMap tracker = ((ServerLevel) this.getHandle().level()).getChunkSource().chunkMap;
@@ -3153,7 +3153,7 @@ index c6ca86dbbb483c2093cbedd8588755dad67c981a..a1894f01320cc923fa0686d0971341df
          if (entry != null) {
              entry.removePlayer(this.getHandle());
          }
-@@ -2171,7 +2176,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -2169,7 +2174,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
              if (original != null) otherPlayer.setUUID(original); // Paper - uuid override
          }
  
@@ -3162,7 +3162,7 @@ index c6ca86dbbb483c2093cbedd8588755dad67c981a..a1894f01320cc923fa0686d0971341df
          if (entry != null && !entry.seenBy.contains(this.getHandle().connection)) {
              entry.updatePlayer(this.getHandle());
          }
-@@ -3320,7 +3325,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -3317,7 +3322,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
          @Override
          public void respawn() {
              if (CraftPlayer.this.getHealth() <= 0 && CraftPlayer.this.isOnline()) {
@@ -3866,7 +3866,7 @@ index 582cdc9e028c882dad0504fef4afd5a86f0f8431..c4a5769bd3d27a7d56e0fd29856d8247
          net.minecraft.world.scores.Scoreboard newBoard = scoreboard.getHandle();
          if (oldBoard == newBoard) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index f78cfd9c03014a10187dae58e2af1e137149dbc7..b33d0acde6e7d0d14a76564454138ed54943b08a 100644
+index a287ad5cce532229f2a514956d34a9358175bc45..e1d4da012fa5dbf7f6397b0418c70b666b7b11d3 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 @@ -370,6 +370,12 @@ public final class CraftMagicNumbers implements UnsafeValues {

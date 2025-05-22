@@ -11915,7 +11915,7 @@ index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..0399bece535984d79a0a16d6fa4500ed
      // Paper end - lag compensation
  }
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a7546959ae9ac4b 100644
+index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..fcfc686b01e73c3a25df68b268ae512d967674cf 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -188,7 +188,7 @@ import org.slf4j.Logger;
@@ -11927,7 +11927,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
      private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_XZ = 32;
      private static final int NEUTRAL_MOB_DEATH_NOTIFICATION_RADII_Y = 10;
      private static final int FLY_STAT_RECORDING_SPEED = 25;
-@@ -477,8 +477,155 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -470,8 +470,155 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          this.maxHealthCache = this.getMaxHealth();
      }
  
@@ -12083,7 +12083,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
          AABB aabb = this.getDimensions(Pose.STANDING).makeBoundingBox(Vec3.ZERO);
          BlockPos blockPos = pos;
          if (level.dimensionType().hasSkyLight() && level.serverLevelData.getGameType() != GameType.ADVENTURE) { // CraftBukkit
-@@ -554,7 +701,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -547,7 +694,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          this.recipeBook.fromNbt(compound.getCompoundOrEmpty("recipeBook"), key -> this.server.getRecipeManager().byKey(key).isPresent());
          this.getBukkitEntity().readExtraData(compound); // CraftBukkit
          if (this.isSleeping()) {
@@ -12092,7 +12092,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
          }
  
          this.respawnConfig = compound.read("respawn", ServerPlayer.RespawnConfig.CODEC).orElse(null);
-@@ -664,9 +811,17 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -657,9 +804,17 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          if (!optional.isEmpty()) {
              ServerLevel level = this.serverLevel().getServer().getLevel(optional.get());
              if (level != null) {
@@ -12111,7 +12111,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
                  } else {
                      LOGGER.warn("Failed to spawn player ender pearl in level ({}), skipping", optional.get());
                  }
-@@ -768,12 +923,23 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -761,12 +916,23 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
  
          Entity camera = this.getCamera();
          if (camera != this) {
@@ -12136,7 +12136,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
              } else {
                  this.setCamera(this);
              }
-@@ -1313,9 +1479,332 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -1306,9 +1472,332 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          }
      }
  
@@ -12469,7 +12469,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
          if (this.isSleeping()) return null; // CraftBukkit - SPIGOT-3154
          if (this.isRemoved()) {
              return null;
-@@ -2329,7 +2818,30 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2322,7 +2811,30 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          return (Entity)(this.camera == null ? this : this.camera);
      }
  
@@ -12500,7 +12500,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
          Entity camera = this.getCamera();
          this.camera = (Entity)(entityToSpectate == null ? this : entityToSpectate);
          if (camera != this.camera) {
-@@ -2348,16 +2860,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2341,16 +2853,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
                  }
              }
              // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
@@ -12527,7 +12527,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
          }
      }
  
-@@ -2735,11 +3250,11 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2728,11 +3243,11 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      }
  
      public void registerEnderPearl(ThrownEnderpearl enderPearl) {
@@ -12541,7 +12541,7 @@ index 75fa38570d758a48303a3a6dfb881b616a50f81c..e426879191389754ab59337e1a754695
      }
  
      public Set<ThrownEnderpearl> getEnderPearls() {
-@@ -2909,7 +3424,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2902,7 +3417,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          this.experienceLevel = this.newLevel;
          this.totalExperience = this.newTotalExp;
          this.experienceProgress = 0;
@@ -13848,10 +13848,10 @@ index 55eac04821d9c9853354912e8c976c16fac21fee..543627d1409b4c5b5c85b3f0cae459b9
  
          @Override
 diff --git a/net/minecraft/world/damagesource/CombatTracker.java b/net/minecraft/world/damagesource/CombatTracker.java
-index 54adc730ba257c047b3be71d427e56ff6b7b5eb1..9fcef208d36eb1ff5164acdd6e8fc97963ac3030 100644
+index 4cec197634fac341cca1ed108f1ecb0561f72461..c7473920cc014646c2cc52bb5f716858aa1c242e 100644
 --- a/net/minecraft/world/damagesource/CombatTracker.java
 +++ b/net/minecraft/world/damagesource/CombatTracker.java
-@@ -61,7 +61,7 @@ public class CombatTracker {
+@@ -63,7 +63,7 @@ public class CombatTracker {
      }
  
      private Component getMessageForAssistedFall(Entity entity, Component entityDisplayName, String hasWeaponTranslationKey, String noWeaponTranslationKey) {
@@ -13860,7 +13860,7 @@ index 54adc730ba257c047b3be71d427e56ff6b7b5eb1..9fcef208d36eb1ff5164acdd6e8fc979
          return !itemStack.isEmpty() && itemStack.has(DataComponents.CUSTOM_NAME)
              ? Component.translatable(hasWeaponTranslationKey, this.mob.getDisplayName(), entityDisplayName, itemStack.getDisplayName())
              : Component.translatable(noWeaponTranslationKey, this.mob.getDisplayName(), entityDisplayName);
-@@ -88,7 +88,7 @@ public class CombatTracker {
+@@ -90,7 +90,7 @@ public class CombatTracker {
  
      @Nullable
      private static Component getDisplayName(@Nullable Entity entity) {
@@ -15975,7 +15975,7 @@ index e0e193078e550225e163149638bf9e053c0531f8..903d3453fc5daba5b5c2923a6ab81d2f
              if (this.attachedToEntity != null) {
                  Vec3 handHoldingItemAngle;
 diff --git a/net/minecraft/world/entity/projectile/FishingHook.java b/net/minecraft/world/entity/projectile/FishingHook.java
-index 9476a33ff4ec272a2c3b3cf9685cb4653138c57e..063ac5a649bae92274cd9fde48fd293df3869580 100644
+index ca5cd9354d53c6c05bd7ba50c6e1dbd1ed548f67..267b970e4d5fc15530004b4e71b8dc1cd68e7f9c 100644
 --- a/net/minecraft/world/entity/projectile/FishingHook.java
 +++ b/net/minecraft/world/entity/projectile/FishingHook.java
 @@ -94,7 +94,7 @@ public class FishingHook extends Projectile {
@@ -15995,7 +15995,7 @@ index 9476a33ff4ec272a2c3b3cf9685cb4653138c57e..063ac5a649bae92274cd9fde48fd293d
          Vec3 vec3 = new Vec3(-sin, Mth.clamp(-(sin1 / f), -5.0F, 5.0F), -cos);
          double len = vec3.length();
          vec3 = vec3.multiply(
-@@ -256,6 +257,11 @@ public class FishingHook extends Projectile {
+@@ -259,6 +260,11 @@ public class FishingHook extends Projectile {
      }
  
      private boolean shouldStopFishing(Player player) {
@@ -16007,7 +16007,7 @@ index 9476a33ff4ec272a2c3b3cf9685cb4653138c57e..063ac5a649bae92274cd9fde48fd293d
          ItemStack mainHandItem = player.getMainHandItem();
          ItemStack offhandItem = player.getOffhandItem();
          boolean isFishingRod = mainHandItem.is(Items.FISHING_ROD);
-@@ -598,10 +604,18 @@ public class FishingHook extends Projectile {
+@@ -601,10 +607,18 @@ public class FishingHook extends Projectile {
  
      @Override
      public void remove(Entity.RemovalReason reason, @Nullable org.bukkit.event.entity.EntityRemoveEvent.Cause cause) { // CraftBukkit - add Bukkit remove cause
@@ -16899,7 +16899,7 @@ index 892a7c1eb1b321ca6d5ca709142e7feae1220815..c4c7993714ff4189b05e2b4653fd2a5e
                  return player;
              }
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index 013ed7dbe2309f562f63e66203179a90566e8115..c85b408c6bfea324fe8a4d511d21cf3b2e91b07b 100644
+index 418d3958b7510d469142178f9427c829b6387d83..a060a87dd3e9db5b567f6272d94b7337ebef544b 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
 @@ -106,10 +106,10 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
@@ -16937,7 +16937,7 @@ index 013ed7dbe2309f562f63e66203179a90566e8115..c85b408c6bfea324fe8a4d511d21cf3b
      public final io.papermc.paper.antixray.ChunkPacketBlockController chunkPacketBlockController; // Paper - Anti-Xray
 @@ -138,20 +138,10 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
      public boolean pvpMode;
-     public org.bukkit.generator.ChunkGenerator generator;
+     public @Nullable org.bukkit.generator.ChunkGenerator generator;
  
 -    public boolean captureBlockStates = false;
 -    public boolean captureTreeGeneration = false;
