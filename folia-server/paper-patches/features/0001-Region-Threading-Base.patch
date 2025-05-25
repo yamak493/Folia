@@ -799,7 +799,7 @@ index 27927bb7967a417dd3542e7d62d67a13118ed98e..eb94f71f626c1f89f1b9048a8e68ae09
          return new BlockPos(pos.blockX(), pos.blockY(), pos.blockZ());
      }
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 1da86b25e3b89c79d4f3920c8d2ef10ee2757f65..e1779224a73b5fe2df33ed8b2ab170b8c89edd8c 100644
+index 1da86b25e3b89c79d4f3920c8d2ef10ee2757f65..1e605345b2911193b4500a7f84ea8ace318842e5 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 @@ -318,7 +318,7 @@ public final class CraftServer implements Server {
@@ -893,7 +893,32 @@ index 1da86b25e3b89c79d4f3920c8d2ef10ee2757f65..e1779224a73b5fe2df33ed8b2ab170b8
          //Preconditions.checkState(!this.console.isIteratingOverLevels, "Cannot unload a world while worlds are being ticked"); // Paper - Cat - Temp disable. We'll see how this goes.
          if (world == null) {
              return false;
-@@ -2998,11 +3037,27 @@ public final class CraftServer implements Server {
+@@ -2941,7 +2980,23 @@ public final class CraftServer implements Server {
+ 
+     @Override
+     public double getAverageTickTime() {
+-        return this.getServer().tickTimes5s.getAverage();
++        // Folia start - region threading
++        ca.spottedleaf.concurrentutil.scheduler.SchedulerThreadPool.SchedulableTick task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentTickingTask();
++        if (task == null) {
++            // might be on the shutdown thread, try retrieving the current region
++            if (io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion() != null) {
++                // we are on the shutdown thread
++                task = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegion().getData().getRegionSchedulingHandle();
++            }
++        }
++        if (!(task instanceof io.papermc.paper.threadedregions.TickRegionScheduler.RegionScheduleHandle tickHandle)) {
++            throw new UnsupportedOperationException("Not on any region");
++        }
++
++
++        long currTime = System.nanoTime();
++        return tickHandle.getTickReport5s(currTime).timePerTickData().segmentAll().average() / 1.0E6;
++        // Folia end - region threading
+     }
+ 
+     private final org.bukkit.Server.Spigot spigot = new org.bukkit.Server.Spigot() {
+@@ -2998,11 +3053,27 @@ public final class CraftServer implements Server {
  
      @Override
      public double[] getTPS() {
@@ -924,7 +949,7 @@ index 1da86b25e3b89c79d4f3920c8d2ef10ee2757f65..e1779224a73b5fe2df33ed8b2ab170b8
      }
  
      @Override
-@@ -3172,7 +3227,7 @@ public final class CraftServer implements Server {
+@@ -3172,7 +3243,7 @@ public final class CraftServer implements Server {
  
      @Override
      public int getCurrentTick() {
