@@ -10865,7 +10865,7 @@ index 794770985c261fd56806188237921b5ec5e548e6..b715d1fbde9db81a2515249bb9a0fc7a
                  list.add(player);
              }
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..b1262fe49dd49e57f9fc13d5d10a9c7a104be94f 100644
+index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..dab8cfad3435dd19f93646a99b41f48157a72ca5 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -175,42 +175,40 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -11756,12 +11756,12 @@ index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..b1262fe49dd49e57f9fc13d5d10a9c7a
          if (!Objects.equals(optional, optional1)) {
              BlockPos blockPos = pos.immutable();
 -            optional.ifPresent(holder -> this.getServer().execute(() -> {
-+            optional.ifPresent(holder -> io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueChunkTask(this, blockPos.getX(), blockPos.getZ(), () -> { // Folia - region threading
++            optional.ifPresent(holder -> io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueChunkTask(this, blockPos.getX() >> 4, blockPos.getZ() >> 4, () -> { // Folia - region threading
                  this.getPoiManager().remove(blockPos);
                  DebugPackets.sendPoiRemovedPacket(this, blockPos);
              }));
 -            optional1.ifPresent(holder -> this.getServer().execute(() -> {
-+            optional1.ifPresent(holder -> io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueChunkTask(this, blockPos.getX(), blockPos.getZ(), () -> { // Folia - region threading
++            optional1.ifPresent(holder -> io.papermc.paper.threadedregions.RegionizedServer.getInstance().taskQueue.queueChunkTask(this, blockPos.getX() >> 4, blockPos.getZ() >> 4, () -> { // Folia - region threading
                  // Paper start - Remove stale POIs
                  if (optional.isEmpty() && this.getPoiManager().exists(blockPos, ignored -> true)) {
                      this.getPoiManager().remove(blockPos);
