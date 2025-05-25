@@ -2965,10 +2965,10 @@ index bbe67e82a29a4bde87c3d988f778c2f2b70b5011..17c6f7533ba7f32010100bdcd37e07bf
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftMob.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftMob.java
-index e2e7743bdebbdc7ada2e08bfddc8c238ac94ee5c..fb20adf3a144e786fbd3099ffc09188861318f9b 100644
+index e2e7743bdebbdc7ada2e08bfddc8c238ac94ee5c..54863f1c6b4c7a7cccbdc5127bea36188e55e1db 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftMob.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftMob.java
-@@ -22,6 +22,7 @@ public abstract class CraftMob extends CraftLivingEntity implements Mob, io.pape
+@@ -22,13 +22,14 @@ public abstract class CraftMob extends CraftLivingEntity implements Mob, io.pape
  
      @Override
      public net.minecraft.world.entity.Mob getHandle() {
@@ -2976,6 +2976,14 @@ index e2e7743bdebbdc7ada2e08bfddc8c238ac94ee5c..fb20adf3a144e786fbd3099ffc091888
          return (net.minecraft.world.entity.Mob) this.entity;
      }
  
+     @Override
+     public void setHandle(net.minecraft.world.entity.Entity entity) {
+         super.setHandle(entity);
+-        this.paperPathfinder.setHandle(getHandle());
++        this.paperPathfinder.setHandle((net.minecraft.world.entity.Mob)getHandleRaw()); // Folia - region threading
+     }
+ 
+     @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftMonster.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftMonster.java
 index 52c165714af356490988edfaf8e14d16dfa25da8..f1a6a22e1175b29a4236eac958f825846ded41d6 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftMonster.java
