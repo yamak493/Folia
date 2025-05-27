@@ -11951,7 +11951,7 @@ index bfbfbaa9660d21071c420b60b10be0a02a1bc87e..dab8cfad3435dd19f93646a99b41f481
      // Paper end - lag compensation
  }
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bcbe8a8844 100644
+index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..fae95f318d7ec66d2d6f8befd4a03b3ea57fc9e3 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
 @@ -188,7 +188,7 @@ import org.slf4j.Logger;
@@ -12172,7 +12172,7 @@ index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bc
              } else {
                  this.setCamera(this);
              }
-@@ -1306,9 +1472,323 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -1306,9 +1472,322 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          }
      }
  
@@ -12428,6 +12428,7 @@ index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bc
 +                java.util.Collections.emptySet()
 +            );
 +            this.connection.resetPosition();
++            this.stopUsingItem();
 +
 +            // delay callback until after post add logic
 +
@@ -12441,11 +12442,9 @@ index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bc
 +                this.connection.send(new ClientboundUpdateMobEffectPacket(this.getId(), mobEffect, false));
 +            }*/ // handled by sendActivePlayerEffects
 +
-+            // Paper start - Reset shield blocking on dimension change
-+            if (this.isBlocking()) {
-+                this.stopUsingItem();
-+            }
-+            // Paper end - Reset shield blocking on dimension change
++            this.lastSentExp = -1;
++            this.lastSentHealth = -1.0F;
++            this.lastSentFood = -1;
 +
 +            this.triggerDimensionChangeTriggers(originWorld);
 +
@@ -12496,7 +12495,7 @@ index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bc
          if (this.isSleeping()) return null; // CraftBukkit - SPIGOT-3154
          if (this.isRemoved()) {
              return null;
-@@ -2322,7 +2802,30 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2322,7 +2801,30 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          return (Entity)(this.camera == null ? this : this.camera);
      }
  
@@ -12527,7 +12526,7 @@ index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bc
          Entity camera = this.getCamera();
          this.camera = (Entity)(entityToSpectate == null ? this : entityToSpectate);
          if (camera != this.camera) {
-@@ -2341,16 +2844,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2341,16 +2843,19 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
                  }
              }
              // Paper end - Add PlayerStartSpectatingEntityEvent and PlayerStopSpectatingEntity
@@ -12554,7 +12553,7 @@ index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bc
          }
      }
  
-@@ -2728,11 +3234,11 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2728,11 +3233,11 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
      }
  
      public void registerEnderPearl(ThrownEnderpearl enderPearl) {
@@ -12568,7 +12567,7 @@ index 3781d9cc174b7aecacb9b9855d52c7b1ff05835c..e4597921598c48443be1b5610960c7bc
      }
  
      public Set<ThrownEnderpearl> getEnderPearls() {
-@@ -2902,7 +3408,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+@@ -2902,7 +3407,7 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
          this.experienceLevel = this.newLevel;
          this.totalExperience = this.newTotalExp;
          this.experienceProgress = 0;
