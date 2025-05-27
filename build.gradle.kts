@@ -4,7 +4,7 @@ import io.papermc.paperweight.tasks.RebuildGitPatches
 
 plugins {
     java // TODO java launcher tasks
-    id("io.papermc.paperweight.patcher") version "2.0.0-beta.14"
+    id("io.papermc.paperweight.patcher") version "2.0.0-beta.17"
 }
 
 paperweight {
@@ -76,18 +76,18 @@ subprojects {
 
     extensions.configure<PublishingExtension> {
         repositories {
-            /*
             maven("https://repo.papermc.io/repository/maven-snapshots/") {
                 name = "paperSnapshots"
                 credentials(PasswordCredentials::class)
             }
-             */
         }
     }
 }
 
-tasks.withType<RebuildGitPatches> {
-    filterPatches.set(false)
+allprojects {
+    tasks.withType<RebuildGitPatches>().configureEach {
+        filterPatches = false
+    }
 }
 
 tasks.register("printMinecraftVersion") {
