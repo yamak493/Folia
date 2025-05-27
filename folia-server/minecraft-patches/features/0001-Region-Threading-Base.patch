@@ -6957,7 +6957,7 @@ index 0000000000000000000000000000000000000000..1054e28e54f55e0a70eb25aee89cbb48
 \ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/scheduler/FoliaRegionScheduler.java b/io/papermc/paper/threadedregions/scheduler/FoliaRegionScheduler.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..bc8aa525b3488dc71e7ca0529c6a8c57eaa99e1e
+index 0000000000000000000000000000000000000000..81cdbcf00efca209b0567ea10d54d1a3add681d7
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/scheduler/FoliaRegionScheduler.java
 @@ -0,0 +1,424 @@
@@ -7161,7 +7161,7 @@ index 0000000000000000000000000000000000000000..bc8aa525b3488dc71e7ca0529c6a8c57
 +            final int chunkZ = sectionZ << shift;
 +
 +            world.moonrise$getChunkTaskScheduler().chunkHolderManager.addTicketAtLevel(
-+                TicketType.REGION_SCHEDULER_API_HOLD, chunkX, chunkZ, ChunkHolderManager.MAX_TICKET_LEVEL, Unit.INSTANCE
++                TicketType.REGION_SCHEDULER_API_HOLD, chunkX, chunkZ, ChunkHolderManager.MAX_TICKET_LEVEL, null
 +            );
 +        }
 +
@@ -7172,7 +7172,7 @@ index 0000000000000000000000000000000000000000..bc8aa525b3488dc71e7ca0529c6a8c57
 +            final int chunkZ = CoordinateUtils.getChunkZ(sectionKey) << shift;
 +
 +            world.moonrise$getChunkTaskScheduler().chunkHolderManager.removeTicketAtLevel(
-+                TicketType.REGION_SCHEDULER_API_HOLD, chunkX, chunkZ, ChunkHolderManager.MAX_TICKET_LEVEL, Unit.INSTANCE
++                TicketType.REGION_SCHEDULER_API_HOLD, chunkX, chunkZ, ChunkHolderManager.MAX_TICKET_LEVEL, null
 +            );
 +        }
 +
