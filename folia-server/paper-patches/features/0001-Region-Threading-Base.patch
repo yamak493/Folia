@@ -3153,10 +3153,10 @@ index d927938df4ac2b5de7ef2d26a3f0056b8310ddcd..2778d675b436642667780758c2e09d60
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b657519b51abc 100644
+index 1db6276ae7a547860cf2c6f85b37ec4d6b33655a..0e32a9ad852e521ce9618acc1642d3748995b4bf 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -234,7 +234,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -237,7 +237,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public ServerPlayer getHandle() {
@@ -3165,7 +3165,7 @@ index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b6575
      }
  
      @Override
-@@ -684,7 +684,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -687,7 +687,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public void kickPlayer(String message) {
@@ -3174,7 +3174,7 @@ index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b6575
          this.getHandle().transferCookieConnection.kickPlayer(CraftChatMessage.fromStringOrEmpty(message, true), org.bukkit.event.player.PlayerKickEvent.Cause.PLUGIN); // Paper - kick event cause
      }
  
-@@ -697,7 +697,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -700,7 +700,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public void kick(net.kyori.adventure.text.Component message, org.bukkit.event.player.PlayerKickEvent.Cause cause) {
@@ -3183,7 +3183,7 @@ index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b6575
          final ServerGamePacketListenerImpl connection = this.getHandle().connection;
          if (connection != null) {
              connection.disconnect(message == null ? net.kyori.adventure.text.Component.empty() : message, cause);
-@@ -1405,6 +1405,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -1408,6 +1408,11 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public boolean teleport(Location location, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause cause, io.papermc.paper.entity.TeleportFlag... flags) {
@@ -3195,7 +3195,7 @@ index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b6575
          Set<io.papermc.paper.entity.TeleportFlag.Relative> relativeArguments;
          Set<io.papermc.paper.entity.TeleportFlag> allFlags;
          if (flags.length == 0) {
-@@ -2072,7 +2077,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -2075,7 +2080,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
      private void unregisterEntity(Entity other) {
          // Paper end
          ChunkMap tracker = ((ServerLevel) this.getHandle().level()).getChunkSource().chunkMap;
@@ -3204,7 +3204,7 @@ index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b6575
          if (entry != null) {
              entry.removePlayer(this.getHandle());
          }
-@@ -2169,7 +2174,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -2172,7 +2177,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
              if (original != null) otherPlayer.setUUID(original); // Paper - uuid override
          }
  
@@ -3213,7 +3213,7 @@ index 8a1e2785d4a3dd6f5d97c152e9b42d5c257d1ee6..00abfbfc0c75434b18e89334a35b6575
          if (entry != null && !entry.seenBy.contains(this.getHandle().connection)) {
              entry.updatePlayer(this.getHandle());
          }
-@@ -3317,7 +3322,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -3327,7 +3332,7 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
          @Override
          public void respawn() {
              if (CraftPlayer.this.getHealth() <= 0 && CraftPlayer.this.isOnline()) {
@@ -3835,7 +3835,7 @@ index 9851c3890c9377d9fd1813f82766c2841ae48fd4..034b210ca024dcb3d9f59f1cdeef8c16
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java b/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
-index 6f86a505c99010eb80e76e2fbe36414fcde80a39..ee8fcf73665de82fa3968e0998b3221d9088647b 100644
+index 9774c9c72a910ccd919b903d92f4068c06d199d7..77871ce6d0eb0005893ea10b17e711ce87d7bfdd 100644
 --- a/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
 +++ b/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
 @@ -808,7 +808,7 @@ public class CraftEventFactory {

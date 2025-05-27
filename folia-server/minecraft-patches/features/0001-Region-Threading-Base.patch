@@ -12864,7 +12864,7 @@ index bd07e6a5aa1883786d789ea71711a0c0c0a95c26..09469ad131622158fe5579216fc41642
              }
              // Spigot end
 diff --git a/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 064a9b6cf6792192fc1fa80095a48c2025cebf2a..77546196289bccbbc0c40c2d69ff9ddd2bc98ffe 100644
+index 9041830c19e2899479e1519488faba5c416ccd88..d60a1d4c4c8bd7650170775e37e8ca76b46a1588 100644
 --- a/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 @@ -284,10 +284,10 @@ public class ServerGamePacketListenerImpl
@@ -13239,7 +13239,7 @@ index 064a9b6cf6792192fc1fa80095a48c2025cebf2a..77546196289bccbbc0c40c2d69ff9ddd
      }
  
      private void updateSignText(ServerboundSignUpdatePacket packet, List<FilteredText> filteredText) {
-@@ -3575,7 +3663,7 @@ public class ServerGamePacketListenerImpl
+@@ -3585,7 +3673,7 @@ public class ServerGamePacketListenerImpl
          this.chatMessageChain
              .append(
                  () -> {
