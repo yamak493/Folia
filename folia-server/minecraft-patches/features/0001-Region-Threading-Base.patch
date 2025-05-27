@@ -13938,7 +13938,7 @@ index a3c7d68469075bf8d33f2016149a181b0fb87e0e..73c581d3ee21d8fa96eae3e47afd6ce2
              return blockToFallLocation(blockState);
          } else {
 diff --git a/net/minecraft/world/entity/Entity.java b/net/minecraft/world/entity/Entity.java
-index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71e8f2d326 100644
+index 81a18b8e605bd4c28b48a32c80be231609182970..8357e4a3f381014b976067d8ed06fc073d23db44 100644
 --- a/net/minecraft/world/entity/Entity.java
 +++ b/net/minecraft/world/entity/Entity.java
 @@ -150,7 +150,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
@@ -14141,7 +14141,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
          if (!this.level().paperConfig().scoreboards.allowNonPlayerEntitiesOnScoreboards && !(this instanceof Player)) { return null; } // Paper - Perf: Disable Scoreboards for non players by default
          return this.level().getScoreboard().getPlayersTeam(this.getScoreboardName());
      }
-@@ -3706,8 +3730,793 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -3706,8 +3730,795 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
          this.portalProcess = entity.portalProcess;
      }
  
@@ -14197,6 +14197,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
 +
 +                List<Entity> newPassengers = new java.util.ArrayList<>();
 +                for (EntityTreeNode passenger : passengers) {
++                    queue.add(passenger);
 +                    newPassengers.add(passenger.root);
 +                    passenger.root.vehicle = curr.root;
 +                }
@@ -14238,6 +14239,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
 +                }
 +
 +                for (EntityTreeNode passenger : passengers) {
++                    queue.add(passenger);
 +                    curr.root.positionRider(passenger.root, teleport ? Entity::snapTo : Entity::setPos);
 +                }
 +            }
@@ -14935,7 +14937,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
          // Paper start - Fix item duplication and teleport issues
          if ((!this.isAlive() || !this.valid) && (teleportTransition.newLevel() != this.level)) {
              LOGGER.warn("Illegal Entity Teleport {} to {}:{}", this, teleportTransition.newLevel(), teleportTransition.position(), new Throwable());
-@@ -3886,6 +4695,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -3886,6 +4697,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
          }
      }
  
@@ -14948,7 +14950,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
      protected void removeAfterChangingDimensions() {
          this.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION, null); // CraftBukkit - add Bukkit remove cause
          if (this instanceof Leashable leashable && leashable.isLeashed()) { // Paper - only call if it is leashed
-@@ -4224,6 +5039,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4224,6 +5041,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
      }
  
      public void startSeenByPlayer(ServerPlayer serverPlayer) {
@@ -14961,7 +14963,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
      }
  
      public void stopSeenByPlayer(ServerPlayer serverPlayer) {
-@@ -4233,6 +5054,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4233,6 +5056,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              new io.papermc.paper.event.player.PlayerUntrackEntityEvent(serverPlayer.getBukkitEntity(), this.getBukkitEntity()).callEvent();
          }
          // Paper end - entity tracking events
@@ -14974,7 +14976,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
      }
  
      public float rotate(Rotation transformRotation) {
-@@ -4775,7 +5602,8 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4775,7 +5604,8 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
              }
          }
          // Paper end - Fix MC-4
@@ -14984,7 +14986,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
              synchronized (this.posLock) { // Paper - detailed watchdog information
              this.position = new Vec3(x, y, z);
              } // Paper - detailed watchdog information
-@@ -4794,7 +5622,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4794,7 +5624,7 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
          }
          // Paper start - Block invalid positions and bounding box; don't allow desync of pos and AABB
          // hanging has its own special logic
@@ -14993,7 +14995,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
              this.setBoundingBox(this.makeBoundingBox());
          }
          // Paper end - Block invalid positions and bounding box
-@@ -4887,6 +5715,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4887,6 +5717,12 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
          return this.removalReason != null;
      }
  
@@ -15006,7 +15008,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
      @Nullable
      public Entity.RemovalReason getRemovalReason() {
          return this.removalReason;
-@@ -4902,6 +5736,9 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4902,6 +5738,9 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
          // Paper end - rewrite chunk system
          org.bukkit.craftbukkit.event.CraftEventFactory.callEntityRemoveEvent(this, cause); // CraftBukkit
          final boolean alreadyRemoved = this.removalReason != null; // Paper - Folia schedulers
@@ -15016,7 +15018,7 @@ index 81a18b8e605bd4c28b48a32c80be231609182970..414be522896c63c34100199177788d71
          if (this.removalReason == null) {
              this.removalReason = removalReason;
          }
-@@ -4925,6 +5762,10 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
+@@ -4925,6 +5764,10 @@ public abstract class Entity implements SyncedDataHolder, Nameable, EntityAccess
          this.removalReason = null;
      }
  
