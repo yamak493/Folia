@@ -756,10 +756,10 @@ index c03608fec96b51e1867f43d8f42e5aefb1520e46..127d96280cad2d4e5db574a089d67ad6
       * Retires the scheduler, preventing new tasks from being scheduled and invoking the retired callback
       * on all currently scheduled tasks.
 diff --git a/src/main/java/io/papermc/paper/util/MCUtil.java b/src/main/java/io/papermc/paper/util/MCUtil.java
-index 27927bb7967a417dd3542e7d62d67a13118ed98e..eb94f71f626c1f89f1b9048a8e68ae09ff17effc 100644
+index 8492a06883e2ff597bbbdaa74fe5e5cdd0a0a1b1..ff6d200c3c3ecb958086f11dff39357dc0bf70fc 100644
 --- a/src/main/java/io/papermc/paper/util/MCUtil.java
 +++ b/src/main/java/io/papermc/paper/util/MCUtil.java
-@@ -92,6 +92,7 @@ public final class MCUtil {
+@@ -94,6 +94,7 @@ public final class MCUtil {
       */
      public static void ensureMain(String reason, Runnable run) {
          if (!isMainThread()) {
@@ -767,37 +767,6 @@ index 27927bb7967a417dd3542e7d62d67a13118ed98e..eb94f71f626c1f89f1b9048a8e68ae09
              if (reason != null) {
                  MinecraftServer.LOGGER.warn("Asynchronous " + reason + "!", new IllegalStateException());
              }
-@@ -150,6 +151,30 @@ public final class MCUtil {
-         return (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2);
-     }
- 
-+    // Folia start - TODO MERGE INTO MCUTIL
-+    /**
-+     * Converts a NMS World/Vector to Bukkit Location
-+     * @param world
-+     * @param pos
-+     * @return
-+     */
-+    public static org.bukkit.Location toLocation(net.minecraft.world.level.Level world, Vec3 pos) {
-+        return new org.bukkit.Location(world.getWorld(), pos.x(), pos.y(), pos.z());
-+    }
-+
-+    /**
-+     * Converts a NMS World/Vector to Bukkit Location
-+     * @param world
-+     * @param pos
-+     * @param yaw
-+     * @param pitch
-+     * @return
-+     */
-+    public static org.bukkit.Location toLocation(net.minecraft.world.level.Level world, Vec3 pos, float yaw, float pitch) {
-+        return new org.bukkit.Location(world.getWorld(), pos.x(), pos.y(), pos.z(), yaw, pitch);
-+    }
-+    // Folia end - TODO MERGE INTO MCUTIL
-+
-     public static BlockPos toBlockPos(Position pos) {
-         return new BlockPos(pos.blockX(), pos.blockY(), pos.blockZ());
-     }
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 index 1da86b25e3b89c79d4f3920c8d2ef10ee2757f65..1e605345b2911193b4500a7f84ea8ace318842e5 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
