@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Spottedleaf <Spottedleaf@users.noreply.github.com>
+Date: Thu, 29 May 2025 05:26:23 -0700
+Subject: [PATCH] Temporary "fix" for
+ https://github.com/PaperMC/Folia/issues/363
+
+Significantly reduce the chances of it happening
+by trying to avoid parsing chunk tasks while ticking. It may
+still happen.
+
+diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
+index 357d81d42f187fb1c52584e6c9cfe611fe755aba..977fefea7f81d69b40dca46f72b9629f8c491c44 100644
+--- a/net/minecraft/server/level/ServerChunkCache.java
++++ b/net/minecraft/server/level/ServerChunkCache.java
+@@ -180,7 +180,7 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
+ 
+             // call mid-tick tasks for chunk system
+             if ((i & 7) == 0) {
+-                ((ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks();
++                //((ca.spottedleaf.moonrise.patches.chunk_system.server.ChunkSystemMinecraftServer)this.level.getServer()).moonrise$executeMidTickTasks(); // Folia - TODO restore this
+                 continue;
+             }
+         }
