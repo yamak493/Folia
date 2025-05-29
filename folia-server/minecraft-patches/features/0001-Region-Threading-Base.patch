@@ -5478,7 +5478,7 @@ index 0000000000000000000000000000000000000000..d4d80a69488f57704f1b3dc74cb379de
 \ No newline at end of file
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..18f57216522a8e22ea6c217c05588f8be13f5c88
+index 0000000000000000000000000000000000000000..503342372f21966dab862e194b030c5951e9f023
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 @@ -0,0 +1,564 @@
@@ -5919,7 +5919,7 @@ index 0000000000000000000000000000000000000000..18f57216522a8e22ea6c217c05588f8b
 +                return null;
 +            }
 +
-+            final long cpuEnd = MEASURE_CPU_TIME ? THREAD_MX_BEAN.getThreadCpuTime(this.currentTickingThread.getId()) : 0L;
++            final long cpuEnd = MEASURE_CPU_TIME ? THREAD_MX_BEAN.getThreadCpuTime(this.currentTickingThread.threadId()) : 0L;
 +
 +            return new TickTime(
 +                currentTickData.previousTickStart(), currentTickData.scheduledTickStart(),
