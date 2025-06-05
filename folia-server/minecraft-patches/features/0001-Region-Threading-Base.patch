@@ -15830,10 +15830,10 @@ index 1d3381f1481bb2b192bb78462c85c2a185d94ad5..2496dafa51b48512e88bc8bbe5c96f42
      }
  
 diff --git a/net/minecraft/world/entity/npc/CatSpawner.java b/net/minecraft/world/entity/npc/CatSpawner.java
-index e282b6ab6d0d1c11ee40f5f436bd50fa90ddc88b..f5d27988605d48cdf314f28ba332f33f0a314266 100644
+index e282b6ab6d0d1c11ee40f5f436bd50fa90ddc88b..a92769d2c0a93afa85797c0e778f460cc6d28599 100644
 --- a/net/minecraft/world/entity/npc/CatSpawner.java
 +++ b/net/minecraft/world/entity/npc/CatSpawner.java
-@@ -18,14 +18,15 @@ import net.minecraft.world.phys.AABB;
+@@ -18,15 +18,16 @@ import net.minecraft.world.phys.AABB;
  
  public class CatSpawner implements CustomSpawner {
      private static final int TICK_DELAY = 1200;
@@ -15846,13 +15846,15 @@ index e282b6ab6d0d1c11ee40f5f436bd50fa90ddc88b..f5d27988605d48cdf314f28ba332f33f
 -            this.nextTick--;
 -            if (this.nextTick <= 0) {
 -                this.nextTick = 1200;
+-                Player randomPlayer = level.getRandomPlayer();
 +            io.papermc.paper.threadedregions.RegionizedWorldData worldData = level.getCurrentWorldData(); // Folia - region threading
 +            worldData.catSpawnerNextTick--; // Folia - region threading
 +            if (worldData.catSpawnerNextTick <= 0) { // Folia - region threading
 +                worldData.catSpawnerNextTick = 1200; // Folia - region threading
-                 Player randomPlayer = level.getRandomPlayer();
++                Player randomPlayer = level.getRandomLocalPlayer(); // Folia - region threading
                  if (randomPlayer != null) {
                      RandomSource randomSource = level.random;
+                     int i = (8 + randomSource.nextInt(24)) * (randomSource.nextBoolean() ? -1 : 1);
 diff --git a/net/minecraft/world/entity/npc/Villager.java b/net/minecraft/world/entity/npc/Villager.java
 index e0e0d2ea7fc60e3142c675404d152eca60263240..aac65526817b1767511c7e180a4d9ded89ef89a1 100644
 --- a/net/minecraft/world/entity/npc/Villager.java
