@@ -2790,10 +2790,10 @@ index 32e426513f3e710abeda3363a4e2a08fe902c703..2655d6c0c58c27bd532d13fab723863c
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-index 13feb2f7a0e4be92cc8d57512475b7e335d581a8..cec510201ab5d084ea9f65fa6dff2b257a1362d8 100644
+index 6b4e74b808b4fb6ac0143d5c82571657b2c49683..eca27a179edfd7a78767bd53d87665e981efb2c2 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-@@ -104,6 +104,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+@@ -105,6 +105,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
  
      @Override
      public net.minecraft.world.entity.LivingEntity getHandle() {
@@ -3648,7 +3648,7 @@ index 227640d34df8d700264196444c4db00fff2f08a9..a46d06e2598e3b6bc594059e35d97982
      }
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
-index 258e149a4c239328f4b068ac4617ca63b788dab3..e86f69f75d406b81d9ca32f9cad5e31cb8c55b54 100644
+index 8523cadccc67fa172041be0316b979a34fac6b26..2ec652c1675a999d7cf157a5a002aba9d58afa0d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftVillager.java
 @@ -32,6 +32,7 @@ public class CraftVillager extends CraftAbstractVillager implements Villager {
