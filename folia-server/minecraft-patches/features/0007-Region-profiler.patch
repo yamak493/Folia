@@ -1705,7 +1705,7 @@ index 548f5f0382c81ca86d238bfd7f94008bbd6e41bc..ac06b8a4813716a8d136be5731cbd961
      }
  
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index 8026f9305faa85434b18366b30d64038290ec7e8..9cbd692680c66331ae8e1544ee8d2a7317262d01 100644
+index 7f3d4b50673252a3534c01d625cdac86c8cf79dc..f884c707d4c1f36801018e15efb9adf91f5d6b33 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
 @@ -729,6 +729,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
@@ -1838,7 +1838,7 @@ index 8026f9305faa85434b18366b30d64038290ec7e8..9cbd692680c66331ae8e1544ee8d2a73
      }
  
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index b5e609a81ee0445226b61ba5bed69ad9f100f7af..548f7a2b0b020ff7fff27396942cc0bc9e755afe 100644
+index 6c96421f9719eeecb5e0910f9ebd837084ce44da..751b011701d6ae373099226ea63ffbafcd24ce6a 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -1163,6 +1163,7 @@ public abstract class PlayerList {

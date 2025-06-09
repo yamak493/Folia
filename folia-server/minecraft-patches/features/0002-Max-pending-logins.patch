@@ -19,7 +19,7 @@ index 6173f704b0d093813ec67eb231c75be49a462e7d..159f2f169d26b436a70006f7bc9bdc48
  
          // CraftBukkit start
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 7b13a9e7d38efe7786023747f55ebf5a2ba80688..b5e609a81ee0445226b61ba5bed69ad9f100f7af 100644
+index f2cf984f053b7a60255eaa245777abb0e1557c54..6c96421f9719eeecb5e0910f9ebd837084ce44da 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
 @@ -151,6 +151,17 @@ public abstract class PlayerList {
