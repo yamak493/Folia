@@ -8,7 +8,7 @@ of the ticking region should help debug the cause.
 
 diff --git a/io/papermc/paper/threadedregions/FoliaWatchdogThread.java b/io/papermc/paper/threadedregions/FoliaWatchdogThread.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..258d82ab2c78482e1561343e8e1f81fc33f1895e
+index 0000000000000000000000000000000000000000..e9ca1a15049b0211d10401cb78e953b93afaf6c7
 --- /dev/null
 +++ b/io/papermc/paper/threadedregions/FoliaWatchdogThread.java
 @@ -0,0 +1,104 @@
@@ -63,7 +63,7 @@ index 0000000000000000000000000000000000000000..258d82ab2c78482e1561343e8e1f81fc
 +                Thread.sleep(1000L);
 +            } catch (final InterruptedException ex) {}
 +
-+            if (MinecraftServer.getServer().hasStopped()) {
++            if (MinecraftServer.getServer() == null || MinecraftServer.getServer().hasStopped()) {
 +                continue;
 +            }
 +
@@ -117,7 +117,7 @@ index 0000000000000000000000000000000000000000..258d82ab2c78482e1561343e8e1f81fc
 +    }
 +}
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
-index 2fd27993b445cd8c3b517a91746c3f303a35238d..7123b3eb2f2e52946b8ef9de993a6828eb0bb6f7 100644
+index e392457ccc06d3c6ad794f3c480d301a46083054..fa6b8d756195c1b430cc11214a901bd42eebc98d 100644
 --- a/io/papermc/paper/threadedregions/TickRegionScheduler.java
 +++ b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 @@ -34,6 +34,13 @@ public final class TickRegionScheduler {
