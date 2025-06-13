@@ -16226,6 +16226,25 @@ index 5104636be1de4bf1dc491673cad55854a106da53..a51bf62b9c72cf0092adafbdbfed06c1
          this.handleFirstTickBubbleColumn();
          this.applyGravity();
          this.applyInertia();
+diff --git a/net/minecraft/world/entity/projectile/ThrownEgg.java b/net/minecraft/world/entity/projectile/ThrownEgg.java
+index 73ec34b43f3fb2aa3edc3f1cb48a923d1fa32036..07dd05ceb9700e91088326290d211d94c1c2a6a6 100644
+--- a/net/minecraft/world/entity/projectile/ThrownEgg.java
++++ b/net/minecraft/world/entity/projectile/ThrownEgg.java
+@@ -97,12 +97,13 @@ public class ThrownEgg extends ThrowableItemProjectile {
+                 for (int i1 = 0; i1 < i; i1++) {
+                     net.minecraft.world.entity.Entity chicken = newEntityType.create(this.level(), net.minecraft.world.entity.EntitySpawnReason.TRIGGERED); // CraftBukkit
+                     if (chicken != null) {
++                        chicken.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F); // Folia - region threading - moved up
+                         // CraftBukkit start
+                         if (chicken.getBukkitEntity() instanceof org.bukkit.entity.Ageable ageable) {
+                             ageable.setBaby();
+                         }
+                         // CraftBukkit end
+-                        chicken.snapTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
++                        // Folia - region threading - move up
+                         // CraftBukkit start
+                         if (chicken instanceof Chicken realChicken) {
+                             Optional.ofNullable(this.getItem().get(DataComponents.CHICKEN_VARIANT))
 diff --git a/net/minecraft/world/entity/projectile/ThrownEnderpearl.java b/net/minecraft/world/entity/projectile/ThrownEnderpearl.java
 index bda858b1e1c6b28cd9d5a664758b3e445eaf4f22..b28f74e1ef7e869f23ce2110b0494de360713e64 100644
 --- a/net/minecraft/world/entity/projectile/ThrownEnderpearl.java
