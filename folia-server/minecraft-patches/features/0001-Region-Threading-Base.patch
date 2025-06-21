@@ -16259,27 +16259,10 @@ index d8dc196ef92e97f831cf97cd1536a46f81f9d5d1..3e223b49878d2622711cb8791d653f78
              if (this.attachedToEntity != null) {
                  Vec3 handHoldingItemAngle;
 diff --git a/net/minecraft/world/entity/projectile/FishingHook.java b/net/minecraft/world/entity/projectile/FishingHook.java
-index 5f3abbe943be394e9cb987945a238208940b5015..1dba06643cae653db44e28fe07f8876c8e8cee27 100644
+index 5f3abbe943be394e9cb987945a238208940b5015..7760ab1fe365b4bf1ab6c2ff953e8659a28008a8 100644
 --- a/net/minecraft/world/entity/projectile/FishingHook.java
 +++ b/net/minecraft/world/entity/projectile/FishingHook.java
-@@ -98,7 +98,7 @@ public class FishingHook extends Projectile {
- 
-     public FishingHook(Player owner, Level level, int luck, int lureSpeed) {
-         this(EntityType.FISHING_BOBBER, level, luck, lureSpeed);
--        this.setOwner(owner);
-+        //this.setOwner(owner); // Folia - region threading - move this down after position so that thread-checks do not fail
-         float xRot = owner.getXRot();
-         float yRot = owner.getYRot();
-         float cos = Mth.cos(-yRot * (float) (Math.PI / 180.0) - (float) Math.PI);
-@@ -109,6 +109,7 @@ public class FishingHook extends Projectile {
-         double eyeY = owner.getEyeY();
-         double d1 = owner.getZ() - cos * 0.3;
-         this.snapTo(d, eyeY, d1, yRot, xRot);
-+        this.setOwner(owner); // Folia - region threading - move this down after position so that thread-checks do not fail
-         Vec3 vec3 = new Vec3(-sin, Mth.clamp(-(sin1 / f), -5.0F, 5.0F), -cos);
-         double len = vec3.length();
-         vec3 = vec3.multiply(
-@@ -270,6 +271,11 @@ public class FishingHook extends Projectile {
+@@ -270,6 +270,11 @@ public class FishingHook extends Projectile {
      }
  
      private boolean shouldStopFishing(Player player) {
@@ -16291,7 +16274,7 @@ index 5f3abbe943be394e9cb987945a238208940b5015..1dba06643cae653db44e28fe07f8876c
          ItemStack mainHandItem = player.getMainHandItem();
          ItemStack offhandItem = player.getOffhandItem();
          boolean isFishingRod = mainHandItem.is(Items.FISHING_ROD);
-@@ -612,10 +618,18 @@ public class FishingHook extends Projectile {
+@@ -612,10 +617,18 @@ public class FishingHook extends Projectile {
  
      @Override
      public void remove(Entity.RemovalReason reason, @Nullable org.bukkit.event.entity.EntityRemoveEvent.Cause cause) { // CraftBukkit - add Bukkit remove cause
@@ -16328,7 +16311,7 @@ index f736f72b8e76dd82236badcdd2756f0d4da89aa4..e0277e9c8037e90d0a479e8fb5013b88
          HitResult hitResultOnMoveVector = ProjectileUtil.getHitResultOnMoveVector(this, this::canHitEntity);
          this.preHitTargetOrDeflectSelf(hitResultOnMoveVector); // CraftBukkit - projectile hit event
 diff --git a/net/minecraft/world/entity/projectile/Projectile.java b/net/minecraft/world/entity/projectile/Projectile.java
-index ee16a05b8b2747ce95fcae1616c96143a5dec74e..777d785b1d478a76b36942de9ce5f426d39bd8c7 100644
+index ee16a05b8b2747ce95fcae1616c96143a5dec74e..b6cdd02ead8ecc38afd4e76fa0c19a9433550b1d 100644
 --- a/net/minecraft/world/entity/projectile/Projectile.java
 +++ b/net/minecraft/world/entity/projectile/Projectile.java
 @@ -71,9 +71,20 @@ public abstract class Projectile extends Entity implements TraceableEntity {
@@ -16348,7 +16331,7 @@ index ee16a05b8b2747ce95fcae1616c96143a5dec74e..777d785b1d478a76b36942de9ce5f426
 +
 +    @Nullable
 +    public Entity getOwnerRaw() { // Folia - region threading
-+        ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot update owner state asynchronously"); // Folia - region threading
++        if (!this.hasNullCallback()) ca.spottedleaf.moonrise.common.util.TickThread.ensureTickThread(this, "Cannot update owner state asynchronously"); // Folia - region threading
          return EntityReference.get(this.owner, this.level(), Entity.class);
      }
  
