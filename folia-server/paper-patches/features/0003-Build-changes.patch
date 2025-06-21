@@ -32,7 +32,7 @@ index 6abc57669e87f7f98f3b76af3c0e50825fea6eb1..90a5178b5025378197b69514d782de5d
                  metrics.addCustomChart(new Metrics.DrilldownPie("java_version", () -> {
                      Map<String, Map<String, Integer>> map = new HashMap<>();
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index bad941054349efe53756d6ab53ba7f6872de8e6f..09d46b25876122626f12ecfd153eade961da4cd3 100644
+index d0554ed6631535815e5932930911e3fe1dee8710..1783f9ea48154dcc8971fc5ef088f5a8c0f0b2ff 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 @@ -49,7 +49,7 @@ public class PaperVersionFetcher implements VersionFetcher {
@@ -54,7 +54,7 @@ index bad941054349efe53756d6ab53ba7f6872de8e6f..09d46b25876122626f12ecfd153eade9
              ).openBufferedStream()) {
                  final JsonObject json = new Gson().fromJson(reader, JsonObject.class);
 diff --git a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
-index 790bad0494454ca12ee152e3de6da3da634d9b20..e741201fdbea0dbbc0e42313ebd33368014c9dc4 100644
+index 74ffdc823e66fc5ec027c4b7c462382bcbfe2be2..10a0be7a4db1a51579d113d279af7a9effe7f438 100644
 --- a/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 +++ b/src/main/java/io/papermc/paper/ServerBuildInfoImpl.java
 @@ -42,9 +42,9 @@ public record ServerBuildInfoImpl(
@@ -66,8 +66,8 @@ index 790bad0494454ca12ee152e3de6da3da634d9b20..e741201fdbea0dbbc0e42313ebd33368
              getManifestAttribute(manifest, ATTRIBUTE_BRAND_NAME)
 -                .orElse(BRAND_PAPER_NAME),
 +                .orElse("Folia"), // Folia
-             SharedConstants.getCurrentVersion().getId(),
-             SharedConstants.getCurrentVersion().getName(),
+             SharedConstants.getCurrentVersion().id(),
+             SharedConstants.getCurrentVersion().name(),
              getManifestAttribute(manifest, ATTRIBUTE_BUILD_NUMBER)
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 index 774556a62eb240da42e84db4502e2ed43495be17..e9b6ca3aa25e140467ae866d572483050ea3fa0e 100644

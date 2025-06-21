@@ -19,10 +19,10 @@ index 983b2e68aa9db72d0fca42016272b9203bfb7a17..829ff1f36d565f15cfe5d4997d3ccfdf
  
          // CraftBukkit start
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 82906a38984cffef30dff2f995633506cf28b031..448e9009781e94e3f2a5236efb6dc114a961b20d 100644
+index 2b48b6bbbc503e2c5c0362a0255a3741d84a22cd..250d805f52e527e48119726851373d74435b74cd 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -151,6 +151,17 @@ public abstract class PlayerList {
+@@ -150,6 +150,17 @@ public abstract class PlayerList {
              conflictingId = this.connectionById.get(byId);
  
              if (conflictingName == null && conflictingId == null) {

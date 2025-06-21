@@ -1016,24 +1016,30 @@ index 0000000000000000000000000000000000000000..6e9b04613c5c867a74fa4f266a8ae8e6
 +    ) {}
 +}
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
-index df839db4e5462aa66f282ac39cb1c3e48749f669..d8cdcfa94e76745c0232a17925dca9941a6b0a60 100644
+index 396b72a20ec48831705935f2f4149307068f9bfa..eff983882c0bce6511939f9f1f705569173eedc6 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/ChunkHolderManager.java
-@@ -1545,7 +1545,9 @@ public final class ChunkHolderManager {
+@@ -1569,6 +1569,7 @@ public final class ChunkHolderManager {
      }
  
      public boolean processTicketUpdates() {
 +        final ca.spottedleaf.leafprofiler.RegionizedProfiler.Handle profiler = io.papermc.paper.threadedregions.TickRegionScheduler.getProfiler(); profiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.TICKET_LEVEL_UPDATE_PROCESSING); try { // Folia - profiler
-         return this.processTicketUpdates(true, null);
+         if (BLOCK_TICKET_UPDATES.get() == Boolean.TRUE) {
+             throw new IllegalStateException("Cannot update ticket level while unloading chunks or updating entity manager");
+         }
+@@ -1606,6 +1607,7 @@ public final class ChunkHolderManager {
+         }
+ 
+         return ret;
 +        } finally { profiler.stopTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.TICKET_LEVEL_UPDATE_PROCESSING); } // Folia - profiler
      }
  
      private static final ThreadLocal<List<ChunkProgressionTask>> CURRENT_TICKET_UPDATE_SCHEDULING = new ThreadLocal<>();
 diff --git a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-index 601ed36413bbbf9c17e530b42906986e441237fd..6ae7d646c1173c4835fa235c7cee21ec463dbab2 100644
+index c098e74c7c2f0eec6e5b97582a705a34a1183180..22f26dfdcfec23852c06470851f750162bc520e4 100644
 --- a/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
 +++ b/ca/spottedleaf/moonrise/patches/chunk_system/scheduling/NewChunkHolder.java
-@@ -1679,6 +1679,8 @@ public final class NewChunkHolder {
+@@ -1681,6 +1681,8 @@ public final class NewChunkHolder {
  
      public SaveStat save(final boolean shutdown) {
          TickThread.ensureTickThread(this.world, this.chunkX, this.chunkZ, "Cannot save data off-main");
@@ -1042,7 +1048,7 @@ index 601ed36413bbbf9c17e530b42906986e441237fd..6ae7d646c1173c4835fa235c7cee21ec
  
          ChunkAccess chunk = this.getCurrentChunk();
          PoiChunk poi = this.getPoiChunk();
-@@ -1737,6 +1739,7 @@ public final class NewChunkHolder {
+@@ -1739,6 +1741,7 @@ public final class NewChunkHolder {
                          canSavePOI | executedUnloadTasks[MoonriseRegionFileIO.RegionFileType.POI_DATA.ordinal()]
                  )
                  : null;
@@ -1051,7 +1057,7 @@ index 601ed36413bbbf9c17e530b42906986e441237fd..6ae7d646c1173c4835fa235c7cee21ec
  
      private boolean saveChunk(final ChunkAccess chunk, final boolean unloading) {
 diff --git a/io/papermc/paper/threadedregions/TickRegionScheduler.java b/io/papermc/paper/threadedregions/TickRegionScheduler.java
-index 18f57216522a8e22ea6c217c05588f8be13f5c88..2fd27993b445cd8c3b517a91746c3f303a35238d 100644
+index 503342372f21966dab862e194b030c5951e9f023..e392457ccc06d3c6ad794f3c480d301a46083054 100644
 --- a/io/papermc/paper/threadedregions/TickRegionScheduler.java
 +++ b/io/papermc/paper/threadedregions/TickRegionScheduler.java
 @@ -67,8 +67,13 @@ public final class TickRegionScheduler {
@@ -1452,10 +1458,10 @@ index 4a7de2ed6eabe919f0c33de49ed7fab75abac1b4..7280ca2250ade4166a1a883b205bbc89
                          if (var4 instanceof ReportedException reportedException && reportedException.getCause() instanceof OutOfMemoryError) {
                              throw makeReportedException(var4, packet, processor);
 diff --git a/net/minecraft/server/MinecraftServer.java b/net/minecraft/server/MinecraftServer.java
-index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc980d4662f8 100644
+index 894fe8abd57fb30c8ea0cdc5330bbf22153930bf..54c7bb8e51af146e0ad9d5fdcc92b76db73bb66a 100644
 --- a/net/minecraft/server/MinecraftServer.java
 +++ b/net/minecraft/server/MinecraftServer.java
-@@ -1577,6 +1577,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1579,6 +1579,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      // Folia start - region threading
      public void tickServer(long startTime, long scheduledEnd, long targetBuffer,
                             io.papermc.paper.threadedregions.TickRegions.TickRegionData region) {
@@ -1463,7 +1469,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
          // Folia end - region threading
          org.spigotmc.WatchdogThread.tick(); // Spigot
          long nanos = startTime; // Folia - region threading
-@@ -1614,6 +1615,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1616,6 +1617,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              }
          }
  
@@ -1471,7 +1477,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
          // Folia start - region threading
          region.world.getCurrentWorldData().updateTickData();
          if (region.world.checkInitialised.get() != ServerLevel.WORLD_INIT_CHECKED) {
-@@ -1635,10 +1637,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1637,10 +1639,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          new com.destroystokyo.paper.event.server.ServerTickStartEvent((int)region.getCurrentTick()).callEvent(); // Paper - Server Tick Events // Folia - region threading
          // Folia start - region threading
          if (region != null) {
@@ -1488,7 +1494,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
              for (net.minecraft.world.entity.Entity entity : region.world.getCurrentWorldData().getLocalEntitiesCopy()) {
                  if (!ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(entity) || entity.isRemoved()) {
                      continue;
-@@ -1646,8 +1654,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1648,8 +1656,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                  org.bukkit.craftbukkit.entity.CraftEntity bukkit = entity.getBukkitEntityRaw();
                  if (bukkit != null) {
                      bukkit.taskScheduler.executeTick();
@@ -1500,7 +1506,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
          }
          // Folia end - region threading
          //this.tickCount++; // Folia - region threading
-@@ -1667,6 +1678,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1669,6 +1680,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          }
          profiler.push("save");
          final boolean fullSave = autosavePeriod > 0 && io.papermc.paper.threadedregions.RegionizedServer.getCurrentTick() % autosavePeriod == 0; // Folia - region threading
@@ -1508,7 +1514,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
          try {
              this.isSaving = true;
              if (playerSaveInterval > 0) {
-@@ -1680,6 +1692,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1682,6 +1694,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          } finally {
              this.isSaving = false;
          }
@@ -1516,7 +1522,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
          profiler.pop();
          // Paper end - Incremental chunk and player saving
  
-@@ -1759,6 +1772,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1761,6 +1774,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
      }
  
      protected void tickChildren(BooleanSupplier hasTimeLeft, io.papermc.paper.threadedregions.TickRegions.TickRegionData region) { // Folia - region threading
@@ -1524,7 +1530,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
          final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = io.papermc.paper.threadedregions.TickRegionScheduler.getCurrentRegionizedWorldData(); // Folia - regionised ticking
          ProfilerFiller profilerFiller = Profiler.get();
          //this.getPlayerList().getPlayers().forEach(serverPlayer1 -> serverPlayer1.connection.suspendFlushing()); // Folia - region threading
-@@ -1813,7 +1827,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1815,7 +1829,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              profilerFiller.push("tick");
  
              try {
@@ -1534,7 +1540,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
              } catch (Throwable var7) {
                  CrashReport crashReport = CrashReport.forThrowable(var7, "Exception ticking world");
                  serverLevel.fillReportDetails(crashReport);
-@@ -1827,7 +1843,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1829,7 +1845,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          //this.isIteratingOverLevels = false; // Paper - Throw exception on world create while being ticked // Folia - region threading
  
          profilerFiller.popPush("connection");
@@ -1545,7 +1551,7 @@ index 6c2aa33856183516b9e0dbd2238cd6e3128ba13c..02676eb449bb98bc959717c72356bc98
          //this.playerList.tick(); // Folia - region threading
          if (this.tickRateManager.runsNormally()) {
 diff --git a/net/minecraft/server/level/ChunkMap.java b/net/minecraft/server/level/ChunkMap.java
-index ed5f63deff49c76589c512a17da450a613ed3492..0c8ba23400714406fd4e99f8e4e3bc7ab2a6dcef 100644
+index 40ad7be72795b7539dbebf54770e364cf58e0ead..4d603fafd07141a63db22f6e5a544fabbb6b9630 100644
 --- a/net/minecraft/server/level/ChunkMap.java
 +++ b/net/minecraft/server/level/ChunkMap.java
 @@ -409,12 +409,17 @@ public class ChunkMap extends ChunkStorage implements ChunkHolder.PlayerProvider
@@ -1596,7 +1602,7 @@ index ed5f63deff49c76589c512a17da450a613ed3492..0c8ba23400714406fd4e99f8e4e3bc7a
      // Paper end - optimise entity tracker
  
 diff --git a/net/minecraft/server/level/ServerChunkCache.java b/net/minecraft/server/level/ServerChunkCache.java
-index 8e0168b1d3aca3925a0774d64549b8d1556bcd7b..357d81d42f187fb1c52584e6c9cfe611fe755aba 100644
+index c79da00ff0428c32cdfb8cea2411ff8b8ecaaa00..250d09fe3c49d1d0cbfde0fc06abd16fe329f9ed 100644
 --- a/net/minecraft/server/level/ServerChunkCache.java
 +++ b/net/minecraft/server/level/ServerChunkCache.java
 @@ -159,6 +159,8 @@ public class ServerChunkCache extends ChunkSource implements ca.spottedleaf.moon
@@ -1634,7 +1640,7 @@ index 8e0168b1d3aca3925a0774d64549b8d1556bcd7b..357d81d42f187fb1c52584e6c9cfe611
          profilerFiller.push("purge");
 +        foliaProfiler.startTimer(ca.spottedleaf.leafprofiler.LProfilerRegistry.CHUNK_HOLDER_MANAGER_TICK); try { // Folia - profiler
          if (this.level.tickRateManager().runsNormally() || !tickChunks || this.level.spigotConfig.unloadFrozenChunks) { // Spigot
-             this.ticketStorage.purgeStaleTickets();
+             this.ticketStorage.purgeStaleTickets(this.chunkMap);
          }
  
          this.runDistanceManagerUpdates();
@@ -1723,10 +1729,10 @@ index 8e0168b1d3aca3925a0774d64549b8d1556bcd7b..357d81d42f187fb1c52584e6c9cfe611
      }
  
 diff --git a/net/minecraft/server/level/ServerLevel.java b/net/minecraft/server/level/ServerLevel.java
-index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25ebd3dc52 100644
+index cd6f937fa4eaba6033bfc230e3483b6b9e1ae607..5e3be75b27ed609be005e8169dc84c125518253e 100644
 --- a/net/minecraft/server/level/ServerLevel.java
 +++ b/net/minecraft/server/level/ServerLevel.java
-@@ -723,6 +723,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -727,6 +727,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
  
      public void tick(BooleanSupplier hasTimeLeft, io.papermc.paper.threadedregions.TickRegions.TickRegionData region) { // Folia - regionised ticking
          final io.papermc.paper.threadedregions.RegionizedWorldData regionizedWorldData = this.getCurrentWorldData(); // Folia - regionised ticking
@@ -1734,7 +1740,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
          ProfilerFiller profilerFiller = Profiler.get();
          regionizedWorldData.setHandlingTick(true); // Folia - regionised ticking
          TickRateManager tickRateManager = this.tickRateManager();
-@@ -746,22 +747,32 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -750,22 +751,32 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          if (!this.isDebug() && runsNormally) {
              long l = regionizedWorldData.getRedstoneGameTime(); // Folia - region threading
              profilerFiller.push("blockTicks");
@@ -1767,7 +1773,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
          }
  
          regionizedWorldData.setHandlingTick(false); // Folia - regionised ticking
-@@ -774,6 +785,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -778,6 +789,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          if (flag || this.emptyTime++ < 300) {
              profilerFiller.push("entities");
              if (this.dragonFight != null && runsNormally) {
@@ -1775,7 +1781,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
                  if (ca.spottedleaf.moonrise.common.util.TickThread.isTickThreadFor(this, this.dragonFight.origin)) { // Folia - region threading
                  profilerFiller.push("dragonFight");
                  this.dragonFight.tick();
-@@ -786,9 +798,13 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -790,9 +802,13 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                              null
                      );
                  } // Folia end - region threading
@@ -1789,7 +1795,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
              regionizedWorldData // Folia - regionised ticking
                  .forEachTickingEntity( // Folia - regionised ticking
                      entity -> {
-@@ -816,8 +832,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -820,8 +836,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
                          }
                      }
                  );
@@ -1801,7 +1807,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
          }
  
          profilerFiller.push("entityManagement");
-@@ -882,8 +901,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -886,8 +905,11 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
      }
  
      public void tickCustomSpawners(boolean spawnEnemies, boolean spawnFriendlies) {
@@ -1813,7 +1819,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
          }
      }
  
-@@ -1316,6 +1338,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -1324,6 +1346,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          profilerFiller.push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
          profilerFiller.incrementCounter("tickNonPassenger");
          final boolean isActive = io.papermc.paper.entity.activation.ActivationRange.checkIfActive(entity); // Paper - EAR 2
@@ -1826,7 +1832,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
          if (isActive) { // Paper - EAR 2
          entity.tick();
          // Folia start - region threading
-@@ -1330,6 +1358,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -1338,6 +1366,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          // Folia end - region threading
          } else {entity.inactiveTick();} // Paper - EAR 2
          profilerFiller.pop();
@@ -1834,7 +1840,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
  
          for (Entity entity1 : entity.getPassengers()) {
              this.tickPassenger(entity, entity1, isActive); // Paper - EAR 2
-@@ -1345,6 +1374,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -1353,6 +1382,12 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
          if (passengerEntity.isRemoved() || passengerEntity.getVehicle() != ridingEntity) {
              passengerEntity.stopRiding();
          } else if (passengerEntity instanceof Player || this.getCurrentWorldData().hasEntityTickingEntity(passengerEntity)) { // Folia - region threading
@@ -1847,7 +1853,7 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
              passengerEntity.setOldPosAndRot();
              passengerEntity.tickCount++;
              passengerEntity.totalEntityAge++; // Paper - age-like counter for all entities
-@@ -1376,6 +1411,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
+@@ -1384,6 +1419,7 @@ public class ServerLevel extends Level implements ServerEntityGetter, WorldGenLe
              for (Entity entity : passengerEntity.getPassengers()) {
                  this.tickPassenger(passengerEntity, entity, isActive); // Paper - EAR 2
              }
@@ -1856,10 +1862,10 @@ index b1262fe49dd49e57f9fc13d5d10a9c7a104be94f..e2a34f725bbbbe590ddf2feb0f615f25
      }
  
 diff --git a/net/minecraft/server/players/PlayerList.java b/net/minecraft/server/players/PlayerList.java
-index 448e9009781e94e3f2a5236efb6dc114a961b20d..44994e63a1e48efe69c0b67d02b99a3c814026b7 100644
+index 89227a0136cfdcaf56a2e109903d1ebc6e1eb597..dd68471549096b86ea82f2add3d3886fb054e78b 100644
 --- a/net/minecraft/server/players/PlayerList.java
 +++ b/net/minecraft/server/players/PlayerList.java
-@@ -1177,6 +1177,7 @@ public abstract class PlayerList {
+@@ -1165,6 +1165,7 @@ public abstract class PlayerList {
  
      public void saveAll(final int interval) {
          io.papermc.paper.util.MCUtil.ensureMain("Save Players" , () -> { // Paper - Ensure main
@@ -1867,7 +1873,7 @@ index 448e9009781e94e3f2a5236efb6dc114a961b20d..44994e63a1e48efe69c0b67d02b99a3c
          int numSaved = 0;
          final long now = System.nanoTime(); // Folia - region threading
          long timeInterval = (long)interval * io.papermc.paper.threadedregions.TickRegionScheduler.TIME_BETWEEN_TICKS; // Folia - region threading
-@@ -1187,7 +1188,9 @@ public abstract class PlayerList {
+@@ -1175,7 +1176,9 @@ public abstract class PlayerList {
              }
              // Folia end - region threading
              if (interval == -1 || now - player.lastSave >= timeInterval) { // Folia - region threading
@@ -1878,10 +1884,10 @@ index 448e9009781e94e3f2a5236efb6dc114a961b20d..44994e63a1e48efe69c0b67d02b99a3c
                      break;
                  }
 diff --git a/net/minecraft/world/entity/EntityType.java b/net/minecraft/world/entity/EntityType.java
-index 8af02ed823da098a5592ef195c9fe8ed8f245b53..6b72ab233508e6df1eca34360ce76d102ee25a41 100644
+index cdf71340278e05e58bbb4ed51a432336de46e549..6f00ffa05d9597917574357e0069c9b056aa5ce2 100644
 --- a/net/minecraft/world/entity/EntityType.java
 +++ b/net/minecraft/world/entity/EntityType.java
-@@ -1103,6 +1103,13 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
+@@ -1113,6 +1113,13 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
          return BuiltInRegistries.ENTITY_TYPE.getOptional(ResourceLocation.tryParse(key));
      }
  
@@ -1895,7 +1901,7 @@ index 8af02ed823da098a5592ef195c9fe8ed8f245b53..6b72ab233508e6df1eca34360ce76d10
      public EntityType(
          EntityType.EntityFactory<T> factory,
          MobCategory category,
-@@ -1117,8 +1124,14 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
+@@ -1127,8 +1134,14 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
          int updateInterval,
          String descriptionId,
          Optional<ResourceKey<LootTable>> lootTable,
@@ -1911,7 +1917,7 @@ index 8af02ed823da098a5592ef195c9fe8ed8f245b53..6b72ab233508e6df1eca34360ce76d10
          this.factory = factory;
          this.category = category;
          this.canSpawnFarFromPlayer = canSpawnFarFromPlayer;
-@@ -1673,7 +1686,8 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
+@@ -1689,7 +1702,8 @@ public class EntityType<T extends Entity> implements FeatureElement, EntityTypeT
                  this.updateInterval,
                  this.descriptionId.get(entityType),
                  this.lootTable.get(entityType),
@@ -1922,7 +1928,7 @@ index 8af02ed823da098a5592ef195c9fe8ed8f245b53..6b72ab233508e6df1eca34360ce76d10
          }
      }
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index adfc46bd1d78b0584face2fbfdbfe53073c73645..0e7e2a17a9ba3b90d4458032b6d5ff324fad77b5 100644
+index 1976a443e7c59e1e18d8a411513df39c83ad1095..5fe048ce442957a534d44454e0bb908afe8ad3a6 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
 @@ -188,6 +188,9 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
@@ -1993,10 +1999,10 @@ index 386e6a48701b4c9256e33174123381a93d61e292..7b8631abf8adcdb889d412b30eca10fa
          this.validBlocks = validBlocks;
      }
 diff --git a/net/minecraft/world/level/chunk/LevelChunk.java b/net/minecraft/world/level/chunk/LevelChunk.java
-index 5428e6981cf24d17b7bbb91356fdc9ce747a5b76..23ccd2bc86e643eb3e79195d20c1182d3ad7ead6 100644
+index e8914d8c3c0e69d9e5ce97345eb9f24b05b4845f..e74ea44096e071878372c5b8889f45cd2bd4ae23 100644
 --- a/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/net/minecraft/world/level/chunk/LevelChunk.java
-@@ -925,9 +925,12 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
+@@ -932,9 +932,12 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
              if (!this.blockEntity.isRemoved() && this.blockEntity.hasLevel()) {
                  BlockPos blockPos = this.blockEntity.getBlockPos();
                  if (LevelChunk.this.isTicking(blockPos)) {
@@ -2009,7 +2015,7 @@ index 5428e6981cf24d17b7bbb91356fdc9ce747a5b76..23ccd2bc86e643eb3e79195d20c1182d
                          BlockState blockState = LevelChunk.this.getBlockState(blockPos);
                          if (this.blockEntity.getType().isValid(blockState)) {
                              this.ticker.tick(LevelChunk.this.level, this.blockEntity.getBlockPos(), blockState, this.blockEntity);
-@@ -941,6 +944,7 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
+@@ -948,6 +951,7 @@ public class LevelChunk extends ChunkAccess implements ca.spottedleaf.moonrise.p
                              }
                              // Paper end - Remove the Block Entity if it's invalid
                          }

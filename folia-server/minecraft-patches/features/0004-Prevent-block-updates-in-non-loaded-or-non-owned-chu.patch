@@ -9,10 +9,10 @@ add explicit block update suppression techniques, it's better
 than the server crashing.
 
 diff --git a/net/minecraft/world/level/Level.java b/net/minecraft/world/level/Level.java
-index c85b408c6bfea324fe8a4d511d21cf3b2e91b07b..45f020dc4f7c4e63a3b9193aa8bc6d212f522faa 100644
+index 402a90890b9754c9c1a1d209a13cda8c9498f05c..1976a443e7c59e1e18d8a411513df39c83ad1095 100644
 --- a/net/minecraft/world/level/Level.java
 +++ b/net/minecraft/world/level/Level.java
-@@ -2048,7 +2048,7 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
+@@ -2045,7 +2045,7 @@ public abstract class Level implements LevelAccessor, UUIDLookup<Entity>, AutoCl
      public void updateNeighbourForOutputSignal(BlockPos pos, Block block) {
          for (Direction direction : Direction.Plane.HORIZONTAL) {
              BlockPos blockPos = pos.relative(direction);
@@ -22,7 +22,7 @@ index c85b408c6bfea324fe8a4d511d21cf3b2e91b07b..45f020dc4f7c4e63a3b9193aa8bc6d21
                  if (blockState.is(Blocks.COMPARATOR)) {
                      this.neighborChanged(blockState, blockPos, block, null, false);
 diff --git a/net/minecraft/world/level/block/DetectorRailBlock.java b/net/minecraft/world/level/block/DetectorRailBlock.java
-index 3022ddd38ac5d7ab17ad38dee2e69d3684ba45ca..ed7e9eda7d8f6f9c2dd27e14631813a3f9f1573f 100644
+index 73bc347616b40f55664dfcbc805dfac5d1e0452e..ec273a242c67d13906d543831e0cd5def2cae931 100644
 --- a/net/minecraft/world/level/block/DetectorRailBlock.java
 +++ b/net/minecraft/world/level/block/DetectorRailBlock.java
 @@ -128,8 +128,8 @@ public class DetectorRailBlock extends BaseRailBlock {
@@ -37,7 +37,7 @@ index 3022ddd38ac5d7ab17ad38dee2e69d3684ba45ca..ed7e9eda7d8f6f9c2dd27e14631813a3
      }
  
 diff --git a/net/minecraft/world/level/block/PoweredRailBlock.java b/net/minecraft/world/level/block/PoweredRailBlock.java
-index 5ec12356e9f044d99762bf64a6d3bf74856d97a6..1c852a410952b11c8d2b584f0cad1d9bc8153326 100644
+index e4c4a6b4a6ea41b1fdb006cfc70dfb68dcd056c0..abc39a31b29ed4f68398851de7a1209fef895769 100644
 --- a/net/minecraft/world/level/block/PoweredRailBlock.java
 +++ b/net/minecraft/world/level/block/PoweredRailBlock.java
 @@ -102,8 +102,8 @@ public class PoweredRailBlock extends BaseRailBlock {

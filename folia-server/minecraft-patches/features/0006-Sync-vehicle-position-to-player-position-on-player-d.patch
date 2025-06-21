@@ -7,18 +7,18 @@ This allows the player to be re-positioned before logging into
 the world without causing thread checks to trip on Folia.
 
 diff --git a/net/minecraft/server/level/ServerPlayer.java b/net/minecraft/server/level/ServerPlayer.java
-index fcfc686b01e73c3a25df68b268ae512d967674cf..403615ba14ad092b7bf37911296260f2815b7a89 100644
+index 451482b08c930daaa75ec1d7bb9c5936bd224a47..4acc8e07ddd731937378f290effc8e732b6e9255 100644
 --- a/net/minecraft/server/level/ServerPlayer.java
 +++ b/net/minecraft/server/level/ServerPlayer.java
-@@ -747,8 +747,18 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
-         Optional<CompoundTag> compound = tag.getCompound("RootVehicle");
-         if (!compound.isEmpty()) {
-             ServerLevel serverLevel = this.serverLevel();
+@@ -755,8 +755,18 @@ public class ServerPlayer extends Player implements ca.spottedleaf.moonrise.patc
+         Optional<ValueInput> optional = input.child("RootVehicle");
+         if (!optional.isEmpty()) {
+             ServerLevel serverLevel = this.level();
 +            Vec3 playerPos = this.position(); // Paper - force sync root vehicle to player position
              Entity entity = EntityType.loadEntityRecursive(
--                compound.get().getCompoundOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, entity2 -> !serverLevel.addWithUUID(entity2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.MOUNT) ? null : entity2 // Paper - Entity#getEntitySpawnReason
+-                optional.get().childOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, entity2 -> !serverLevel.addWithUUID(entity2, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason.MOUNT) ? null : entity2 // Paper - Entity#getEntitySpawnReason
 +                    // Paper start - force sync root vehicle to player position
-+                    compound.get().getCompoundOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, (Entity entity2) -> {
++                    optional.get().childOrEmpty("Entity"), serverLevel, EntitySpawnReason.LOAD, (Entity entity2) -> {
 +                        // Paper start - force sync root vehicle to player position
 +                        if (entity2.distanceToSqr(ServerPlayer.this) > (5.0 * 5.0)) {
 +                            entity2.setPosRaw(playerPos.x, playerPos.y, playerPos.z, true);
@@ -29,4 +29,4 @@ index fcfc686b01e73c3a25df68b268ae512d967674cf..403615ba14ad092b7bf37911296260f2
 +                    // Paper end - force sync root vehicle to player position
              );
              if (entity != null) {
-                 UUID uuid = compound.get().read("Attach", UUIDUtil.CODEC).orElse(null);
+                 UUID uuid = optional.get().read("Attach", UUIDUtil.CODEC).orElse(null);
