@@ -1,4 +1,4 @@
-name: Patch and Build
+name: Builder
 
 on:
   workflow_dispatch:
